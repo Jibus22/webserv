@@ -4,9 +4,12 @@ NAME = webserv.out
 SRCPATH = ./core
 #SRCPATH2 = ./http
 #SRCPATH3 = ./parsing
+SRCPATH4 = ./utils
+
 OBJPATH = $(SRCPATH)/obj
 #OBJPATH2 = $(SRCPATH2)/obj
 #OBJPATH3 = $(SRCPATH3)/obj
+OBJPATH4 = $(SRCPATH4)/obj
 
 ##### LIB #####
 LIBS =
@@ -34,11 +37,15 @@ else
 endif
 
 ##### SRCS #####
-SRCS = $(addprefix $(SRCPATH)/, main.cpp)
+SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp server_engine.cpp)
 #SRCS2 = $(addprefix $(SRCPATH2)/, )
+#SRCS3 = $(addprefix $(SRCPATH2)/, )
+SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp sys_err.cpp)
 
 OBJ = $(SRCS:$(SRCPATH)/%.cpp=$(OBJPATH)/%.o)
 #OBJ += $(SRCS2:$(SRCPATH2)/%.cpp=$(OBJPATH2)/%.o)
+#OBJ += $(SRCS3:$(SRCPATH3)/%.cpp=$(OBJPATH3)/%.o)
+OBJ += $(SRCS4:$(SRCPATH4)/%.cpp=$(OBJPATH4)/%.o)
 
 
 ### RULES ###
@@ -48,6 +55,9 @@ all : mk_objdir $(NAME)
 
 mk_objdir:
 	@if [ ! -d $(OBJPATH) ]; then mkdir $(OBJPATH); fi
+	@#@if [ ! -d $(OBJPATH2) ]; then mkdir $(OBJPATH2); fi
+	@#@if [ ! -d $(OBJPATH3) ]; then mkdir $(OBJPATH3); fi
+	@if [ ! -d $(OBJPATH4) ]; then mkdir $(OBJPATH4); fi
 
 
 $(NAME) : message $(OBJ)
@@ -65,6 +75,12 @@ $(OBJPATH)/%.o : $(SRCPATH)/%.cpp $(HEADERS)
 #$(OBJPATH2)/%.o : $(SRCPATH2)/%.cpp $(HEADERS)
 	#$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@
 
+#$(OBJPATH3)/%.o : $(SRCPATH3)/%.cpp $(HEADERS)
+	#$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@
+
+$(OBJPATH4)/%.o : $(SRCPATH4)/%.cpp $(HEADERS)
+	$(CXX) $(CXXFLAGS) $(INC) -c $< -o $@
+
 .PHONY : sanitize clean fclean re debug
 
 debug: CXXFLAGS += -D _DEBUG
@@ -81,4 +97,3 @@ fclean : clean
 	rm -f $(NAME)
 
 re : fclean all
-
