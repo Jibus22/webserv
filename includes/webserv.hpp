@@ -31,6 +31,8 @@
 #include <sys/epoll.h>
 #endif
 
+#include "conf.hpp"
+
 
 
 //__________________________________MACROS____________________________________//
@@ -52,6 +54,7 @@ int	run_darwin_server(const std::vector<int> & net_socks);
 
 //______UTILS______//
 int	sys_err(const std::string& msg);
+int	pgm_err(const std::string& msg);
 int	close_listening_ports(const std::vector<int> & net_socks, int ret);
 
 
