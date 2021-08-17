@@ -34,6 +34,8 @@ public :
 		typedef Config_struct::c_methode_vector			c_methode_vector;
 		typedef Config_struct::c_host_vector			c_host_vector;									
 		
+
+
 		typedef Config_struct::c_serv_list				c_serv_list;
 		typedef	Config_struct::serv_port				serv_port;
 		typedef std::map<serv_port, c_serv_list>		c_srv_map;
@@ -46,10 +48,12 @@ private :
 		void				open_conf();
 		void				prsg_main();
 		conf_nginx			enum_prsg(std::string &str);
-	
+		
 		void				verif_serveur();	
 		void				verif_location();
 		void 				locat_bracket(std::string &buff);
+		conf_nginx			verif_serv_listen(std:: string &str, std::string &conf);
+		conf_nginx			verif_locat_bracket(std:: string &str, std::string &conf);
 		void				in_server();
 		void				in_location();	
 
@@ -80,6 +84,9 @@ private :
 
 		std::ifstream		_file;
 		std::string			_config;
+
+
+		bool			braket_on;
 };
 
 # endif

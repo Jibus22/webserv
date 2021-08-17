@@ -18,6 +18,7 @@ void				Config_base::prsg_main(){
 	while (getline(_file, str)){ // envois les caractères du fichier dans str
 		_error++;
 
+		braket_on = false;
 		ft_trim(str); 
 		if (str.empty())
 			continue ;
@@ -87,7 +88,7 @@ void			Config_base::get_container(conf_nginx &conf, std::string &str){
 			break;
 		case n_root :
 			if (_server->root.empty() == false)
-					print_error("Rediff parametres");
+				print_error("Rediff parametres");
 			root_prsg(str, _server->root);
 			break ;
 		case n_index :
@@ -213,27 +214,35 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 
 	std::string conf = str.substr(0, pos);
 
+
+
+	// std::cout << "conf == " << conf << "\n";
+
 	if (conf[0] == '}')
 		return (n_braket);
 	
 	pos = str.find_first_not_of(" \t", pos);
 	str.erase(0, pos);
+
+
+
 	size_t conf_size = conf.size();
 	
-	// std::cout << conf << " " << str << std::endl;  //-> Print fichier nginx 
+	std::cout << "conf = " << conf << " str = " << str << std::endl;  //-> Print fichier nginx 
 
 // number case = size conf (index = 5, location = 8)
 	switch (conf_size){		
+		
 		case 4 :
 			return	(conf == "root" ? n_root : n_none);
 		case 5 :
 			return	(conf == "index" ? n_index : n_none);
 		case 6 :
-			return	(conf == "server" ? n_server : conf == "listen" ? n_listen : n_none);
+			return (verif_serv_listen(str, conf));
 		case 7 :
 			return	(conf == "cgi_ext" ? n_cgi_ext : n_none);
 		case 8 :
-			return	(conf == "location" ? n_location : n_none);
+			return (conf == "location" ? n_location : n_none);
 		case 9 :
 			return	(conf == "autoindex" ? n_auto_index : n_none);
 		case 10 :
@@ -249,7 +258,7 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 }
 
 //---------------------------------------------------------------------------------------//
-//--------------------------------- VERIF SERV LOCTION ----------------------------------//
+//--------------------------------- VERIF PARSING ---------------------------------------//
 //---------------------------------------------------------------------------------------//
 void			Config_base::verif_serveur(){  // -> en cours 
 	if (_server->host.empty())
@@ -294,23 +303,45 @@ void				Config_base::verif_location(){ // -> en cours
 		print_error("methode manquant");
 		return ;
 	}
-	
 }
 
-void Config_base::locat_bracket(std::string &str){ 
-	size_t		pos = str.find_first_of(" {");
 
-// Vérifier s'il manque un URI
+void Config_base::locat_bracket(std::string &str){ 
+	
+	size_t			pos = str.find_first_of(" {");
+	size_t			b = str.find_last_of("{}");
+	std::string 	bracket;
+	size_t n = std::count(str.begin(), str.end(), '{');
+
+	bracket = str.substr(b, std::string::npos);
+	
+	if (bracket == "}" || n > 1)
+		print_error("bracket error");
+
 	if (pos == 0)
 		print_error("URI manquant");
 	_location->uri = str.substr(0, pos);
+
+
 }
 
 void			Config_base::in_server(){
 	if (_bool_serv == true) 
-				print_error("Serveur deja open"); 
-			_server = new Server_config();
-			_bool_serv = true;
+			print_error("Serveur deja open"); 
+		_server = new Server_config();
+		_bool_serv = true;
+}
+
+Config_base::conf_nginx		Config_base::verif_serv_listen(std:: string &str, std::string &conf){
+	if (conf == "listen")
+		return (n_listen);
+	if (conf == "server") {
+		if (str != "{")
+			print_error("mauvais bracket server");
+		return (n_server);
+	}
+	return	(n_none);
+
 }
 
 //---------------------------------------------------------------------------------------//
@@ -348,8 +379,14 @@ void				Config_base::ft_trim(std::string& str){
 	size_t			j = str.find_last_of(";{}");
 
 	if (j == std::string::npos)
-		print_error("missing ; or {");
+		print_error("bracket or semicolon");
+
+	
+	
 	str = str.substr(i, j + 1);
+	
+
+
 }
 
 void

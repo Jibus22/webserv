@@ -1,14 +1,4 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: frfrance <frfrance@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/08/11 14:15:42 by frfrance          #+#    #+#             */
-/*   Updated: 2021/08/16 21:25:58 by frfrance         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
+
 
 #include "includes/Config_base.hpp"
 # include "includes/Config_struct.hpp"
@@ -21,7 +11,7 @@ int main(int ac, char **av){
 
 		Config_struct	c_prsg = c_get_prsg.parsing_return();
 
-		std::cout << "\n\n" << c_prsg << std:: endl;
+		// std::cout << "\n\n" << c_prsg << std:: endl;
 
 	}
 	else
