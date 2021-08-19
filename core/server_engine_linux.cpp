@@ -2,17 +2,18 @@
 
 //Set all our IP:PORT listening sockets in the kqueue so they are monitored
 //for read event
-static int	monitor_network_sockets(const int & kq,
+static int	monitor_network_sockets(const int & ep,
 		const std::vector<int> & net_socks)
 {
-	struct kevent	changelist;
+	struct epoll_event	changelist;
 
 	for (std::vector<int>::const_iterator i = net_socks.begin();
 			i != net_socks.end(); i++)
 	{
-		EV_SET(&changelist, *i, EVFILT_READ, EV_ADD, 0, 0, 0);
-		if (kevent(kq, &changelist, 1, NULL, 0, NULL) == -1)
-			return sys_err("network socks kevent failed");
+		changelist.events = EPOLLIN;
+		changelist.data.fd = *i;
+		if (epoll_ctl(ep, EPOLL_CTL_ADD, *i, &changelist) == -1)
+			return sys_err("network socks epoll_ctl failed");
 	}
 	return 0;
 }
@@ -29,16 +30,17 @@ static int	check_new_connection(const int & event_fd,
 	return -1;
 }
 
-static int	accept_new_client(const int & kq, const int & event_fd)
+static int	accept_new_client(const int & ep, const int & event_fd)
 {
-	struct kevent	changelist;
-	const int		client_fd = accept(event_fd, NULL, NULL);
+	struct epoll_event	changelist;
+	const int			client_fd = accept(event_fd, NULL, NULL);
 
 	if (client_fd == -1)
 		return sys_err("failed to accept a new client");
-	EV_SET(&changelist, client_fd, EVFILT_READ, EV_ADD, 0, 0, 0);
-	if (kevent(kq, &changelist, 1, NULL, 0, NULL) == -1)
-		return sys_err("kevent client_fd failed");
+	changelist.events = EPOLLIN;
+	changelist.data.fd = client_fd;
+	if (epoll_ctl(ep, EPOLL_CTL_ADD, client_fd, &changelist) == -1)
+		return sys_err("network socks epoll_ctl failed");
 	__D_DISPLAY(" new client had been accepted on socket "
 		<< client_fd << " and is now monitored");
 	return 0;
@@ -48,43 +50,55 @@ static int	accept_new_client(const int & kq, const int & event_fd)
 //socket descriptors & client connection descriptor
 int	run_darwin_server(const std::vector<int> & net_socks)
 {
-	const int		kq = kqueue();
-	int				i, event_fd, new_events;
-	struct kevent	eventlist[32];
+	const int			ep = epoll_create(1);
+	int					i, event_fd, new_events, disconnected = 0;
+	struct epoll_event	eventlist[32];
 
-	if (monitor_network_sockets(kq, net_socks) == -1)
+	if (monitor_network_sockets(ep, net_socks) == -1)
 		return -1;
 	for (;;)//Main loop to wait new events
 	{
 		__D_DISPLAY("waiting new event...");
-		new_events = kevent(kq, NULL, 0, eventlist, 32, NULL);
+		new_events = epoll_wait(ep, eventlist, 32, -1);
 		if (new_events == -1)
 			return sys_err("kevent new event failed");
 		for (i = 0; i < new_events; i++)//loop to process triggered events
 		{
-			event_fd = eventlist[i].ident;
-			if (eventlist[i].flags & EV_EOF)
-			{
-				__D_DISPLAY(" client " << event_fd << " has disconnected");
-				close(event_fd);
-			}
+			event_fd = eventlist[i].data.fd;
+			if (eventlist[i].events & EPOLLRDHUP
+					|| eventlist[i].events & EPOLLHUP
+					|| eventlist[i].events & EPOLLERR
+					|| !(eventlist[i].events & EPOLLIN))
+				disconnected = 1;
 			else if (check_new_connection(event_fd, net_socks) >= 0)
 			{
-				if (accept_new_client(kq, event_fd) == -1)
+				if (accept_new_client(ep, event_fd) == -1)
 					return -1;
 			}
-			else if (eventlist[i].filter & EVFILT_READ)//2.
+			else if (eventlist[i].events & EPOLLIN)//2.
 			{
 				char	buf[5];
 				ssize_t	len;
 
 				memset(buf, 0, sizeof(buf));
 				len = recv(event_fd, buf, 4, 0);
-				__D_DISPLAY(" client " << event_fd << ": " << len
+				if (!len)
+					disconnected = 1;
+				else {
+					__D_DISPLAY(" client " << event_fd << ": " << len
 						<< " bytes had been read: " << std::string(buf));
+				}
+			}
+			if (disconnected)
+			{
+				__D_DISPLAY(" client " << event_fd << " has disconnected");
+				if (epoll_ctl(ep, EPOLL_CTL_DEL, event_fd, NULL) == -1)
+					return sys_err("delete client epoll_ctl fd failed");
+				close(event_fd);
+				disconnected = 0;
 			}
 		}
 	}
-	close(kq);
+	close(ep);
 	return 0;
 }

@@ -18,10 +18,7 @@ int	main(void)
 
 	if (create_network_sockets(ports, network_sockets) == -1)
 		return -1;
-	if (__APPLE__)
-		run_darwin_server(network_sockets);
-	else
-		std::cout << "kernel isn't darwin" << std::endl;
+	run_darwin_server(network_sockets);
 	close_listening_ports(network_sockets, 0);
 
 	return 0;

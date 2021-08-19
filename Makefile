@@ -26,22 +26,31 @@ CXX = clang++
 ##### COMPILATION FLAG #####
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
+
 ##### OSTYPE #####
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
-	# mac
 	CXXFLAGS += -D DARWIN
 else
-	#Linux and others...
 	CXXFLAGS += -D LINUX
 endif
 
+
 ##### SRCS #####
-SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp server_engine.cpp)
+SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp)
 #SRCS2 = $(addprefix $(SRCPATH2)/, )
 #SRCS3 = $(addprefix $(SRCPATH2)/, )
 SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp sys_err.cpp)
 
+##### OS CONDITIONNAL SRCS #####
+ifeq ($(UNAME), Darwin)
+	SRCS += $(addprefix $(SRCPATH)/, server_engine.cpp)
+else
+	SRCS += $(addprefix $(SRCPATH)/, server_engine_linux.cpp)
+endif
+
+
+##### OBJS #####
 OBJ = $(SRCS:$(SRCPATH)/%.cpp=$(OBJPATH)/%.o)
 #OBJ += $(SRCS2:$(SRCPATH2)/%.cpp=$(OBJPATH2)/%.o)
 #OBJ += $(SRCS3:$(SRCPATH3)/%.cpp=$(OBJPATH3)/%.o)
