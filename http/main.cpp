@@ -16,7 +16,7 @@ Host: google.com\n");
 	std::map<std::string, std::string> headers = r.get_headers();
 	for(std::map<std::string, std::string>::iterator it = headers.begin();
 		it != headers.end(); it++)
-		std::cout << "\t|" << it->first << "|: |" << it->second << '|' <<std::endl;
+		std::cout << "\t|" << it->first << "|: |" <<it->second<<'|'<<std::endl;
 	std::cout << "Body    : " << r.get_body() << std::endl;
 	return 0;
 }

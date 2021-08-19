@@ -10,25 +10,36 @@ Response::Response(void){
 	return;
 }
 
-/*Response::Response(Response const & src){
+Response::Response(Response const & src){
 	*this = src;
 	return;
-}*/
+}
 
-/*Response &	Response::operator=(Response const & rhs){
+Response &	Response::operator=(Response const & rhs){
+	this->_status_code = rhs._status_code;
+	this->_status_infos = rhs._status_infos;
+	this->_headers = rhs._headers;
+	this->_body = rhs._body;
 	return *this;
-}*/
+}
 
 Response::~Response(void){
 	return;
 }
 
-void Response::set_status_code(int status_code){this->_status_code = status_code;}
-void Response::set_status_infos(std::string status_infos){this->_status_infos = status_infos;}
-void Response::add_header(std::string header, std::string value){this->_headers[header] = value;}
-void Response::set_body(std::string & body){this->_body = body;}
+void Response::set_status_code(int status_code)
+{this->_status_code = status_code;}
 
-std::string Response::get_raw()
+void Response::set_status_infos(std::string const & status_infos)
+{this->_status_infos = status_infos;}
+
+void Response::add_header(std::string const & key_header, std::string const & value)
+{this->_headers[key_header] = value;}
+
+void Response::set_body(std::string const & body)
+{this->_body = body;}
+
+std::string const Response::get_raw()
 {
 	std::string raw_response("HTTP/1.1 ");
 	raw_response.append(this->_status_code);

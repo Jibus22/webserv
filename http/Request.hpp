@@ -1,5 +1,5 @@
-#ifndef REQUEST_H
-# define REQUEST_H
+#ifndef REQUEST_HPP
+# define REQUEST_HPP
 
 #include <iostream>
 #include <string>
@@ -9,14 +9,14 @@ class Request{
 
 private:
 	std::string							_method;
-	std::string 						_target;
+	std::string							_target;
 	std::string							_version;
 	std::map<std::string, std::string>	_headers;
 	std::string							_body;
 
 
-	void add_header(std::string header);
-	void parse_first_line(std::string first_line);
+	void add_header(std::string const header);
+	void parse_first_line(std::string const first_line);
 
 
 public:
@@ -24,20 +24,20 @@ public:
 	/*
 	** CANONICAL FUNCS
 	*/
-	//Request(void);
-	//Request(Request const & src);
+	Request(void);
+	Request(Request const & src);
 	~Request(void);
-	//Request & operator=(Request const & rhs);
+	Request & operator=(Request const & rhs);
 
-	Request(std::string & raw_request);
+	Request(std::string const & raw_request);
 
-	std::string& operator[] (const std::string& key_header);
-	std::string& get_header(const std::string& key_header);
-	std::map<std::string, std::string> get_headers();
-	std::string& get_method();
-	std::string& get_target();
-	std::string& get_version();
-	std::string& get_body();
+	std::string & operator[] (std::string const & key_header);
+	std::string const & get_header(const std::string& key_header);
+	std::map<std::string, std::string> const & get_headers() const;
+	std::string const & get_method() const;
+	std::string const & get_target() const;
+	std::string const & get_version() const;
+	std::string const & get_body() const;
 };
 
 #endif
