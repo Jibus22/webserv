@@ -96,7 +96,7 @@ Request::Request(std::string const & raw_r)
 	}
 }
 
-std::string & Request::operator[] (std::string const & key_header)
+std::string const & Request::operator[] (std::string const & key_header)
 {return this->_headers[key_header];}
 
 std::string const & Request::get_header(const std::string& key_header)

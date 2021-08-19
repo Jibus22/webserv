@@ -31,7 +31,7 @@ public:
 
 	Request(std::string const & raw_request);
 
-	std::string & operator[] (std::string const & key_header);
+	std::string const & operator[] (std::string const & key_header);
 	std::string const & get_header(const std::string& key_header);
 	std::map<std::string, std::string> const & get_headers() const;
 	std::string const & get_method() const;
