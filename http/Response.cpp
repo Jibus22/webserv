@@ -39,24 +39,24 @@ void Response::add_header(std::string const & key_header, std::string const & va
 void Response::set_body(std::string const & body)
 {this->_body = body;}
 
-std::string const Response::get_raw()
+std::string const * Response::get_raw()
 {
-	std::string raw_response("HTTP/1.1 ");
-	raw_response.append(this->_status_code);
-	raw_response.append(" ");
-	raw_response.append(this->_status_infos);
-	raw_response.append("\n");
+	std::string * raw_response = new std::string("HTTP/1.1 ");
+	raw_response->append(this->_status_code);
+	raw_response->append(" ");
+	raw_response->append(this->_status_infos);
+	raw_response->append("\n");
 	std::map<std::string, std::string>::iterator it = this->_headers.begin();
 	std::map<std::string, std::string>::iterator ite = this->_headers.end();
 	while(it != ite)
 	{
-		raw_response.append(it->first);
-		raw_response.append(": ");
-		raw_response.append(it->second);
-		raw_response.append("\n");
+		raw_response->append(it->first);
+		raw_response->append(": ");
+		raw_response->append(it->second);
+		raw_response->append("\n");
 		it++;
 	}
-	raw_response.append("\n");
-	raw_response.append(this->_body);
+	raw_response->append("\n");
+	raw_response->append(this->_body);
 	return raw_response;
 }
