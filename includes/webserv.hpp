@@ -31,6 +31,7 @@
 #include <sys/epoll.h>
 #endif
 
+#include "simulation.hpp"
 #include "conf.hpp"
 
 
@@ -42,21 +43,22 @@
 	ost << fmt << std::endl;\
 	std::cout << ost.str();} else ;\
 
+# define RCV_BUF 5
+# define INCOMPLETE 1
 
 
 //__________________________________PROTOTYPES________________________________//
 
 //______CORE_______//
-int	create_network_sockets(const std::vector<int> & ports,
+int		create_network_sockets(const std::vector<int> & ports,
 			std::vector<int> & net_socks);
-int	run_darwin_server(const std::vector<int> & net_socks);
+int		run_darwin_server(const std::vector<int> & net_socks);
 
 
 //______UTILS______//
-int	sys_err(const std::string& msg);
-int	pgm_err(const std::string& msg);
-int	close_listening_ports(const std::vector<int> & net_socks, int ret);
-
+int		sys_err(const std::string& msg);
+int		pgm_err(const std::string& msg);
+int		close_listening_ports(const std::vector<int> & net_socks, int ret);
 
 
 #endif

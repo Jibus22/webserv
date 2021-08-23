@@ -39,11 +39,15 @@ endif
 
 
 ##### SRCS #####
+#CORE
 SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp)
+#CONF
 SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 		Location_config.cpp Server_config.cpp)
+#HTTP
 #SRCS3 = $(addprefix $(SRCPATH2)/, )
-SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp)
+#UTILS
+SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp)
 
 ##### OS CONDITIONNAL SRCS #####
 ifeq ($(UNAME), Darwin)

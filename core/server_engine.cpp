@@ -75,13 +75,15 @@ int	run_darwin_server(const std::vector<int> & net_socks)
 			}
 			else if (eventlist[i].filter & EVFILT_READ)//2.
 			{
-				char	buf[5];
-				ssize_t	len;
+				std::string	str;
+				char		buf[RCV_BUF + 1];
+				ssize_t		len;
 
-				memset(buf, 0, sizeof(buf));
-				len = recv(event_fd, buf, 4, 0);
+				len = recv(event_fd, buf, RCV_BUF, 0);
+				buf[len] = 0;
+				str = buf;
 				__D_DISPLAY(" client " << event_fd << ": " << len
-						<< " bytes had been read: " << std::string(buf));
+						<< " bytes had been read: " << str);
 			}
 		}
 	}
