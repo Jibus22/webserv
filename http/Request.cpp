@@ -4,6 +4,16 @@
 #include <map>
 #include <vector>
 
+const char* Request::NotTerminatedException::what() const throw()
+{
+	return "Request not Terminated";
+}
+
+const char* Request::InvalidRequest::what() const throw()
+{
+	return "Invalid Request";
+}
+
 std::vector<std::string> & split(const std::string& s, char const separator)
 {
 	std::vector<std::string> * output = new std::vector<std::string>();
@@ -74,7 +84,11 @@ Request::Request(std::string const & raw_r)
 	std::string raw_request(raw_r);
 	//stocke le body et le supprime de la string
 	size_t pos_body = raw_request.find("\n\n");
-	if (pos_body != std::string::npos)
+	if (pos_body == std::string::npos)
+	{
+		throw Request::NotTerminatedException();
+	}
+	else
 	{
 		this->_body = raw_request.substr(pos_body + 2);
 		raw_request.erase(pos_body);
