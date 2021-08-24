@@ -32,3 +32,15 @@ std::string const *process_request(std::string& raw_request,
 	(void)flag;
 	return NULL;
 }
+
+void	process_request(Client& client,
+				const std::vector<SiServ>& server_blocks)
+{
+	Response	test;
+	Request		test2;
+
+	__D_DISPLAY(client);
+	(void)server_blocks;
+	(void)test;
+	(void)test2;
+}

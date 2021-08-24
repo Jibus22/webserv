@@ -28,6 +28,12 @@ Client &	Client::operator=(Client const & src)
 /*----------------------------------METHODS-----------------------------------*/
 
 void	Client::eraseRaw(void) { _raw.erase(_raw.begin(), _raw.end()); }
+void	Client::setResponse(const std::string& response, const int flag)
+{ 
+	eraseRaw();
+	_raw = response;
+	_flag = flag;
+}
 
 
 /*------------------------------GETTERS/SETTERS-------------------------------*/

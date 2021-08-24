@@ -1,7 +1,9 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include "webserv.hpp"
+#include <utility>
+#include <iostream>
+#include "macros.hpp"
 
 class Client
 {
@@ -21,6 +23,7 @@ public:
 /*----------------------------------METHODS-----------------------------------*/
 
 	void				eraseRaw(void);
+	void				setResponse(const std::string& response, const int flag);
 
 
 /*------------------------------GETTERS/SETTERS-------------------------------*/

@@ -61,18 +61,6 @@ static int	accept_new_client(const int kq, const int event_fd,
 	return 0;
 }
 
-void	process_request(Client& client,
-				const std::vector<SiServ>& server_blocks)
-{
-	Response	test;
-	Request		test2;
-
-	__D_DISPLAY(client);
-	(void)server_blocks;
-	(void)test;
-	(void)test2;
-}
-
 static int	read_request(const int event_fd,
 					const std::vector<SiServ>& server_blocks,
 					std::map<int, Client>& client_map)
