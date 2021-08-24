@@ -1,4 +1,5 @@
 
+
 #ifndef	CONFIG_BASE_HPP
 # define CONFIG_BASE_HPP
 
@@ -18,29 +19,28 @@ public :
 		n_index,
 		n_server,
 		n_listen,
+		n_body,
 		n_cgi_ext,
 		n_location,
 		n_auto_index,
-		n_error, 
+		n_error_page, 
 		n_name,
 		n_allow_request,
 		n_braket,
-		n_none
+		n_none,
+		n_bracket_error,
 	};
 
 //------------------------> TYPE DEF  <-----------------------
-		typedef Config_struct::c_str_vector				c_str_vector;
-		typedef Config_struct::c_cgi_map				c_cgi_map;
+		typedef Config_struct:: c_name_vector			c_name_vector;
 		typedef Config_struct::c_methode_vector			c_methode_vector;
-		typedef Config_struct::c_host_vector			c_host_vector;									
-		
-
-
-		typedef Config_struct::c_serv_list				c_serv_list;
-		typedef	Config_struct::serv_port				serv_port;
-		typedef std::map<serv_port, c_serv_list>		c_srv_map;
+		typedef Config_struct::c_cgi_map				c_cgi_map;
+		typedef Config_struct::c_error_map				c_error_map;
+		typedef Config_struct::p_listen					p_listen;
+		typedef Config_struct::c_serv_vector			c_serv_vector;
 
 //-------------------> FUNC PUBLIC  <-----------------------	
+		// Config_struct		parsing_return();
 		Config_struct		parsing_return();
 	
 //------------------> PRIVATE FONCTION <------------------
@@ -53,19 +53,21 @@ private :
 		void				verif_location();
 		void 				locat_bracket(std::string &buff);
 		conf_nginx			verif_serv_listen(std:: string &str, std::string &conf);
+		conf_nginx			verif_locat(std::string &str, std::string &conf);
 		conf_nginx			verif_locat_bracket(std:: string &str, std::string &conf);
 		void				in_server();
 		void				in_location();	
 
 		void				get_container(conf_nginx &conf, std::string &str);
-		void 				host_prsg(std::string &buff, c_host_vector &host, serv_port &port);
-		void				name_serv_prsg(std::string & buff, c_str_vector &dest);
-		void				root_prsg(std::string &buff, std::string &dest);
-		void 				cgi_ext_prsg(std::string &buff, c_cgi_map &dest);
-		void				methode_prsg(std::string &buff, c_methode_vector &dest);
-		void				auto_index_prsg(std::string &str, bool &prsg);
-		void 				location_prsg(const std::string &buff, bool & dest);
-		void				index_prsg(std::string & buff, c_str_vector &dest);
+		void 				listen_prsg(std::string &str, p_listen &prsg);
+		void				name_serv_prsg(std::string &str, c_name_vector &prsg);
+		void				root_prsg(std::string &str, std::string &prsg);
+		void 				cgi_ext_prsg(std::string &str, c_cgi_map &prsg);
+		void				methode_prsg(std::string &str, c_methode_vector &prsg);
+		void				auto_index_prsg(const std::string &str, bool &prsg);
+		void				error_page_prsg(std::string &str, c_error_map &prsg);
+		void				index_prsg(std::string &str, std::string &prsg);
+		void				body_size_prsg(std::string &str, size_t &prsg);
 
 		void				init_value(std:: string &path);
 		void				ft_trim(std::string &str);
@@ -76,7 +78,7 @@ private :
 		Location_config		*_location;  //-> tous les locations nginx
 		Server_config		*_server; //-> tous mon serveur nginx
 		Config_struct		_main_config;
-		
+
 		bool				_bool_serv;
 		bool				_bool_locat;
 		bool				_again;
@@ -85,8 +87,11 @@ private :
 		std::ifstream		_file;
 		std::string			_config;
 
+		bool				braket_on;
+		size_t				space_count;
 
-		bool			braket_on;
+
+		
 };
 
 # endif
