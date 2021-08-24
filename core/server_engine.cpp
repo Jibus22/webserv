@@ -45,6 +45,8 @@ static int	accept_new_client(const int kq, const int event_fd,
 	EV_SET(&changelist, client_fd, EVFILT_READ, EV_ADD, 0, 0, 0);
 	if (kevent(kq, &changelist, 1, NULL, 0, NULL) == -1)
 		return sys_err("kevent client_fd failed");
+	//While data will be available to read on the socket buffer, we will be
+	//triggered. When there isn't any data, no trigger: block.
 
 	i = server_map.find(event_fd);
 	if (i == server_map.end())
@@ -53,10 +55,10 @@ static int	accept_new_client(const int kq, const int event_fd,
 	newclient.setListen(i->second);
 	client_map[client_fd] = newclient;
 
-	__D_DISPLAY("event_fd  : " << event_fd);
-	__D_DISPLAY("new client: " << newclient);
-	__D_DISPLAY(" new client had been accepted on socket "
-		<< client_fd << " and is now monitored");
+	__D_DISPLAY(std::endl << "--- server socket event: " << event_fd);
+	__D_DISPLAY("New client: " << newclient
+			<< "had been accepted on socket " << client_fd
+			<< " and is now monitored ---" << std::endl);
 
 	return 0;
 }
@@ -73,14 +75,56 @@ static int	read_request(const int event_fd,
 	buf[len] = 0;
 	client.setRaw(buf);
 
-	__D_DISPLAY(" client " << event_fd << ": " << len
-			<< " bytes had been read");
+	__D_DISPLAY(std::endl << "Client " << event_fd << ": " << len
+			<< " bytes had been read.");
 
 	process_request(client, server_blocks);
-	if (client.getFlag() == COMPLETE)
+	return 0;
+}
+
+static int	set_ready(const int kq, Client& client)
+{
+	struct kevent					changelist;
+
+	EV_SET(&changelist, client.getFd(), EVFILT_WRITE,
+			EV_ADD | EV_ONESHOT, 0, 0, 0);
+	if (kevent(kq, &changelist, 1, NULL, 0, NULL) == -1)
+		return sys_err("kevent client_fd failed");
+	client.setFlag(READY);
+	return READY;
+}
+
+static int	send_request(const int kq, const struct kevent *event,
+					std::map<int, Client>& client_map)
+{ 
+	int								len;
+	std::map<int, Client>::iterator	i = client_map.find(event->ident);
+
+	if (i == client_map.end())
+		return pgm_err("send_request : oops, client should exist");
+
+	if (i->second.getFlag() == INCOMPLETE)//response not processed: return
+		return INCOMPLETE;
+	if (i->second.getFlag() == COMPLETE)//response processed: poll write event
+		return set_ready(kq, i->second);
+
+	//Write thru write kevent
+	//event->data contains space remaining in the write buffer
+	if (i->second.getFlag() == READY && event->filter == EVFILT_WRITE)
 	{
-		//send; (j'ai des trucs à voir avant. peu-être kevent() WRITE event...)
-		client.eraseRaw();
+		__D_DISPLAY("data flag from write event: " << event->data);
+		if (event->data < static_cast<long>(i->second.getRaw().size()))
+		{
+			len = send(event->ident, i->second.getRaw().c_str(), event->data, 0);
+			i->second.truncateRaw(len);
+			return set_ready(kq, i->second);
+		}
+		else
+		{
+			len = send(event->ident, i->second.getRaw().c_str(),
+							i->second.getRaw().size(), 0);
+			i->second.setResponse("", INCOMPLETE);
+		}
 	}
 	return 0;
 }
@@ -106,17 +150,20 @@ int	run_server(const int kq, const std::vector<SiServ> & server_blocks,
 				__D_DISPLAY(" client " << event_fd << " has disconnected");
 				close(event_fd);
 				client_map->erase(event_fd);
+				continue;
 			}
 			else if (check_new_connection(event_fd, server_map) >= 0)
 			{
 				if (accept_new_client(kq, event_fd, *client_map, server_map)
 						== -1)
 					return -1;
+				continue;
 			}
-			else if (eventlist[i].filter & EVFILT_READ)//2.
+			else if (eventlist[i].filter == EVFILT_READ)//2.
 			{
 				read_request(event_fd, server_blocks, *client_map);
 			}
+			send_request(kq, &(eventlist[i]), *client_map);
 		}
 	}
 	delete client_map;

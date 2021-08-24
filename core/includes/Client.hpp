@@ -23,6 +23,7 @@ public:
 /*----------------------------------METHODS-----------------------------------*/
 
 	void				eraseRaw(void);
+	void				truncateRaw(const int len);
 	void				setResponse(const std::string& response, const int flag);
 
 

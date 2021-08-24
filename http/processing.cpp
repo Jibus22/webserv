@@ -40,6 +40,10 @@ void	process_request(Client& client,
 	Request		test2;
 
 	__D_DISPLAY(client);
+	if (client.getRaw().size() > 10)
+	{
+		client.setResponse("REPONSE PROCESSEE BITCCHH\n", COMPLETE);
+	}
 	(void)server_blocks;
 	(void)test;
 	(void)test2;
