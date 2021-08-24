@@ -36,6 +36,7 @@
 #include "Client.hpp"
 
 #include "conf.hpp"
+#include "processing.hpp"
 
 
 

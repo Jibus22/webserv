@@ -4,6 +4,8 @@
 #include "Request.hpp"
 #include "Response.hpp"
 
+class Server {};
+
 std::string const *process_request(std::string& raw_request,
 	const std::vector<Server>& server_blocks,
 	const std::pair<std::string, int>& listen, int *flag);

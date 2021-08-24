@@ -6,6 +6,7 @@ std::string const *process_request(std::string& raw_request,
 	const std::vector<Server>& server_blocks,
 	const std::pair<std::string, int>& listen, int *flag)
 {
+	/*
 	try {
 		Request r = Request(raw_request);
 
@@ -24,4 +25,10 @@ std::string const *process_request(std::string& raw_request,
 		//Requete non valide set flag
 		return NULL;
 	}
+	*/
+	(void)raw_request;
+	(void)server_blocks;
+	(void)listen;
+	(void)flag;
+	return NULL;
 }
