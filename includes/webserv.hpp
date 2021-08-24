@@ -24,6 +24,7 @@
 #include <sstream>
 #include <ostream>
 #include <cstring>
+#include <string>
 #include <vector>
 #if __APPLE__
 #include <sys/event.h>
@@ -31,7 +32,9 @@
 #include <sys/epoll.h>
 #endif
 
-#include "simulation.hpp"
+#include "SiServ.hpp"
+#include "Client.hpp"
+
 #include "conf.hpp"
 
 
@@ -45,20 +48,26 @@
 
 # define RCV_BUF 5
 # define INCOMPLETE 1
+# define COMPLETE 0
 
 
 //__________________________________PROTOTYPES________________________________//
 
 //______CORE_______//
-int		create_network_sockets(const std::vector<int> & ports,
-			std::vector<int> & net_socks);
-int		run_darwin_server(const std::vector<int> & net_socks);
+std::map<int, std::pair<std::string, int> >*
+		create_network_sockets(const std::vector<SiServ> & srvs);
+int		start_server(const std::vector<SiServ> & server_blocks,
+					std::map<int, std::pair<std::string, int> >	& server_map);
 
 
 //______UTILS______//
 int		sys_err(const std::string& msg);
 int		pgm_err(const std::string& msg);
 int		close_listening_ports(const std::vector<int> & net_socks, int ret);
+int		close_server_sockets(std::map<int, std::pair<std::string, int> >&
+			server_map, const int ret);
 
+void					bunch_of_ports_simulation(std::vector<int>& ports);
+std::vector<SiServ>	*get_servers_simulation();
 
 #endif

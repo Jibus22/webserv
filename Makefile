@@ -17,10 +17,17 @@ LIBSD = -lbsd
 
 ##### INCLUDE #####
 PATH_INCLUDE = ./includes
+PATH_INCLUDE1 = $(SRCPATH)/includes
 PATH_INCLUDE2 = $(SRCPATH2)/includes
+PATH_INCLUDE4 = $(SRCPATH4)/includes
+
 HEADERS = $(PATH_INCLUDE)/*.hpp
+HEADERS += $(PATH_INCLUDE1)/*.hpp
 HEADERS += $(PATH_INCLUDE2)/*.hpp
-INC = $(addprefix -I , $(PATH_INCLUDE) $(PATH_INCLUDE2))
+HEADERS += $(PATH_INCLUDE4)/*.hpp
+
+INC = $(addprefix -I , $(PATH_INCLUDE) $(PATH_INCLUDE1) $(PATH_INCLUDE2) \
+	  $(PATH_INCLUDE4))
 
 
 ##### COMPILER #####
@@ -40,14 +47,15 @@ endif
 
 ##### SRCS #####
 #CORE
-SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp)
+SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp Client.cpp)
 #CONF
 SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 		Location_config.cpp Server_config.cpp)
 #HTTP
 #SRCS3 = $(addprefix $(SRCPATH2)/, )
 #UTILS
-SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp)
+SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp \
+		SiServ.cpp)
 
 ##### OS CONDITIONNAL SRCS #####
 ifeq ($(UNAME), Darwin)
