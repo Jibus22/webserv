@@ -114,6 +114,7 @@ void			Config_base::get_container(conf_nginx &conf, std::string &str){
 				auto_index_prsg(str, _location->auto_index);
 			else
 				print_error("Auto index must be location");
+			break;
 		case n_body :
 			if (_bool_serv)
 				body_size_prsg(str, _server->m_body_size);
@@ -125,42 +126,6 @@ void			Config_base::get_container(conf_nginx &conf, std::string &str){
 		}
 }
 
-void			Config_base::body_size_prsg(std::string &str, size_t &prsg){
-	std::string 	letter;
-	std::string 	number;
-	size_t			memory = 1;
-	size_t			arg = 0;
-	size_t			nb;
-	
-	for (size_t i = 0; i < str.length(); i++){
-		if (std::isalpha(str[i])){
-			letter = str.substr(i, str.size());
-			number = str.substr(0, i);
-			break;
-		}
-	}
-	if (letter[0] == 'K' || letter[0] ==  'k')
-		memory = 100; 
-	else if (letter[0] == 'M' || letter[0] == 'm')
-		memory = 1000000;
-	else
-		arg = 1;
-	if (letter.size() > 3 || std::isalpha(str[0]))
-		print_error("Error client_max_body_size");
-	if (arg == 1){
-		if (std::isalpha(letter[0]))
-			print_error("client_max_body_size");
-		std::stringstream ss;  
-  		ss << str;  
-  		ss >> nb; 
-	}
-	else{
-		std::stringstream ss;  
-  		ss << number;  
-  		ss >> nb; 
-	}
-	prsg = nb * memory;
-}
 
 void			Config_base::listen_prsg(std::string &str, p_listen &prsg){
 	size_t			position = str.find(':');
@@ -267,12 +232,56 @@ void		Config_base::error_page_prsg(std::string &str, c_error_map &prsg){
 	
 }
 
+void			Config_base::body_size_prsg(std::string &str, size_t &prsg){
+	std::string 	letter;
+	std::string 	number;
+	size_t			memory = 1;
+	size_t			arg = 0;
+	size_t			nb;
+	
+	for (size_t i = 0; i < str.length(); i++){
+		if (std::isalpha(str[i])){
+			letter = str.substr(i, str.size());
+			number = str.substr(0, i);
+			break;
+		}
+	}
+	if (letter[0] == 'K' || letter[0] ==  'k')
+		memory = 100; 
+	else if (letter[0] == 'M' || letter[0] == 'm')
+		memory = 1000000;
+	else
+		arg = 1;
+	if (letter.size() > 3 || std::isalpha(str[0]))
+		print_error("Error client_max_body_size");
+	if (arg == 1){
+		if (std::isalpha(letter[0]))
+			print_error("client_max_body_size");
+		std::stringstream ss;  
+  		ss << str;  
+  		ss >> nb; 
+	}
+	else{
+		std::stringstream ss;  
+  		ss << number;  
+  		ss >> nb; 
+	}
+	prsg = nb * memory;
+}
+
 
 void	Config_base::auto_index_prsg(const std::string &str, bool &prsg){ 
+
+	std::cout << "str == " << str << "\n";
+
+	if (str == "off;")
+		prsg = false;
+	else if (str == "on;")
+		prsg = true;
+	else
+		print_error("Error auto index");
+
 	
-// -> en cours 
-	(void)str;
-	(void)prsg;
 
 }
 
@@ -309,7 +318,7 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 		case 9 :
 			return	(conf == "autoindex" ? n_auto_index : n_none);
 		case 10 :
-			return	(conf == "error_page" ? n_error_page : n_none);
+			return	(case_conf(conf));
 		case 11 :
 			return	(conf == "server_name" ? n_name : n_none);
 		case 13 :
@@ -446,8 +455,13 @@ void				Config_base::init_value(std::string &config){
 
 
 
-Config_struct Config_base::parsing_return(){ // return dans le main mon objet du parsing
+Config_struct Config_base::parsing_return() const { 
 	return (_main_config);
+}
+
+
+Config_struct::c_serv_vector *Config_base::get_vector() const {
+	return (_main_config._main_server);
 }
 
 //---------------------------------------------------------------------------------------//
@@ -482,9 +496,17 @@ void 	Config_base::find_and_replace(std::string &str, std::string &src, std::str
 	}
 }
 
+Config_base::conf_nginx	Config_base::case_conf(const std::string &conf) const {
+	if (conf == "error_page")
+		return (n_error_page);
+	else if (conf == "upload_dir")
+		return (n_upload_d);
+	else
+		return (n_none);
+}
 
-void Config_base::print_error(std::string str) 
-{
+
+void Config_base::print_error(const std::string str) const {
 	std::cout << "\033[1;33m" ;
 	std::cout << "Error line " << _error << " [ "<< str << " ]" << "\n";
 	std::cout << "\033[0m";

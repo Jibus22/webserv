@@ -10,6 +10,7 @@
 class	Config_base
 {//---------------> CONSTRUCTEUR || DESTRUCTEUR <------------------
 public :
+	Config_base();
 	Config_base(std::string &path);
 	virtual ~Config_base();
 
@@ -26,6 +27,8 @@ public :
 		n_error_page, 
 		n_name,
 		n_allow_request,
+		n_upload_d,
+		n_auth_b,
 		n_braket,
 		n_none,
 		n_bracket_error,
@@ -40,8 +43,8 @@ public :
 		typedef Config_struct::c_serv_vector			c_serv_vector;
 
 //-------------------> FUNC PUBLIC  <-----------------------	
-		// Config_struct		parsing_return();
-		Config_struct		parsing_return();
+		c_serv_vector		*get_vector() const ;
+		Config_struct		parsing_return() const ;
 	
 //------------------> PRIVATE FONCTION <------------------
 private :
@@ -71,7 +74,8 @@ private :
 
 		void				init_value(std:: string &path);
 		void				ft_trim(std::string &str);
-		void 				print_error(std::string str);
+		void 				print_error(const std::string str) const ;
+		conf_nginx			case_conf(const std::string &conf) const;
 		void				find_and_replace(std::string &str, std::string &src, std::string &dest);
 
 //------------------> PRIVATE VARIABLE <------------------

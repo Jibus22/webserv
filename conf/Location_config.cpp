@@ -13,6 +13,8 @@ std::ostream& operator<<(std::ostream& os, Location_config &ref){
   for (Location_config::c_methode_vector::iterator it = ref.methode.begin(); it != ref.methode.end(); it++)
     os << "ALLOW_REQUEST = " << *it << std::endl;
 
+  os << "AUTO_INDEX = " << ref.auto_index << "\n";
+
   for (Location_config::c_cgi_map::iterator it = ref.cgi.begin(); it != ref.cgi.end(); it++)
 	  os << "CGI_EXT exec = " << it->first << "\nCGI_EXT chemin = " << it->second << std::endl;
   
