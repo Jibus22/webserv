@@ -38,6 +38,18 @@ public:
 	std::string const & get_target() const;
 	std::string const & get_version() const;
 	std::string const & get_body() const;
+
+	class NotTerminatedException:std::exception
+	{
+		const char* what() const throw();
+	};
+
+	class InvalidRequest : std::exception
+	{
+		const char* what() const throw();
+	};
+
+
 };
 
 #endif
