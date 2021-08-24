@@ -21,21 +21,21 @@ struct Location_config;
 
 struct Config_struct
 {//------------------> CONSTRUCT <------------------
+	Config_struct();
 	~Config_struct();
 
 //------------------> TYPE DEF <-------------------
-	typedef std::map<std::string, Location_config *>	c_loc_map;
-	typedef std::vector<std::string>					c_str_vector;
-	typedef std::map<std::string, std::string>			c_cgi_map;
+	typedef std::vector<std::string>					c_name_vector;
 	typedef std::vector<std::string>					c_methode_vector;
-	typedef std::vector<std::string>					c_host_vector;
-
-	typedef int											serv_port;	
-	typedef std::list<Server_config *>					c_serv_list;
-	typedef std::map<serv_port, c_serv_list>			c_serv_map;
-
+	typedef std::vector<Server_config *>				c_serv_vector;	
+	typedef std::map<std::string, Location_config *>	c_loc_map;
+	typedef std::map<std::string, std::string>			c_cgi_map;
+	typedef std::map<int, std::string>					c_error_map; 						
+	typedef std::pair <std::string, int>				p_listen;
+	
 //------------------> VARIABLE <------------------
-	c_serv_map	_main_server;	
+	
+	c_serv_vector	*_main_server;
 
 };
 
