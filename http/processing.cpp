@@ -38,11 +38,13 @@ void	process_request(Client& client,
 {
 	Response	test;
 	Request		test2;
+	const char	*request = client.getRawRequest();
 
 	__D_DISPLAY(client);
-	if (client.getRaw().size() > 10)
+	if (client.getRequestSize() > 10)
 	{
-		client.setResponse("REPONSE PROCESSEE BITCCHH\n", COMPLETE);
+		client.setResponse(request, request + 10, COMPLETE);
+		client.truncateRequest(10);
 	}
 	(void)server_blocks;
 	(void)test;

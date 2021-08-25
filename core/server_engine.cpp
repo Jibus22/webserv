@@ -73,7 +73,7 @@ static int	read_request(const int event_fd,
 
 	len = recv(event_fd, buf, RCV_BUF, 0);
 	buf[len] = 0;
-	client.setRaw(buf);
+	client.setRequest(buf, len);
 
 	__D_DISPLAY(std::endl << "Client " << event_fd << ": " << len
 			<< " bytes had been read.");
@@ -84,7 +84,7 @@ static int	read_request(const int event_fd,
 
 static int	set_ready(const int kq, Client& client)
 {
-	struct kevent					changelist;
+	struct kevent	changelist;
 
 	EV_SET(&changelist, client.getFd(), EVFILT_WRITE,
 			EV_ADD | EV_ONESHOT, 0, 0, 0);
@@ -113,17 +113,19 @@ static int	send_request(const int kq, const struct kevent *event,
 	if (i->second.getFlag() == READY && event->filter == EVFILT_WRITE)
 	{
 		__D_DISPLAY("data flag from write event: " << event->data);
-		if (event->data < static_cast<long>(i->second.getRaw().size()))
+		if (event->data < static_cast<long>(i->second.getResponseSize()))
 		{
-			len = send(event->ident, i->second.getRaw().c_str(), event->data, 0);
-			i->second.truncateRaw(len);
+			len = send(event->ident, i->second.getRawResponse(), event->data, 0);
+			i->second.truncateResponse(len);
+			__D_DISPLAY("1. just sent: " << i->second.getStrResponse());
 			return set_ready(kq, i->second);
 		}
 		else
 		{
-			len = send(event->ident, i->second.getRaw().c_str(),
-							i->second.getRaw().size(), 0);
-			i->second.setResponse("", INCOMPLETE);
+			len = send(event->ident, i->second.getRawResponse(),
+							i->second.getResponseSize(), 0);
+			__D_DISPLAY("2. just sent: " << i->second.getStrResponse());
+			i->second.clearResponse();
 		}
 	}
 	return 0;
@@ -174,7 +176,7 @@ int	run_server(const int kq, const std::vector<SiServ> & server_blocks,
 int	start_server(const std::vector<SiServ> & server_blocks,
 					std::map<int, std::pair<std::string, int> >	& server_map)
 {
-	const int		kq = kqueue();
+	const int	kq = kqueue();
 
 	if (monitor_network_sockets(kq, server_map) == -1)
 		return -1;
