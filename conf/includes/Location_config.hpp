@@ -22,9 +22,9 @@ struct Location_config
 	std::string				index;
 	std::string				root;
 	std::string				uri;
+	std::string				upload_dir;
+
 	bool					auto_index;
-
-
 };
 
 # endif

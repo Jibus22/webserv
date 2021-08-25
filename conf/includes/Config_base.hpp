@@ -55,7 +55,7 @@ private :
 		void				verif_serveur();	
 		void				verif_location();
 		void 				locat_bracket(std::string &buff);
-		conf_nginx			verif_serv_listen(std:: string &str, std::string &conf);
+		conf_nginx			verif_serv_listen(std::string &str, std::string &conf);
 		conf_nginx			verif_locat(std::string &str, std::string &conf);
 		conf_nginx			verif_locat_bracket(std:: string &str, std::string &conf);
 		void				in_server();
@@ -64,7 +64,7 @@ private :
 		void				get_container(conf_nginx &conf, std::string &str);
 		void 				listen_prsg(std::string &str, p_listen &prsg);
 		void				name_serv_prsg(std::string &str, c_name_vector &prsg);
-		void				root_prsg(std::string &str, std::string &prsg);
+		void				basic_prsg(const std::string &str, std::string &prsg) const;
 		void 				cgi_ext_prsg(std::string &str, c_cgi_map &prsg);
 		void				methode_prsg(std::string &str, c_methode_vector &prsg);
 		void				auto_index_prsg(const std::string &str, bool &prsg);
@@ -92,10 +92,7 @@ private :
 		std::string			_config;
 
 		bool				braket_on;
-		size_t				space_count;
-
-
-		
+		size_t				space_count;	
 };
 
 # endif

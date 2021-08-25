@@ -17,7 +17,6 @@ void				Config_base::prsg_main(){
 
 	while (getline(_file, str)){ // envois les caractères du fichier dans str
 		_error++;
-
 		braket_on = false;
 		ft_trim(str); 
 		if (str.empty())
@@ -27,7 +26,7 @@ void				Config_base::prsg_main(){
 			continue;
 		if (conf == n_none)
 			print_error("no parametre");
-		if (conf == n_server) {		// -> en cours 
+		if (conf == n_server) {		
  			in_server();
 			continue;
 		}
@@ -36,7 +35,7 @@ void				Config_base::prsg_main(){
 			locat_bracket(str);
 			continue ;
 		}
-		if (conf == n_braket) {		// -> Si bracket de fin 
+		if (conf == n_braket) {	
 	
 			if (_bool_locat == true){
 				verif_location();
@@ -45,7 +44,7 @@ void				Config_base::prsg_main(){
 				_bool_locat = false;	
 				_again = true;
 			}
-			else if (_bool_serv == true){	// -> en cours 
+			else if (_bool_serv == true){
 				if (_server->location.empty())
 					verif_serveur();
 				_main_config._main_server->push_back(_server);
@@ -54,8 +53,7 @@ void				Config_base::prsg_main(){
 				_again = false;
 			}
 			else {
-				print_error("bracket");	 // -> en cours
-
+				print_error("bracket");	
 			}	
 		}
 		if (_bool_locat == true)
@@ -70,8 +68,6 @@ void				Config_base::prsg_main(){
 //------------------------------ PARSING ARG FICHIER CONF -------------------------------//
 //---------------------------------------------------------------------------------------//
 void			Config_base::get_container(conf_nginx &conf, std::string &str){
-// arguments du fichier (127.0.2, GET..) dans des variable/container		
-// voir fichier Config_struct pour les types 
 	switch (conf){
 		case n_listen :
 			listen_prsg(str, _server->listen);
@@ -87,7 +83,7 @@ void			Config_base::get_container(conf_nginx &conf, std::string &str){
 			break;
 		case n_root :
 			if (_bool_locat)
-				root_prsg(str, _location->root);
+				basic_prsg(str, _location->root);
 			else
 				print_error("Root must be location");
 			break ;
@@ -121,19 +117,23 @@ void			Config_base::get_container(conf_nginx &conf, std::string &str){
 			else
 				print_error("client_max_body_size must be server");
 			break;
+		case n_upload_d :
+			if (_bool_locat)
+				basic_prsg(str, _location->upload_dir);
+			else
+				print_error("upload_dir must be location");	
 		default :
 				break;
 		}
 }
 
-
 void			Config_base::listen_prsg(std::string &str, p_listen &prsg){
 	size_t			position = str.find(':');
+	size_t 			p = std::count(str.begin(), str.end(), ':');
 	std::string 	host_str;
 	size_t			port = 80;
 
 	host_str = str.substr(0, position);
-
 	if (host_str == ";")
 		prsg.first = "0.0.0.0";
 	else 
@@ -141,15 +141,16 @@ void			Config_base::listen_prsg(std::string &str, p_listen &prsg){
 	if (position != std::string::npos)
 	{
 		str.erase(0, position + 1);
-		std::cout << "str == " << str << "\n";
-		if (str == ";")
+		if (str == ";" || p != 1)
 			port = 80;
 		else {
 			std::stringstream ss;  
   			ss << str;  
-  			ss >> port; 
+  			ss >> port;			  
 		}
 	}
+	if (port == 0)
+		print_error("Error port");
 	prsg.second = port;
 }
 
@@ -165,7 +166,6 @@ void		Config_base::name_serv_prsg(std::string &str, c_name_vector &prsg){
 	if (str.size()){
 		prsg.push_back(str);
 	}
-
 }
 
 void		Config_base::methode_prsg(std::string &str, c_methode_vector &prsg){
@@ -195,41 +195,36 @@ void		Config_base::index_prsg(std::string &str, std::string &prsg){
 	}
 }
 
-void 		Config_base::root_prsg(std::string &str, std::string &prsg){
+void 		Config_base::basic_prsg(const std::string &str, std::string &prsg) const {
+	if (prsg.empty() == false)
+		print_error("Parametre deja existant");
 	prsg = str;
 }
 
-void 		Config_base::cgi_ext_prsg(std::string &str, c_cgi_map &prsg)
-{
+void 		Config_base::cgi_ext_prsg(std::string &str, c_cgi_map &prsg){
 	size_t		position = str.find_first_of(" \t");
 
 	if (position == std::string::npos)
 		print_error("Executable mannquant");
-
-	std::string p = str.substr(0, position); // -> point de lexec 
-
+	std::string p = str.substr(0, position); 
 	position = str.find_first_not_of(" \t", position);
 	str.erase(0, position);
-
 	prsg[p] = str;
 }
 
 void		Config_base::error_page_prsg(std::string &str, c_error_map &prsg){
 	size_t		position = str.find_first_of(" \t");
 	int			nb = 0;
+
 	if (position == std::string::npos)
 		print_error("error server_name");
-
 	std::string number_error = str.substr(0, position); 
-
 	position = str.find_first_not_of(" \t", position);
 	str.erase(0, position);
-
 	std::stringstream ss;  
   	ss << number_error;  
   	ss >> nb; 
 	prsg[nb] = str;
-	
 }
 
 void			Config_base::body_size_prsg(std::string &str, size_t &prsg){
@@ -269,41 +264,36 @@ void			Config_base::body_size_prsg(std::string &str, size_t &prsg){
 	prsg = nb * memory;
 }
 
-
-void	Config_base::auto_index_prsg(const std::string &str, bool &prsg){ 
-
-	std::cout << "str == " << str << "\n";
-
+void		Config_base::auto_index_prsg(const std::string &str, bool &prsg){ 
 	if (str == "off;")
 		prsg = false;
 	else if (str == "on;")
 		prsg = true;
 	else
 		print_error("Error auto index");
-
-	
-
 }
 
 
 Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
-	size_t		pos = str.find_first_of(" \t");
+	size_t				pos = str.find_first_of(" \t");
+	size_t				b = str.find_first_of("{");
+	std::string 		conf;
 
-	std::string conf = str.substr(0, pos);
-
+	if (str == "server{"){
+		conf = str.substr(0, b);
+		pos = str.find_last_of('{');
+	}
+	else {
+		conf = str.substr(0, pos);
+		pos = str.find_first_not_of(" \t", pos);
+	}
 	if (conf[0] == '}')
 		return (n_braket);
-
-	pos = str.find_first_not_of(" \t", pos);
-	
 	str.erase(0, pos);
 	size_t conf_size = conf.size();
-	
-	std::cout << "conf = " << conf << " \t\tstr = " << str << std::endl;  //-> Print fichier nginx 
-
+	// std::cout << "conf = " << conf << " \t\tstr = " << str << std::endl;  //-> Print fichier nginx 
 	if (conf.empty() && !str.empty())
 		print_error("Error bracket or semicolon");
-
 	switch (conf_size){		
 		case 4 :
 			return	(conf == "root" ? n_root : n_none);
@@ -326,17 +316,15 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 		case 20 :
 			return (conf == "client_max_body_size" ? n_body : n_none);
 		default :
-			if (space_count == 1){
-				
+			if (space_count == 1)
 				return (n_bracket_error);
-			}		
 			return (n_none);
 			break;
 	}
 }
 
 Config_base::conf_nginx		Config_base::verif_locat(std::string &str, std::string &conf){
-	size_t 		bracket = std::count(str.begin(), str.end(), '{');
+	size_t 			bracket = std::count(str.begin(), str.end(), '{');
 
 	if (conf == "location") {
 		if (bracket < 1 )
@@ -356,10 +344,9 @@ void			Config_base::verif_serveur(){  // -> en cours
 	}
 	// if (_location->root.empty())
 	// 	print_error("Root manquant");
-// Si server_name vide -> Va prendre listen (127.0.0.1)
-	// if (_server->name.empty()){
-	// 	_server->name = _server->listen.first;
-	// }
+	if (_server->name_serv.empty()){
+		_server->name_serv.push_back(_server->listen.first);
+	}
 }
 
 void		Config_base::in_location(){	
@@ -379,59 +366,45 @@ void				Config_base::verif_location(){ // -> en cours
 // si aucune redéfinition de la racine à l'emplacement
 	std::string one = "/";
 	std::string two = "//";
-
-	// if (_location->root.empty()) 
-	// {
-	// 	_location->root = _server->root + one + _location->uri;
-	// 	find_and_replace(_location->root, two, one);
-	// }
-
-	if (_location->methode.empty()){
-		print_error("methode manquant");
-		return ;
+	if (_location->root.empty()) {
+		_location->root = one + _location->uri;
+		find_and_replace(_location->root, two, one);
 	}
+	if (_location->methode.empty())
+		print_error("methode manquant");
 }
 
-
-void Config_base::locat_bracket(std::string &str){ 
+void 				Config_base::locat_bracket(std::string &str){ 
 	size_t			pos = str.find_first_of(" {");
 	size_t			b = str.find_last_of("{}");
 	std::string 	bracket;
 	size_t 			n = std::count(str.begin(), str.end(), '{');
 
 	bracket = str.substr(b, std::string::npos);
-	
 	if (bracket == "}" || n > 1)
 		print_error("bracket error");
-
 	if (pos == 0)
 		print_error("URI manquant");
-
-	_location->uri = str.substr(0, pos);
-
+	_location->uri = str.substr(0, b);
 }
 
 void			Config_base::in_server(){
 	if (_bool_serv == true) 
-			print_error("Serveur deja open"); 
-		_server = new Server_config();
-		_bool_serv = true;
+		print_error("Serveur deja open"); 
+	_server = new Server_config();
+	_bool_serv = true;
 }
 
-Config_base::conf_nginx		Config_base::verif_serv_listen(std:: string &str, std::string &conf){
-	
+Config_base::conf_nginx		Config_base::verif_serv_listen(std::string &str, std::string &conf) {
 	if (conf == "listen")
 		return (n_listen);
-	if (conf == "server") {
-
+	if (conf == "server" ) {
 		if (str != "{")
 			print_error("mauvais bracket server");
 		return (n_server);
 	}
 	return	(n_none);
-
 }
-
 //---------------------------------------------------------------------------------------//
 //----------------------------------- FILL INIT OPEN ------------------------------------//
 //---------------------------------------------------------------------------------------//
@@ -452,8 +425,6 @@ void				Config_base::init_value(std::string &config){
 	_again = false;
 	_error = 0;
 }
-
-
 
 Config_struct Config_base::parsing_return() const { 
 	return (_main_config);
@@ -477,26 +448,21 @@ void				Config_base::ft_trim(std::string& str){
 	space_count = 0;
 	if (db > 1)
 		print_error("bracket error");
-// -> pouvoir faire des "\n" apres server et location sans erreur
-// voir line 269 
 	if (j == std::string::npos) 
 		space_count = 1; 
 	else
 		str = str.substr(i, j + 1);
-
 }
 
-void 	Config_base::find_and_replace(std::string &str, std::string &src, std::string &dest)
+void 		Config_base::find_and_replace(std::string &str, std::string &src, std::string &dest)
 {
 	std::string::size_type	find;
-
-	while ((find = str.find(src)) != std::string::npos)
-	{
+	while ((find = str.find(src)) != std::string::npos){
 		str.replace(find, src.length(), dest);
 	}
 }
 
-Config_base::conf_nginx	Config_base::case_conf(const std::string &conf) const {
+Config_base::conf_nginx		Config_base::case_conf(const std::string &conf) const {
 	if (conf == "error_page")
 		return (n_error_page);
 	else if (conf == "upload_dir")
@@ -505,8 +471,7 @@ Config_base::conf_nginx	Config_base::case_conf(const std::string &conf) const {
 		return (n_none);
 }
 
-
-void Config_base::print_error(const std::string str) const {
+void 		Config_base::print_error(const std::string str) const {
 	std::cout << "\033[1;33m" ;
 	std::cout << "Error line " << _error << " [ "<< str << " ]" << "\n";
 	std::cout << "\033[0m";

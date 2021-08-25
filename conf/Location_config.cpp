@@ -7,6 +7,7 @@ Location_config::Location_config(){
 }
 
 std::ostream& operator<<(std::ostream& os, Location_config &ref){
+  
   os << "INDEX = " << ref.index << std::endl;
   os << "ROOT = " << ref.root << std::endl;
 
@@ -17,6 +18,8 @@ std::ostream& operator<<(std::ostream& os, Location_config &ref){
 
   for (Location_config::c_cgi_map::iterator it = ref.cgi.begin(); it != ref.cgi.end(); it++)
 	  os << "CGI_EXT exec = " << it->first << "\nCGI_EXT chemin = " << it->second << std::endl;
+
+  os << "UPLOAD_DIR = " << ref.upload_dir << "\n";
   
   for (Location_config::c_error_map::iterator it = ref.error_page.begin(); it != ref.error_page.end(); it++)
 	  os << "ERROR_PAGE NUMBER = " << it->first << "\nERROR_PAGE = " << it->second << std::endl;
