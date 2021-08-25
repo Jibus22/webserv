@@ -2,45 +2,62 @@
 #include <iostream>
 #include <string>
 
-std::string const *process_request(std::string& raw_request,
-	const std::vector<Server>& server_blocks,
-	const std::pair<std::string, int>& listen, int *flag)
+const char* NoServerMatchException::what() const throw()
 {
-	/*
-	try {
-		Request r = Request(raw_request);
+	return "There is no server match";
+}
 
-		// On recupere le serveur associe a la requete
-		Server & s = match_server(server_blocks, listen, r);
-		Response response;
-		return response.get_raw();
-	}
-	catch (Request::NotTerminatedException e)
+SiServ & match_server(std::vector<SiServ> server_blocks,
+					std::pair<std::string, int> listen)
+{
+	for (std::vector<SiServ>::iterator it = server_blocks.begin();
+	it != server_blocks.end(); it++)
 	{
-		//Requete non termine set flag
-		return NULL;
+		if(it->listen == listen)
+			return *it;
 	}
-	catch (Request::InvalidRequest e)
-	{
-		//Requete non valide set flag
-		return NULL;
-	}
-	*/
-	(void)raw_request;
-	(void)server_blocks;
-	(void)listen;
-	(void)flag;
-	return NULL;
+	throw NoServerMatchException();
+}
+
+void	construct_response(Response & response, SiServ & server)
+{
+	(void)response;
+	(void)server;
 }
 
 void	process_request(Client& client,
 				const std::vector<SiServ>& server_blocks)
 {
-	Response	test;
-	Request		test2;
 
-	__D_DISPLAY(client);
-	(void)server_blocks;
-	(void)test;
-	(void)test2;
+	try {
+		// On recupere le serveur associe a la requete
+		SiServ & s = match_server(server_blocks, client.getListen());
+
+		Request r = Request(client.getRaw());
+
+		Response response;
+
+		//Construction reponse
+		construct_response(response, s);
+
+		client.setResponse(response.get_raw(), COMPLETE);
+		return;
+	}
+	catch (NoServerMatchException e)
+	{
+		//TODO: Pas de match
+		return;
+	}
+	catch (Request::NotTerminatedException e)
+	{
+		//Requete non termine set flag
+		client.setFlag(INCOMPLETE);
+		return;
+	}
+	catch (Request::InvalidRequest e)
+	{
+		//Requete non valide renvoyer reponse non valide
+		//TODO: Reponse invlaide
+		return;
+	}
 }

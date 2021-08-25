@@ -5,14 +5,16 @@
 #include "Response.hpp"
 #include "Client.hpp"
 #include "SiServ.hpp"
+#include <vector>
 
 class Server {};
 
-std::string const *process_request(std::string& raw_request,
-	const std::vector<Server>& server_blocks,
-	const std::pair<std::string, int>& listen, int *flag);
-
 void	process_request(Client& client,
 				const std::vector<SiServ>& server_blocks);
+
+class NoServerMatchException:std::exception
+{
+	const char* what() const throw();
+};
 
 #endif
