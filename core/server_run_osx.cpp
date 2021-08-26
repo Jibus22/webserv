@@ -2,7 +2,7 @@
 
 //Server engine. System is set to notify any event on any server
 //socket descriptors & client socket descriptor which are monitored.
-int	run_server(const int kq, const std::vector<SiServ> & server_blocks,
+int	run_server(const int kq, const std::vector<Server_config*> & server_blocks,
 				const std::map<int, std::pair<std::string, int> > & server_map)
 {
 	int						i, event_fd, new_events;
@@ -47,7 +47,7 @@ int	run_server(const int kq, const std::vector<SiServ> & server_blocks,
 
 //Creates kqueue and add server sockets to it so they are monitored
 //Then run the server.
-int	start_server(const std::vector<SiServ> & server_blocks,
+int	start_server(const std::vector<Server_config*> & server_blocks,
 					std::map<int, std::pair<std::string, int> >	& server_map)
 {
 	const int	kq = kqueue();

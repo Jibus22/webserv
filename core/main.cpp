@@ -11,12 +11,33 @@ void	display_servermap(std::map<int, std::pair<std::string, int> >& srvmp)
 	}
 }
 
+std::vector<Server_config *>	*load_configuration(int ac, char *av[])
+{
+	std::vector<Server_config *>	*conf = NULL;
+	std::string						*file;
+	Config_base						*parser;
+
+	if (ac == 2)
+	{
+		file = new std::string(av[1]);
+		parser = new Config_base(*file);
+		conf = parser->get_vector();
+		delete file;
+		delete parser;
+	}
+	else if (_DEBUG)
+		conf = get_servers_simulation();
+	else
+		pgm_err("conf file missing");
+	return conf;
+}
+
 int	main(int ac, char *av[])
 {
-	std::vector<SiServ>							*conf;
+	std::vector<Server_config *>				*conf;
 	std::map<int, std::pair<std::string, int> >	*server_map;
 
-	conf = get_servers_simulation();
+	conf = load_configuration(ac, av);
 	server_map = create_network_sockets(*conf);
 	if (server_map == NULL)
 		return -1;
@@ -25,8 +46,6 @@ int	main(int ac, char *av[])
 	close_server_sockets(*server_map, 0);
 	delete server_map;
 	delete conf;
-	(void)ac;
-	(void)av;
 
 	return 0;
 }

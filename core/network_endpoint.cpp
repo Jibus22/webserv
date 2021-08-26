@@ -26,17 +26,17 @@ static int	create_listening_socket(const std::pair<std::string, int> & ipport)
 //1st, creates unique list of ip:port pair
 //2nd, creates listening sockets + map of socket:pair(ip, port)
 std::map<int, std::pair<std::string, int> >*
-create_network_sockets(const std::vector<SiServ> & srvs)
+create_network_sockets(const std::vector<Server_config *> & srvs)
 {
 	int												fd;
 	std::list<std::pair<std::string, int> >			listen_list;
 	std::map<int, std::pair<std::string, int> >
 		*server_map = new std::map<int, std::pair<std::string, int> >;
 
-	for (std::vector<SiServ>::const_iterator i = srvs.begin();
+	for (std::vector<Server_config *>::const_iterator i = srvs.begin();
 			i != srvs.end(); i++)
 	{
-		listen_list.push_back(i->listen);
+		listen_list.push_back((*i)->listen);
 	}
 	listen_list.sort();
 	listen_list.unique();

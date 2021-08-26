@@ -60,7 +60,8 @@ int	accept_new_client(const int kq, const int event_fd,
 
 //Receive new data, add it to client buffer
 //& process it (HTTP parsing + processing)
-int	read_request(const int event_fd, const std::vector<SiServ>& server_blocks,
+int	read_request(const int event_fd,
+					const std::vector<Server_config*>& server_blocks,
 					std::map<int, Client>& client_map)
 {
 	char	buf[RCV_BUF + 1];

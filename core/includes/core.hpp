@@ -2,16 +2,16 @@
 #define CORE_HPP
 
 #include <map>
-#include "SiServ.hpp"
 #include "Client.hpp"
+#include "conf.hpp"
 
 //__________________________________PROTOTYPES________________________________//
 //--network_endpoint.cpp--
 std::map<int, std::pair<std::string, int> >*
-		create_network_sockets(const std::vector<SiServ> & srvs);
+		create_network_sockets(const std::vector<Server_config *> & srvs);
 
 //--server_run_osx.cpp--
-int		start_server(const std::vector<SiServ> & server_blocks,
+int		start_server(const std::vector<Server_config*> & server_blocks,
 					std::map<int, std::pair<std::string, int> >	& server_map);
 
 //--kqueue_event_osx.cpp--
@@ -23,7 +23,7 @@ int		is_response(const int kq, const struct kevent *event,
 					std::map<int, Client>& client_map);
 int		send_response(const int kq, const struct kevent *event, Client& client);
 int		read_request(const int event_fd,
-				const std::vector<SiServ>& server_blocks,
+				const std::vector<Server_config*>& server_blocks,
 					std::map<int, Client>& client_map);
 
 int		accept_new_client(const int kq, const int event_fd,
