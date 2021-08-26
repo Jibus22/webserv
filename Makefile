@@ -64,7 +64,7 @@ SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp \
 ifeq ($(UNAME), Darwin)
 	SRCS += $(addprefix $(SRCPATH)/, server_run_osx.cpp kqueue_event_osx.cpp)
 else
-	SRCS += $(addprefix $(SRCPATH)/, server_engine_linux.cpp)
+	SRCS += $(addprefix $(SRCPATH)/, server_run_linux.cpp)
 endif
 
 

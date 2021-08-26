@@ -17,8 +17,7 @@
 # define RCV_BUF 5
 # define MAX_EVENTS 32
 
-# define INCOMPLETE 3
-# define COMPLETE 2
+# define EMPTY 2
 # define READY 1
 
 

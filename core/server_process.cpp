@@ -113,11 +113,11 @@ int	is_response(const int kq, const struct kevent *event,
 	if (i == client_map.end())
 		return pgm_err("send_request : oops, client should exist");
 
-	if (i->second.getFlag() == INCOMPLETE)//response not processed: return
-		return INCOMPLETE;
-	else if (i->second.getFlag() == COMPLETE)//response processed: poll write ev
+	if (i->second.getResponseNb() == 0)
+		return EMPTY;
+	else if (i->second.getResponseNb() > 0 && i->second.isReady() == false)
 		return set_write_ready(kq, i->second);
-	else if (i->second.getFlag() == READY && event->filter == EVFILT_WRITE)
+	else if (i->second.isReady() && event->filter == EVFILT_WRITE)
 		return 0;
 	else
 		return -1;

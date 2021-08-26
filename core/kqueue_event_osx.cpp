@@ -26,6 +26,6 @@ int	set_write_ready(const int kq, Client& client)
 			EV_ADD | EV_ONESHOT, 0, 0, 0);
 	if (kevent(kq, &changelist, 1, NULL, 0, NULL) == -1)
 		return sys_err("kevent client_fd failed");
-	client.setFlag(READY);
+	client.setReady();
 	return READY;
 }
