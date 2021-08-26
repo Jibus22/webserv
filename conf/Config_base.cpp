@@ -5,7 +5,7 @@
 
 Config_base::Config_base(std::string &config){
 	init_value(config);
-	open_conf();  // -> ouverture fichier
+	open_conf();
 	prsg_main();	
 	_file.close();
 }
@@ -15,13 +15,13 @@ Config_base::~Config_base(){}
 void				Config_base::prsg_main(){
 	std::string		str;
 
-	while (getline(_file, str)){ // envois les caractères du fichier dans str
+	while (getline(_file, str)){
 		_error++;
 		braket_on = false;
 		ft_trim(str); 
 		if (str.empty())
 			continue ;
-		conf_nginx	conf = enum_prsg(str);	// -> conf va etre egal a server, listen ect..
+		conf_nginx	conf = enum_prsg(str);
 		if (conf == n_bracket_error)
 			continue;
 		if (conf == n_none)
@@ -36,7 +36,6 @@ void				Config_base::prsg_main(){
 			continue ;
 		}
 		if (conf == n_braket) {	
-	
 			if (_bool_locat == true){
 				verif_location();
 				_server->location[_location->uri] = _location;
@@ -57,10 +56,10 @@ void				Config_base::prsg_main(){
 			}	
 		}
 		if (_bool_locat == true)
-			if (conf == n_name || conf == n_listen)
-				print_error("invalid param dans location");
+			if (conf == n_name || conf == n_listen || conf == n_body || conf == n_error_page)
+				print_error("invalid param must be server");
 
-		get_container(conf, str);			
+		get_container(conf, str);
 	}
 }
 
@@ -70,16 +69,22 @@ void				Config_base::prsg_main(){
 void			Config_base::get_container(conf_nginx &conf, std::string &str){
 	switch (conf){
 		case n_listen :
-			listen_prsg(str, _server->listen);
+			if (_bool_serv)
+				listen_prsg(str, _server->listen);
+			else
+				print_error("listen  must be server");
 			break;
 		case n_name :
-			name_serv_prsg(str, _server->name_serv);
+			if (_bool_serv)
+				name_serv_prsg(str, _server->name_serv);
+			else
+				print_error("server name  must be server");
 			break;
 		case n_error_page :
-			if (_bool_locat)
-				error_page_prsg(str, _location->error_page);	
+			if (_bool_serv)
+				error_page_prsg(str, _server->error_page);	
 			else
-				error_page_prsg(str, _server->error_page);
+				print_error("error_page must be server");
 			break;
 		case n_root :
 			if (_bool_locat)
@@ -129,61 +134,94 @@ void			Config_base::get_container(conf_nginx &conf, std::string &str){
 
 void			Config_base::listen_prsg(std::string &str, p_listen &prsg){
 	size_t			position = str.find(':');
-	size_t 			p = std::count(str.begin(), str.end(), ':');
-	std::string 	host_str;
-	size_t			port = 80;
+	size_t			db = std::count(str.begin(), str.end(), ':');
+	std::string		port;
 
-	host_str = str.substr(0, position);
-	if (host_str == ";")
+	if (search_space(str) == 1 || error_semilicon(str) == 1)
+		print_error("No space in listen");
+	if (db > 1)
+		print_error("to many separate ':'");
+	if (str[str.size() - 1] == ';')
+		str.pop_back();
+	std::string 	host_str = str.substr(0, position);
+	if (host_str.empty())
 		prsg.first = "0.0.0.0";
-	else 
+	else
 		prsg.first = host_str;
-	if (position != std::string::npos)
-	{
+	if (db < 1)
+		prsg.first = str;
+	if (position != std::string::npos){
 		str.erase(0, position + 1);
-		if (str == ";" || p != 1)
-			port = 80;
-		else {
-			std::stringstream ss;  
-  			ss << str;  
-  			ss >> port;			  
-		}
+		port = str;
+		for (int i = 0; i < port[i]; i++)
+			if (!std::isdigit(str[i]))
+				print_error("only number is port");
 	}
-	if (port == 0)
-		print_error("Error port");
-	prsg.second = port;
+	if (port.empty())
+		prsg.second = 80;
+	else
+		prsg.second = conver_to_str(port);
 }
 
 void		Config_base::name_serv_prsg(std::string &str, c_name_vector &prsg){
 	size_t		position;
+	size_t		semilicon = 0;
 
+	if (error_semilicon(str) == 1)
+		print_error("No space after semicolon");
+	if (!str.empty()) 
+        str.pop_back();
 	while ((position = str.find_first_of(" \t")) != std::string::npos){
 		std::string temp = str.substr(0, position);
 		prsg.push_back(temp);
 		position = str.find_first_not_of(" \t", position);
 		str.erase(0, position);
 	}
-	if (str.size()){
-		prsg.push_back(str);
+	if (str.size()){	
+		for (int i = 0; i < str[i]; i++)
+			if (str[i] == ';')
+				semilicon = 1;
+		if (semilicon == 0)
+			prsg.push_back(str);
 	}
 }
 
 void		Config_base::methode_prsg(std::string &str, c_methode_vector &prsg){
 	size_t		position;
+	size_t		semilicon = 0;
 
+	if (error_semilicon(str) == 1)
+		print_error("No space after semicolon");
+	if (!str.empty()) 
+        str.pop_back();
 	while ((position = str.find_first_of(" \t")) != std::string::npos){
 		std::string temp = str.substr(0, position);
+		if (temp[temp.size() - 1] == ';')
+			temp.pop_back();
+		if (error_methode(temp) == 1)
+			print_error("Error methode");
 		prsg.push_back(temp);
 		position = str.find_first_not_of(" \t", position);
 		str.erase(0, position);
 	}
-	if (str.size())
-		prsg.push_back(str);
+	if (str.size()){	
+		if (error_methode(str) == 1)
+			print_error("Error methode");
+		for (int i = 0; i < str[i]; i++)
+			if (str[i] == ';')
+				semilicon = 1;
+		if (semilicon == 0)
+			prsg.push_back(str);
+	}
 }
 
 void		Config_base::index_prsg(std::string &str, std::string &prsg){
 	size_t		position;
 
+	if (error_semilicon(str) == 1)
+		print_error("No space after semicolon");
+	if (search_space(str) == 1)
+		print_error("No space arguments");
 	while ((position = str.find_first_of(" \t")) != std::string::npos){
 		std::string temp = str.substr(0, position);
 		prsg = temp;
@@ -191,24 +229,40 @@ void		Config_base::index_prsg(std::string &str, std::string &prsg){
 		str.erase(0, position);
 	}
 	if (str.size()){
+		if (str[str.size() - 1] == ';')
+			str.pop_back();
 		prsg = str;
 	}
 }
 
-void 		Config_base::basic_prsg(const std::string &str, std::string &prsg) const {
+void 		Config_base::basic_prsg(std::string &str, std::string &prsg) {
+	if (error_semilicon(str) == 1)
+		print_error("No space after semicolon");
+	if (search_space(str) == 1)
+		print_error("No space arguments");
 	if (prsg.empty() == false)
 		print_error("Parametre deja existant");
-	prsg = str;
+	if (str[str.size() - 1] == ';'){
+		str.pop_back();
+	}
+	prsg = str;	
+	
 }
 
 void 		Config_base::cgi_ext_prsg(std::string &str, c_cgi_map &prsg){
 	size_t		position = str.find_first_of(" \t");
-
+	
+	if (error_semilicon(str) == 1)
+		print_error("No space after semicolon");
 	if (position == std::string::npos)
 		print_error("Executable mannquant");
 	std::string p = str.substr(0, position); 
 	position = str.find_first_not_of(" \t", position);
 	str.erase(0, position);
+	if (search_space(str) == 1)
+		print_error("No space arguments");
+	if (str[str.size() - 1] == ';')
+		str.pop_back();
 	prsg[p] = str;
 }
 
@@ -216,11 +270,22 @@ void		Config_base::error_page_prsg(std::string &str, c_error_map &prsg){
 	size_t		position = str.find_first_of(" \t");
 	int			nb = 0;
 
+	if (error_semilicon(str) == 1)
+		print_error("No space after semicolon");
 	if (position == std::string::npos)
-		print_error("error server_name");
+		print_error("error -> error_page");
 	std::string number_error = str.substr(0, position); 
+	for (size_t i = 0; i < number_error.length(); i++)
+		if (std::isalpha(number_error[i]))
+			print_error("Only number");
 	position = str.find_first_not_of(" \t", position);
 	str.erase(0, position);
+	if (search_space(str) == 1)
+		print_error("No space arguments");
+	if (str[0] == ';')
+		print_error("Error No path");
+	if (str[str.size() - 1 ] == ';')
+		str.pop_back();
 	std::stringstream ss;  
   	ss << number_error;  
   	ss >> nb; 
@@ -233,7 +298,11 @@ void			Config_base::body_size_prsg(std::string &str, size_t &prsg){
 	size_t			memory = 1;
 	size_t			arg = 0;
 	size_t			nb;
-	
+
+	if (error_semilicon(str) == 1)
+		print_error("No space after semicolon");
+	if (search_space(str) == 1)
+		print_error("No space arguments");
 	for (size_t i = 0; i < str.length(); i++){
 		if (std::isalpha(str[i])){
 			letter = str.substr(i, str.size());
@@ -264,10 +333,14 @@ void			Config_base::body_size_prsg(std::string &str, size_t &prsg){
 	prsg = nb * memory;
 }
 
-void		Config_base::auto_index_prsg(const std::string &str, bool &prsg){ 
-	if (str == "off;")
+void		Config_base::auto_index_prsg(std::string &str, bool &prsg){ 
+	if (error_semilicon(str) == 1)
+		print_error("No space after semicolon");
+	if (str[str.size() - 1] == ';')
+		str.pop_back();
+	if (str == "off")
 		prsg = false;
-	else if (str == "on;")
+	else if (str == "on")
 		prsg = true;
 	else
 		print_error("Error auto index");
@@ -323,17 +396,6 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 	}
 }
 
-Config_base::conf_nginx		Config_base::verif_locat(std::string &str, std::string &conf){
-	size_t 			bracket = std::count(str.begin(), str.end(), '{');
-
-	if (conf == "location") {
-		if (bracket < 1 )
-			print_error("mauvais bracket location");
-		return (n_location);
-	}
-	return	(n_none);
-}
-
 //---------------------------------------------------------------------------------------//
 //--------------------------------- VERIF PARSING ---------------------------------------//
 //---------------------------------------------------------------------------------------//
@@ -342,11 +404,10 @@ void			Config_base::verif_serveur(){  // -> en cours
 		_server->listen.first = "0.0.0.0";
 		_server->listen.second = 80;
 	}
-	// if (_location->root.empty())
-	// 	print_error("Root manquant");
-	if (_server->name_serv.empty()){
-		_server->name_serv.push_back(_server->listen.first);
-	}
+	if (_server->name_serv.empty())
+		_server->name_serv.push_back("");
+	if (!_server->m_body_size)
+		_server->m_body_size = 1000000;
 }
 
 void		Config_base::in_location(){	
@@ -371,7 +432,20 @@ void				Config_base::verif_location(){ // -> en cours
 		find_and_replace(_location->root, two, one);
 	}
 	if (_location->methode.empty())
-		print_error("methode manquant");
+		_location->methode.push_back("GET");
+	if (_location->index.empty())
+		_location->index = "index.html";
+}
+
+Config_base::conf_nginx		Config_base::verif_locat(std::string &str, std::string &conf){
+	size_t 			bracket = std::count(str.begin(), str.end(), '{');
+
+	if (conf == "location") {
+		if (bracket < 1 )
+			print_error("mauvais bracket location");
+		return (n_location);
+	}
+	return	(n_none);
 }
 
 void 				Config_base::locat_bracket(std::string &str){ 
@@ -386,6 +460,8 @@ void 				Config_base::locat_bracket(std::string &str){
 	if (pos == 0)
 		print_error("URI manquant");
 	_location->uri = str.substr(0, b);
+	if (search_space(_location->uri) == 1)
+		print_error("No space argument");
 }
 
 void			Config_base::in_server(){
@@ -430,7 +506,6 @@ Config_struct Config_base::parsing_return() const {
 	return (_main_config);
 }
 
-
 Config_struct::c_serv_vector *Config_base::get_vector() const {
 	return (_main_config._main_server);
 }
@@ -471,9 +546,45 @@ Config_base::conf_nginx		Config_base::case_conf(const std::string &conf) const {
 		return (n_none);
 }
 
+int			Config_base::search_space(std::string &str){
+	size_t 		space = std::count(str.begin(), str.end(), ' ');
+	if (space >= 1)
+		return (1);
+	return (0);
+}
+
+
+int			Config_base::error_semilicon(std::string &str){
+	size_t		error;
+	error = str.find_first_of(";");
+
+	std::string temp = str.substr(error, std::string::npos);
+	if (search_space(temp) == 1)
+		return (1);
+	return (0);
+
+}
+
+int 		Config_base::error_methode(std::string &temp){
+	if ((temp == "GET" || temp == "POST" || temp == "DELETE"))
+		return (0);
+	else if ((temp != "GET" || temp != "POST" || temp != "DELETE"))
+		return (1);
+	return (0);
+}
+
+int		Config_base::conver_to_str(std::string &str){
+	int 	nb;
+	std::stringstream ss;  
+  		ss << str;  
+  		ss >> nb;	
+	return (nb);
+}
+
 void 		Config_base::print_error(const std::string str) const {
 	std::cout << "\033[1;33m" ;
 	std::cout << "Error line " << _error << " [ "<< str << " ]" << "\n";
 	std::cout << "\033[0m";
 	exit (0);
 }
+
