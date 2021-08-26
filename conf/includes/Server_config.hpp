@@ -24,7 +24,7 @@ struct Server_config
 	c_name_vector			name_serv;
 	c_error_map				error_page;
 	c_loc_map				location;
-	size_t			m_body_size;
+	size_t					m_body_size;
 
 };
 

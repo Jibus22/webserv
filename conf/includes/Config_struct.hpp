@@ -34,15 +34,11 @@ struct Config_struct
 	typedef std::pair <std::string, int>				p_listen;
 	
 //------------------> VARIABLE <------------------
-	
 	c_serv_vector	*_main_server;
-
 };
 
 std::ostream& operator<<(std::ostream& os, Location_config &ref);
 std::ostream& operator<<(std::ostream& os, Server_config &ref);
 std::ostream& operator<<(std::ostream& os, Config_struct  &ref);
-
-
 
 # endif
