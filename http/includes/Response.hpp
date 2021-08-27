@@ -27,7 +27,8 @@ public:
 	void set_status_infos(std::string const & status_infos);
 	void add_header(std::string const & key_header, std::string const & value);
 	void set_body(std::string const & body);
-	std::string const get_raw();
+//	std::string const * get_raw();
+	std::string * get_raw();
 };
 
 #endif

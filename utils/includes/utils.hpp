@@ -11,7 +11,7 @@ int		close_listening_ports(const std::vector<int> & net_socks, int ret);
 int		close_server_sockets(std::map<int, std::pair<std::string, int> >&
 			server_map, const int ret);
 
-std::vector<SiServ>	*get_servers_simulation();
+std::vector<Server_config *>	*get_servers_simulation();
 
 
 #endif

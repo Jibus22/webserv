@@ -8,7 +8,7 @@ const char* NoServerMatchException::what() const throw()
 	return "There is no server match";
 }
 
-bool	match_server_name(Server *server, Request & request)
+bool	match_server_name(Server_config *server, Request & request)
 {
 	(void)server;
 	(void)request;
@@ -16,13 +16,13 @@ bool	match_server_name(Server *server, Request & request)
 }
 
 //TODO: gere le 0.0.0.0
-Serveur * match_server(std::vector<Serveur *> server_blocks,
+Server_config * match_server(std::vector<Server_config *> server_blocks,
 					std::pair<std::string, int> listen, Request & requete)
 {
 	(void)requete;
 
-	std::vector<Serveur *> matching_listen;
-	for (std::vector<Serveur *>::iterator it = server_blocks.begin();
+	std::vector<Server_config *> matching_listen;
+	for (std::vector<Server_config *>::iterator it = server_blocks.begin();
 		it != server_blocks.end(); it++)
 	{
 		if((*it)->listen == listen)
@@ -48,7 +48,7 @@ std::ifstream get_file_content(std::string & path)
 	return file;
 }*/
 
-void	construct_response(Response & response, Serveur * server)
+void	construct_response(Response & response, Server_config * server)
 {
 	//verifier les parametres de server
 
@@ -60,28 +60,29 @@ void	construct_response(Response & response, Serveur * server)
 }
 
 void	process_request(Client& client,
-				const std::vector<Serveur>& server_blocks)
+				const std::vector<Server_config>& server_blocks)
 {
 	(void)client;
 	(void)server_blocks;
 }
 
 void	process_request(Client& client,
-				const std::vector<Serveur *>& server_blocks)
+				const std::vector<Server_config *>& server_blocks)
 {
 
 	try {
-		Request r = Request(client.getRaw());
+		Request r = Request(client.getStrRequest());
 
 		// On recupere le serveur associe a la requete
-		Serveur * s = match_server(server_blocks, client.getListen(), r);
+		Server_config * s = match_server(server_blocks, client.getListen(), r);
 
 		Response response;
 
 		//Construction reponse
 		construct_response(response, s);
 
-		client.setResponse(response.get_raw(), COMPLETE);
+		//client.setResponse(response.get_raw(), COMPLETE);
+		client.setResponse(response.get_raw());
 		return;
 	}
 	catch (NoServerMatchException e)
@@ -92,7 +93,7 @@ void	process_request(Client& client,
 	catch (Request::NotTerminatedException e)
 	{
 		//Requete non termine set flag
-		client.setFlag(INCOMPLETE);
+		//client.setFlag(INCOMPLETE);
 		return;
 	}
 	catch (Request::InvalidRequest e)
@@ -102,3 +103,37 @@ void	process_request(Client& client,
 		return;
 	}
 }
+
+/*
+void	process_request(Client& client,
+				const std::vector<Server_config*>& server_blocks)
+{
+	Response	test;
+	Request		test2;
+	const char	*request = client.getRawRequest();
+	std::string	*response;
+
+	__D_DISPLAY(client);
+
+	for (int i = 0; i < client.getRequestSize(); i++)
+	{
+		if (*request == 'x')
+		{
+			response = new std::string(client.getRawRequest(), request + 1);
+			response->insert(0, "Response: ");
+			client.truncateRequest(request + 1);
+			client.setResponse(response);
+
+			//--------------//
+			__D_DISPLAY("X had been found into the request!");
+			__D_DISPLAY("Truncated request: |" << client.getStrRequest() << "|");
+			__D_DISPLAY("Response: |" << client.getStrResponse() << "|");
+		}
+		request++;
+	}
+
+	(void)server_blocks;
+	(void)test;
+	(void)test2;
+}
+*/

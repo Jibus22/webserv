@@ -10,9 +10,7 @@ Config_struct::Config_struct() : _main_server(new c_serv_vector){
 
 Config_struct::~Config_struct(){
 //TODO  delet iterator vector 
-    
-    
-    
+ 
 }
 
 // print operateur serveur et location 

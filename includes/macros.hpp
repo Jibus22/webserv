@@ -15,8 +15,10 @@
 	std::cout << ost.str();} else ;\
 
 # define RCV_BUF 5
-# define INCOMPLETE 1
-# define COMPLETE 0
+# define MAX_EVENTS 32
+
+# define EMPTY 2
+# define READY 1
 
 
 #endif

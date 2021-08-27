@@ -10,6 +10,7 @@
 class	Config_base
 {//---------------> CONSTRUCTEUR || DESTRUCTEUR <------------------
 public :
+	Config_base();
 	Config_base(std::string &path);
 	virtual ~Config_base();
 
@@ -26,6 +27,8 @@ public :
 		n_error_page, 
 		n_name,
 		n_allow_request,
+		n_upload_d,
+		n_auth_b,
 		n_braket,
 		n_none,
 		n_bracket_error,
@@ -40,8 +43,8 @@ public :
 		typedef Config_struct::c_serv_vector			c_serv_vector;
 
 //-------------------> FUNC PUBLIC  <-----------------------	
-		// Config_struct		parsing_return();
-		Config_struct		parsing_return();
+		c_serv_vector		*get_vector() const ;
+		Config_struct		parsing_return() const ;
 	
 //------------------> PRIVATE FONCTION <------------------
 private :
@@ -52,27 +55,33 @@ private :
 		void				verif_serveur();	
 		void				verif_location();
 		void 				locat_bracket(std::string &buff);
-		conf_nginx			verif_serv_listen(std:: string &str, std::string &conf);
+		conf_nginx			verif_serv_listen(std::string &str, std::string &conf);
 		conf_nginx			verif_locat(std::string &str, std::string &conf);
 		conf_nginx			verif_locat_bracket(std:: string &str, std::string &conf);
 		void				in_server();
 		void				in_location();	
+		void				verif_container();
 
 		void				get_container(conf_nginx &conf, std::string &str);
 		void 				listen_prsg(std::string &str, p_listen &prsg);
 		void				name_serv_prsg(std::string &str, c_name_vector &prsg);
-		void				root_prsg(std::string &str, std::string &prsg);
+		void				basic_prsg(std::string &str, std::string &prsg);
 		void 				cgi_ext_prsg(std::string &str, c_cgi_map &prsg);
 		void				methode_prsg(std::string &str, c_methode_vector &prsg);
-		void				auto_index_prsg(const std::string &str, bool &prsg);
+		void				auto_index_prsg(std::string &str, bool &prsg);
 		void				error_page_prsg(std::string &str, c_error_map &prsg);
 		void				index_prsg(std::string &str, std::string &prsg);
 		void				body_size_prsg(std::string &str, size_t &prsg);
 
 		void				init_value(std:: string &path);
 		void				ft_trim(std::string &str);
-		void 				print_error(std::string str);
+		void 				print_error(const std::string str) const ;
+		conf_nginx			case_conf(const std::string &conf) const;
 		void				find_and_replace(std::string &str, std::string &src, std::string &dest);
+		int					search_space(std::string &str);
+		int 				error_methode(std::string &temp);
+		int					error_semilicon(std::string &str);
+		int					conver_to_str(std::string &str);
 
 //------------------> PRIVATE VARIABLE <------------------
 		Location_config		*_location;  //-> tous les locations nginx
@@ -88,10 +97,7 @@ private :
 		std::string			_config;
 
 		bool				braket_on;
-		size_t				space_count;
-
-
-		
+		size_t				space_count;	
 };
 
 # endif

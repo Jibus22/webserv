@@ -49,7 +49,8 @@ endif
 
 ##### SRCS #####
 #CORE
-SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp Client.cpp)
+SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp Client.cpp \
+	   server_process.cpp)
 #CONF
 SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 		Location_config.cpp Server_config.cpp)
@@ -61,9 +62,9 @@ SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp \
 
 ##### OS CONDITIONNAL SRCS #####
 ifeq ($(UNAME), Darwin)
-	SRCS += $(addprefix $(SRCPATH)/, server_engine.cpp)
+	SRCS += $(addprefix $(SRCPATH)/, server_run_osx.cpp kqueue_event_osx.cpp)
 else
-	SRCS += $(addprefix $(SRCPATH)/, server_engine_linux.cpp)
+	SRCS += $(addprefix $(SRCPATH)/, server_run_linux.cpp)
 endif
 
 
