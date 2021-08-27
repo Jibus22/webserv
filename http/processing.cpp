@@ -10,9 +10,11 @@ const char* NoServerMatchException::what() const throw()
 
 bool	match_server_name(Server_config *server, Request & request)
 {
-	(void)server;
-	(void)request;
-	return true;
+	Config_struct::c_name_vector::iterator it = server->name_serv.begin();
+	while (it != server->name_serv.end())
+		if (*it == request["Host"])
+			return true;
+	return false;
 }
 
 //TODO: gere le 0.0.0.0
@@ -32,7 +34,13 @@ Server_config * match_server(std::vector<Server_config *> server_blocks,
 		return matching_listen.front();
 	else if (matching_listen.size() > 1)
 	{
-
+		for (std::vector<Server_config *>::iterator it = matching_listen.begin();
+			it != matching_listen.end(); it++)
+		{
+			if (match_server_name(*it, requete))
+				return *it;
+		}
+		return matching_listen.front();
 	}
 	throw NoServerMatchException();
 }
@@ -48,22 +56,26 @@ std::ifstream get_file_content(std::string & path)
 	return file;
 }*/
 
-void	construct_response(Response & response, Server_config * server)
+Location_config * match_location(Config_struct::c_loc_map map_location,
+											std::string target)
 {
-	//verifier les parametres de server
+	(void) target;
+	return map_location.begin()->second;
+}
+
+void	construct_response(Response & response, Server_config * server,
+														Request & requete)
+{
+	//TODO: verifier les parametres de server
+	// ...
 
 	//find matching location
+	Location_config * location = match_location(server->location,
+												requete.get_target());
 
 
 	(void)response;
-	(void)server;
-}
-
-void	process_request(Client& client,
-				const std::vector<Server_config>& server_blocks)
-{
-	(void)client;
-	(void)server_blocks;
+	(void)location;
 }
 
 void	process_request(Client& client,
@@ -79,7 +91,7 @@ void	process_request(Client& client,
 		Response response;
 
 		//Construction reponse
-		construct_response(response, s);
+		construct_response(response, s, r);
 
 		//client.setResponse(response.get_raw(), COMPLETE);
 		client.setResponse(response.get_raw());
