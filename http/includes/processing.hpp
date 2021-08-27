@@ -17,4 +17,6 @@ class NoServerMatchException:std::exception
 	const char* what() const throw();
 };
 
+typedef SiServ Serveur;
+
 #endif

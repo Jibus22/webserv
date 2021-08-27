@@ -1,5 +1,6 @@
 #include "processing.hpp"
 #include <iostream>
+#include <fstream>
 #include <string>
 
 const char* NoServerMatchException::what() const throw()
@@ -7,33 +8,73 @@ const char* NoServerMatchException::what() const throw()
 	return "There is no server match";
 }
 
-SiServ & match_server(std::vector<SiServ> server_blocks,
-					std::pair<std::string, int> listen)
+bool	match_server_name(Server *server, Request & request)
 {
-	for (std::vector<SiServ>::iterator it = server_blocks.begin();
-	it != server_blocks.end(); it++)
+	(void)server;
+	(void)request;
+	return true;
+}
+
+//TODO: gere le 0.0.0.0
+Serveur * match_server(std::vector<Serveur *> server_blocks,
+					std::pair<std::string, int> listen, Request & requete)
+{
+	(void)requete;
+
+	std::vector<Serveur *> matching_listen;
+	for (std::vector<Serveur *>::iterator it = server_blocks.begin();
+		it != server_blocks.end(); it++)
 	{
-		if(it->listen == listen)
-			return *it;
+		if((*it)->listen == listen)
+			matching_listen.push_back(*it);
+	}
+	if (matching_listen.size() == 1)
+		return matching_listen.front();
+	else if (matching_listen.size() > 1)
+	{
+
 	}
 	throw NoServerMatchException();
 }
 
-void	construct_response(Response & response, SiServ & server)
+/*
+std::ifstream get_file_content(std::string & path)
 {
+	std::ifstream		file;
+	file.open(path.c_str());
+
+	if (file.fail() == true)
+		throw std::runtime_error("Open file");
+	return file;
+}*/
+
+void	construct_response(Response & response, Serveur * server)
+{
+	//verifier les parametres de server
+
+	//find matching location
+
+
 	(void)response;
 	(void)server;
 }
 
 void	process_request(Client& client,
-				const std::vector<SiServ>& server_blocks)
+				const std::vector<Serveur>& server_blocks)
+{
+	(void)client;
+	(void)server_blocks;
+}
+
+void	process_request(Client& client,
+				const std::vector<Serveur *>& server_blocks)
 {
 
 	try {
-		// On recupere le serveur associe a la requete
-		SiServ & s = match_server(server_blocks, client.getListen());
-
 		Request r = Request(client.getRaw());
+
+		// On recupere le serveur associe a la requete
+		Serveur * s = match_server(server_blocks, client.getListen(), r);
 
 		Response response;
 
