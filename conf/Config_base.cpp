@@ -142,7 +142,7 @@ void			Config_base::listen_prsg(std::string &str, p_listen &prsg){
 	if (db > 1)
 		print_error("to many separate ':'");
 	if (str[str.size() - 1] == ';')
-		str.pop_back();
+		str = ft_pop_back(str);
 	std::string 	host_str = str.substr(0, position);
 	if (host_str.empty())
 		prsg.first = "0.0.0.0";
@@ -157,11 +157,23 @@ void			Config_base::listen_prsg(std::string &str, p_listen &prsg){
 			if (!std::isdigit(str[i]))
 				print_error("only number is port");
 	}
+
+
+
 	if (port.empty())
 		prsg.second = 80;
 	else
 		prsg.second = conver_to_str(port);
 }
+
+
+std::string Config_base::ft_pop_back(std::string str){
+	size_t			position = str.size() - 1;
+
+	std::string temp; temp = str.substr(0, position);
+	return (temp);
+}
+
 
 void		Config_base::name_serv_prsg(std::string &str, c_name_vector &prsg){
 	size_t		position;
@@ -170,7 +182,7 @@ void		Config_base::name_serv_prsg(std::string &str, c_name_vector &prsg){
 	if (error_semilicon(str) == 1)
 		print_error("No space after semicolon");
 	if (!str.empty()) 
-        str.pop_back();
+        str = ft_pop_back(str);
 	while ((position = str.find_first_of(" \t")) != std::string::npos){
 		std::string temp = str.substr(0, position);
 		prsg.push_back(temp);
@@ -193,11 +205,11 @@ void		Config_base::methode_prsg(std::string &str, c_methode_vector &prsg){
 	if (error_semilicon(str) == 1)
 		print_error("No space after semicolon");
 	if (!str.empty()) 
-        str.pop_back();
+        str = ft_pop_back(str);
 	while ((position = str.find_first_of(" \t")) != std::string::npos){
 		std::string temp = str.substr(0, position);
 		if (temp[temp.size() - 1] == ';')
-			temp.pop_back();
+			temp = ft_pop_back(temp);
 		if (error_methode(temp) == 1)
 			print_error("Error methode");
 		prsg.push_back(temp);
@@ -230,7 +242,7 @@ void		Config_base::index_prsg(std::string &str, std::string &prsg){
 	}
 	if (str.size()){
 		if (str[str.size() - 1] == ';')
-			str.pop_back();
+			str = ft_pop_back(str);
 		prsg = str;
 	}
 }
@@ -243,7 +255,7 @@ void 		Config_base::basic_prsg(std::string &str, std::string &prsg) {
 	if (prsg.empty() == false)
 		print_error("Parametre deja existant");
 	if (str[str.size() - 1] == ';'){
-		str.pop_back();
+		str = ft_pop_back(str);
 	}
 	prsg = str;	
 	
@@ -262,7 +274,7 @@ void 		Config_base::cgi_ext_prsg(std::string &str, c_cgi_map &prsg){
 	if (search_space(str) == 1)
 		print_error("No space arguments");
 	if (str[str.size() - 1] == ';')
-		str.pop_back();
+		str = ft_pop_back(str);
 	prsg[p] = str;
 }
 
@@ -285,7 +297,7 @@ void		Config_base::error_page_prsg(std::string &str, c_error_map &prsg){
 	if (str[0] == ';')
 		print_error("Error No path");
 	if (str[str.size() - 1 ] == ';')
-		str.pop_back();
+		str = ft_pop_back(str);
 	std::stringstream ss;  
   	ss << number_error;  
   	ss >> nb; 
@@ -337,7 +349,7 @@ void		Config_base::auto_index_prsg(std::string &str, bool &prsg){
 	if (error_semilicon(str) == 1)
 		print_error("No space after semicolon");
 	if (str[str.size() - 1] == ';')
-		str.pop_back();
+		str = ft_pop_back(str);
 	if (str == "off")
 		prsg = false;
 	else if (str == "on")
@@ -580,6 +592,8 @@ int		Config_base::conver_to_str(std::string &str){
   		ss >> nb;	
 	return (nb);
 }
+
+
 
 void 		Config_base::print_error(const std::string str) const {
 	std::cout << "\033[1;33m" ;

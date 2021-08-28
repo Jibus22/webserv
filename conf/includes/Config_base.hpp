@@ -82,6 +82,7 @@ private :
 		int 				error_methode(std::string &temp);
 		int					error_semilicon(std::string &str);
 		int					conver_to_str(std::string &str);
+		std::string 		ft_pop_back(std::string str);
 
 //------------------> PRIVATE VARIABLE <------------------
 		Location_config		*_location;  //-> tous les locations nginx
