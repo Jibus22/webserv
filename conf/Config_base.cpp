@@ -314,14 +314,17 @@ void			Config_base::body_size_prsg(std::string &str, size_t &prsg){
 	size_t			arg = 0;
 	size_t			nb;
 
-	if (error_semilicon(str) == 1)
-		print_error("No space after semicolon");
-	if (search_space(str) == 1)
-		print_error("No space arguments");
+	if (error_semilicon(str) == 1 || search_space(str) == 1)
+		print_error("No space befor or after semicolon");
+
 	for (size_t i = 0; i < str.length(); i++){
 		if (std::isalpha(str[i])){
 			letter = str.substr(i, str.size());
 			number = str.substr(0, i);
+			for (size_t i = 0; i < number.length(); i++){
+				if (!std::isalnum(number[i]))
+					print_error("Only number positive");
+			}
 			break;
 		}
 	}
@@ -345,6 +348,8 @@ void			Config_base::body_size_prsg(std::string &str, size_t &prsg){
   		ss << number;  
   		ss >> nb; 
 	}
+	if (number[0] == '-' || str[0] == '-')
+		print_error("Only number positive");
 	prsg = nb * memory;
 }
 
@@ -423,6 +428,11 @@ void			Config_base::verif_serveur(){  // -> en cours
 		_server->name_serv.push_back("");
 	if (!_server->m_body_size)
 		_server->m_body_size = 1000000;
+	if (_server->m_body_size > INTMAX_MAX)
+		print_error("value too high");
+
+
+	
 }
 
 void		Config_base::in_location(){	
