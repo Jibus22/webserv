@@ -486,6 +486,8 @@ void 				Config_base::locat_bracket(std::string &str){
 	if (pos == 0)
 		print_error("URI manquant");
 	_location->uri = str.substr(0, b);
+	if (_location->uri[0] != '/')
+		print_error("Path non valide");
 	if (search_space(_location->uri) == 1)
 		print_error("No space argument");
 }
