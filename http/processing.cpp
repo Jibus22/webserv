@@ -45,22 +45,32 @@ Server_config * match_server(std::vector<Server_config *> server_blocks,
 	throw NoServerMatchException();
 }
 
-/*
-std::ifstream get_file_content(std::string & path)
+
+bool	get_file_content(std::string const & path, std::string & content)
 {
 	std::ifstream		file;
+	std::string			line;
+
 	file.open(path.c_str());
-
 	if (file.fail() == true)
-		throw std::runtime_error("Open file");
-	return file;
-}*/
+		return false;
+	while (std::getline(file, line))
+		content.append(line);
+	return true;
+}
 
-Location_config * match_location(Config_struct::c_loc_map map_location,
+Location_config * match_location(Config_struct::c_loc_map & map_location,
 											std::string target)
 {
-	(void) target;
-	return map_location.begin()->second;
+	if (map_location.empty())
+		return NULL;
+	Config_struct::c_loc_map::iterator it = map_location.begin();
+	while (it != map_location.end())
+	{
+		if(it->first.compare(0, it->first.size(), target) == 0)
+			return it->second;
+	}
+	return NULL;
 }
 
 void	construct_response(Response & response, Server_config * server,
@@ -72,7 +82,21 @@ void	construct_response(Response & response, Server_config * server,
 	//find matching location
 	Location_config * location = match_location(server->location,
 												requete.get_target());
-
+	//check la conf location
+	if (requete.get_method() == "GET")
+	{
+		std::string content;
+		if (get_file_content(requete.get_target(), content))
+		{
+			response.set_status_code(200);
+			response.set_status_infos("OK");
+			response.set_body(content);
+		}
+		//else
+			//TODO: File non present
+	}
+	//else
+	//
 
 	(void)response;
 	(void)location;
