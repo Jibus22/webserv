@@ -20,8 +20,8 @@ std::ostream& operator<<(std::ostream& os, Server_config &ref){
 
 	os << "CLIENT_MAX_BODY = " << "{" << ref.m_body_size << "}" << "\n";
 
-	for(Server_config::c_loc_map::iterator it = ref.location.begin(); it != ref.location.end(); it++)
-		os << "\nLOCATION " << "URI = " << "{" << it->first << "}" << "\n" << *it->second << "\n";
+	for(Server_config::c_location_vector::iterator it = ref.location.begin(); it != ref.location.end(); it++)
+		os << "\nLOCATION " << **it  << "\n";
 	
 	return (os);
 }
