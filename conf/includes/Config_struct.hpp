@@ -27,6 +27,8 @@ struct Config_struct
 //------------------> TYPE DEF <-------------------
 	typedef std::vector<std::string>					c_name_vector;
 	typedef std::vector<std::string>					c_methode_vector;
+	
+	typedef std::vector<std::string>					c_index_vector;
 	typedef std::vector<Server_config *>				c_serv_vector;	
 	typedef std::map<std::string, Location_config *>	c_loc_map;
 	typedef std::map<std::string, std::string>			c_cgi_map;
