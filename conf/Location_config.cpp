@@ -8,7 +8,9 @@ Location_config::Location_config(){
 
 std::ostream& operator<<(std::ostream& os, Location_config &ref){
   
-  os << "INDEX = " << "{" << ref.index << "}" << std::endl;
+  for (Location_config::c_index_vector::iterator it = ref.index.begin(); it != ref.index.end(); it++)
+    os << "INDEX = " << "{" << *it << "}" << std::endl;
+    
   os << "ROOT = " << "{" << ref.root << "}" << std::endl;
 
   for (Location_config::c_methode_vector::iterator it = ref.methode.begin(); it != ref.methode.end(); it++)

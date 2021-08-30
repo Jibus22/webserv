@@ -227,23 +227,26 @@ void		Config_base::methode_prsg(std::string &str, c_methode_vector &prsg){
 	}
 }
 
-void		Config_base::index_prsg(std::string &str, std::string &prsg){
+void		Config_base::index_prsg(std::string &str, c_index_vector &prsg){
 	size_t		position;
+	size_t		semilicon = 0;
 
 	if (error_semilicon(str) == 1)
 		print_error("No space after semicolon");
-	if (search_space(str) == 1)
-		print_error("No space arguments");
+	if (!str.empty()) 
+        str = ft_pop_back(str);
 	while ((position = str.find_first_of(" \t")) != std::string::npos){
 		std::string temp = str.substr(0, position);
-		prsg = temp;
+		prsg.push_back(temp);
 		position = str.find_first_not_of(" \t", position);
 		str.erase(0, position);
 	}
-	if (str.size()){
-		if (str[str.size() - 1] == ';')
-			str = ft_pop_back(str);
-		prsg = str;
+	if (str.size()){	
+		for (int i = 0; i < str[i]; i++)
+			if (str[i] == ';')
+				semilicon = 1;
+		if (semilicon == 0)
+			prsg.push_back(str);
 	}
 }
 
@@ -446,7 +449,7 @@ void				Config_base::verif_location(){ // -> en cours
 	if (_location->methode.empty())
 		_location->methode.push_back("GET");
 	if (_location->index.empty())
-		_location->index = "index.html";
+		_location->index.push_back("index.html");
 }
 
 Config_base::conf_nginx		Config_base::verif_locat(std::string &str, std::string &conf){
