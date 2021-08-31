@@ -92,8 +92,11 @@ void	construct_response(Response & response, Server_config * server,
 			response.set_status_infos("OK");
 			response.set_body(content);
 		}
-		//else
-			//TODO: File non present
+		else
+		{
+			response.set_status_code(404);
+			response.set_status_infos("Not Found");
+		}
 	}
 	//else
 	//
