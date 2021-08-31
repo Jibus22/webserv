@@ -15,7 +15,9 @@ struct Server_config
 //------------------> TYPE DEF <-------------------
 	typedef Config_struct::c_name_vector			c_name_vector;
 	typedef Config_struct::c_methode_vector			c_methode_vector;
-	typedef Config_struct::c_loc_map 				c_loc_map;
+
+	typedef Config_struct::c_location_vector 		c_location_vector;
+
 	typedef Config_struct::c_error_map				c_error_map;
 	typedef	Config_struct::p_listen					p_listen;
 	
@@ -23,7 +25,9 @@ struct Server_config
 	p_listen				listen;
 	c_name_vector			name_serv;
 	c_error_map				error_page;
-	c_loc_map				location;
+
+	c_location_vector		location;
+
 	size_t					m_body_size;
 
 };
