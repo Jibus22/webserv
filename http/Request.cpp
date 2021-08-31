@@ -1,5 +1,6 @@
 #include "Request.hpp"
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <map>
 #include <vector>
@@ -78,9 +79,9 @@ void Request::parse_first_line(std::string const first_line)
 void	Request::checkTerminatedBody()
 {
 	std::stringstream str(this->_headers["Content-Length"]);
-	int length;
+	unsigned long length;
 
-	str >> x;
+	str >> length;
 	if (!str)
 		throw InvalidRequest();
 	if (this->_body.size() != length)
@@ -122,7 +123,7 @@ Request::Request(std::string const & raw_r)
 	}
 
 	//check si body est fini sinon NotTerminatedException
-	if (this->_body)
+	if (!this->_body.empty())
 		this->checkTerminatedBody();
 }
 

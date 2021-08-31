@@ -59,16 +59,19 @@ bool	get_file_content(std::string const & path, std::string & content)
 	return true;
 }
 
-Location_config * match_location(Config_struct::c_loc_map & map_location,
+Location_config * match_location(Config_struct::c_location_vector & locations,
 											std::string target)
 {
-	if (map_location.empty())
+	Location_config * location;
+
+	if (locations.empty())
 		return NULL;
-	Config_struct::c_loc_map::iterator it = map_location.begin();
-	while (it != map_location.end())
+	Config_struct::c_location_vector::iterator it = locations.begin();
+	while (it != locations.end())
 	{
-		if(it->first.compare(0, it->first.size(), target) == 0)
-			return it->second;
+		location = *it;
+		if(location->uri.compare(0, location->uri.size(), target) == 0)
+			return location;
 	}
 	return NULL;
 }
