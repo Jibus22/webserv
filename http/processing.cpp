@@ -131,13 +131,12 @@ void	process_request(Client& client,
 	}
 	catch (Request::NotTerminatedException e)
 	{
-		//Requete non termine set flag
-		//client.setFlag(INCOMPLETE);
+		//Requete non termine pas de set reponse
 		return;
 	}
 	catch (Request::InvalidRequest e)
 	{
-		//Requete non valide renvoyer reponse non valide
+		//Requete non valide renvoyer reponse avec code erreur non valide
 		//TODO: Reponse invlaide
 		return;
 	}
