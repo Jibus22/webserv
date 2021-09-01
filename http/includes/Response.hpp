@@ -23,7 +23,7 @@ public:
 	~Response(void);
 	Response & operator=(Response const & rhs);
 
-	void set_status_code(int const status_code);
+	void set_status_code(std::string const status_code);
 	void set_status_infos(std::string const & status_infos);
 	void add_header(std::string const & key_header, std::string const & value);
 	void set_body(std::string const & body);
