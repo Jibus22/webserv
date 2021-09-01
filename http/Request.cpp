@@ -58,12 +58,17 @@ Request::~Request(void){
 
 void Request::add_header(std::string const header)
 {
-	size_t pos_separateur = header.find(": ");
+	size_t pos_separateur = header.find(":");
 
 	if (pos_separateur == std::string::npos)
-		;//TODO: exception
+		throw InvalidRequest();
 	else
-		this->_headers[header.substr(0, pos_separateur)] = header.substr(pos_separateur + 2);
+	{
+		if(header[pos_separateur + 1] == ' ')
+			this->_headers[header.substr(0, pos_separateur)] = header.substr(pos_separateur + 2);
+		else
+			this->_headers[header.substr(0, pos_separateur)] = header.substr(pos_separateur + 1);
+	}
 }
 
 void Request::parse_first_line(std::string const first_line)
