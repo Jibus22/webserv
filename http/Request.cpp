@@ -56,6 +56,18 @@ Request::~Request(void){
 	return;
 }
 
+std::string & str_to_lower(std::string & str)
+{
+	std::string::iterator it = str.begin();
+	std::string::iterator ite = str.end();
+	while (it != ite)
+	{
+		*it = std::tolower(*it);
+		it++;
+	}
+	return str;
+}
+
 void Request::add_header(std::string const header)
 {
 	size_t pos_separateur = header.find(":");
@@ -65,9 +77,11 @@ void Request::add_header(std::string const header)
 	else
 	{
 		if(header[pos_separateur + 1] == ' ')
-			this->_headers[header.substr(0, pos_separateur)] = header.substr(pos_separateur + 2);
+			this->_headers[header.substr(0, pos_separateur)] =
+			str_to_lower(header.substr(pos_separateur + 2));
 		else
-			this->_headers[header.substr(0, pos_separateur)] = header.substr(pos_separateur + 1);
+			this->_headers[header.substr(0, pos_separateur)] =
+			str_to_lower(header.substr(pos_separateur + 1));
 	}
 }
 
