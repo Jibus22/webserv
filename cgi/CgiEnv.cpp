@@ -25,7 +25,12 @@ CgiEnv &	CgiEnv::operator=(CgiEnv const & src)
 
 /*------------------------------GETTERS/SETTERS-------------------------------*/
 
-std::string	CgiEnv::getName(void) const { return _name; }
+void	CgiEnv::setMetaVar(const Request& request)
+{
+	const std::string&	str;
+
+	str = request.getHeader("content-lenght");
+}
 
 std::ostream &operator<<(std::ostream &out, CgiEnv const &value)
 {
