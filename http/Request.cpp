@@ -1,4 +1,5 @@
 #include "Request.hpp"
+#include "webserv.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -92,16 +93,18 @@ void	Request::checkTerminatedBody()
 // TODO:  Exception a gerer si requete mal formate
 Request::Request(std::string const & raw_r)
 {
+	//__D_DISPLAY(raw_r);
 	std::string raw_request(raw_r);
 	//stocke le body et le supprime de la string
-	size_t pos_body = raw_request.find("\n\n");
+	size_t pos_body = raw_request.find("\r\n\r\n");
 	if (pos_body == std::string::npos)
 	{
+		__D_DISPLAY("Pas de \\r\\n\\r\\n -> Requete non terminé");
 		throw Request::NotTerminatedException();
 	}
 	else
 	{
-		this->_body = raw_request.substr(pos_body + 2);
+		this->_body = raw_request.substr(pos_body + 4);
 		raw_request.erase(pos_body);
 	}
 
