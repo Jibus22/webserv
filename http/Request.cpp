@@ -1,5 +1,6 @@
 #include "Request.hpp"
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <map>
 #include <vector>
@@ -28,8 +29,6 @@ std::vector<std::string> & split(const std::string& s, char const separator)
     output->push_back(s.substr(prev_pos, pos - prev_pos)); // Last word
     return *output;
 }
-
-
 
 /*
 ** CANONICAL FUNCS
@@ -71,10 +70,22 @@ void Request::parse_first_line(std::string const first_line)
 	std::vector<std::string> & words = split(first_line, ' ');
 
 	if(words.size() != 3)
-		std::cerr << "erreur taille premiere ligne " <<std::endl;//erreur
+		throw InvalidRequest();
 	this->_method = words[0];
 	this->_target = words[1];
 	this->_version = words[2];
+}
+
+void	Request::checkTerminatedBody()
+{
+	std::stringstream str(this->_headers["Content-Length"]);
+	unsigned long length;
+
+	str >> length;
+	if (!str)
+		throw InvalidRequest();
+	if (this->_body.size() != length)
+		throw NotTerminatedException();
 }
 
 
@@ -101,6 +112,8 @@ Request::Request(std::string const & raw_r)
 
 	if(it != ite)
 		parse_first_line(*(it++));
+	else
+		throw InvalidRequest();
 	//TODO: else ligne vide -> exception
 
 	while(it != ite)
@@ -108,6 +121,10 @@ Request::Request(std::string const & raw_r)
 		this->add_header(*it);
 		it++;
 	}
+
+	//check si body est fini sinon NotTerminatedException
+	if (!this->_body.empty())
+		this->checkTerminatedBody();
 }
 
 std::string const & Request::operator[] (std::string const & key_header)

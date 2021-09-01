@@ -19,7 +19,6 @@ struct Location_config
 //------------------> VARIABLE <-------------------
 	c_methode_vector		methode;
 	c_cgi_map				cgi;
-	// std::string				index;
 	c_index_vector			index;
 	std::string				root;
 	std::string				uri;

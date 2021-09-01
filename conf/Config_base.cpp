@@ -38,11 +38,7 @@ void				Config_base::prsg_main(){
 		if (conf == n_braket) {	
 			if (_bool_locat == true){
 				verif_location();
-				// _server->location[_location->uri] = _location;
-
 				_server->location.push_back(_location);	
-			
-				
 				_location = NULL;
 				_bool_locat = false;	
 				_again = true;
