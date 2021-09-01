@@ -41,6 +41,7 @@ public :
 		typedef Config_struct::c_error_map				c_error_map;
 		typedef Config_struct::p_listen					p_listen;
 		typedef Config_struct::c_serv_vector			c_serv_vector;
+		typedef Config_struct::c_index_vector			c_index_vector;
 
 //-------------------> FUNC PUBLIC  <-----------------------	
 		c_serv_vector		*get_vector() const ;
@@ -70,7 +71,7 @@ private :
 		void				methode_prsg(std::string &str, c_methode_vector &prsg);
 		void				auto_index_prsg(std::string &str, bool &prsg);
 		void				error_page_prsg(std::string &str, c_error_map &prsg);
-		void				index_prsg(std::string &str, std::string &prsg);
+		void				index_prsg(std::string &str, c_index_vector &prsg);
 		void				body_size_prsg(std::string &str, size_t &prsg);
 
 		void				init_value(std:: string &path);
