@@ -48,6 +48,7 @@ Server_config * match_server(std::vector<Server_config *> server_blocks,
 
 bool	get_file_content(std::string const & path, std::string & content)
 {
+	__D_DISPLAY("target : " << path);
 	std::ifstream		file;
 	std::string			line;
 
@@ -72,6 +73,7 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 		location = *it;
 		if(location->uri.compare(0, location->uri.size(), target) == 0)
 			return location;
+		it++;
 	}
 	return NULL;
 }
@@ -85,19 +87,20 @@ void	construct_response(Response & response, Server_config * server,
 	//find matching location
 	Location_config * location = match_location(server->location,
 												requete.get_target());
+	__D_DISPLAY("location matched");
 	//check la conf location
 	if (requete.get_method() == "GET")
 	{
 		std::string content;
 		if (get_file_content(requete.get_target(), content))
 		{
-			response.set_status_code(200);
+			response.set_status_code("200");
 			response.set_status_infos("OK");
 			response.set_body(content);
 		}
 		else
 		{
-			response.set_status_code(404);
+			response.set_status_code("404");
 			response.set_status_infos("Not Found");
 		}
 	}
@@ -114,15 +117,18 @@ void	process_request(Client& client,
 
 	try {
 		Request r = Request(client.getStrRequest());
+		__D_DISPLAY("request created");
 
 		// On recupere le serveur associe a la requete
 		Server_config * s = match_server(server_blocks, client.getListen(), r);
+		__D_DISPLAY("server find");
 
 		Response response;
 
 		//Construction reponse
 		construct_response(response, s, r);
-
+		__D_DISPLAY("response :")
+		__D_DISPLAY(response.get_raw());
 		//client.setResponse(response.get_raw(), COMPLETE);
 		client.setResponse(response.get_raw());
 		return;
@@ -130,17 +136,20 @@ void	process_request(Client& client,
 	catch (NoServerMatchException e)
 	{
 		//TODO: Pas de match
+		__D_DISPLAY("No SERVER MATCH");
 		return;
 	}
 	catch (Request::NotTerminatedException e)
 	{
 		//Requete non termine pas de set reponse
+		__D_DISPLAY("NoT TERMINATED REQUEST");
 		return;
 	}
 	catch (Request::InvalidRequest e)
 	{
 		//Requete non valide renvoyer reponse avec code erreur non valide
 		//TODO: Reponse invlaide
+		__D_DISPLAY("INVALID REQUEST");
 		return;
 	}
 }
