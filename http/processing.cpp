@@ -52,11 +52,11 @@ bool	get_file_content(std::string const & path, std::string & content)
 	std::ifstream		file;
 	std::string			line;
 
-	file.open(path.c_str());
+	file.open(path.c_str() + 1);
 	if (file.fail() == true)
 		return false;
 	while (std::getline(file, line))
-		content.append(line);
+		content.append(line + "\n");
 	return true;
 }
 
@@ -97,6 +97,9 @@ void	construct_response(Response & response, Server_config * server,
 			response.set_status_code("200");
 			response.set_status_infos("OK");
 			response.set_body(content);
+			std::stringstream ss;
+			ss << content.size();
+			response.add_header("Content-Length", ss.str());
 		}
 		else
 		{
