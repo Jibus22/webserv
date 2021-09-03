@@ -91,6 +91,7 @@ private :
 		Config_struct		_main_config;
 
 		bool				_bool_serv;
+		bool				_in_server;
 		bool				_bool_locat;
 		bool				_again;
 		size_t				_error;

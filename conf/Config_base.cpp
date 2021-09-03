@@ -6,7 +6,9 @@
 Config_base::Config_base(std::string &config){
 	init_value(config);
 	open_conf();
-	prsg_main();	
+	prsg_main();
+	if (_in_server == false)
+		print_error("Error file");
 	_file.close();
 }
 
@@ -14,14 +16,18 @@ Config_base::~Config_base(){}
 
 void				Config_base::prsg_main(){
 	std::string		str;
-
+	_in_server = false;
+	
 	while (getline(_file, str)){
 		_error++;
 		braket_on = false;
 		ft_trim(str); 
-		if (str.empty())
+		if (str.empty() )
 			continue ;
 		conf_nginx	conf = enum_prsg(str);
+		
+		if (_in_server == false)
+				print_error("Error file");
 		if (conf == n_bracket_error)
 			continue;
 		if (conf == n_none)
@@ -368,10 +374,11 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 	size_t				pos = str.find_first_of(" \t");
 	size_t				b = str.find_first_of("{");
 	std::string 		conf;
-
+	
 	if (str == "server{"){
 		conf = str.substr(0, b);
 		pos = str.find_last_of('{');
+		_in_server = true;		
 	}
 	else {
 		conf = str.substr(0, pos);
@@ -447,6 +454,8 @@ void		Config_base::in_location(){
 void				Config_base::verif_location(){ // -> en cours 
 // Définir la racine avec la racine du serveur + uri 
 // si aucune redéfinition de la racine à l'emplacement
+	
+
 	std::string one = "/";
 	std::string two = "//";
 	if (_location->root.empty()) {
@@ -486,6 +495,9 @@ void 				Config_base::locat_bracket(std::string &str){
 		print_error("Path non valide");
 	if (search_space(_location->uri) == 1)
 		print_error("No space argument");
+
+
+	
 }
 
 void			Config_base::in_server(){
@@ -511,6 +523,9 @@ Config_base::conf_nginx		Config_base::verif_serv_listen(std::string &str, std::s
 
 void				Config_base::open_conf(){
 	_file.open(_config.c_str()); // Renvoie un pointeur vers un tableau
+
+	if (_file.peek( )== std::ifstream::traits_type::eof() )
+		print_error("Error file");
 
 	if (_file.fail() == true)
 		throw std::runtime_error("Open file");
