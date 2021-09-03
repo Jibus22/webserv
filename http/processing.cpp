@@ -119,8 +119,10 @@ void	process_request(Client& client,
 {
 
 	try {
+		__D_DISPLAY("request : ");
+		__D_DISPLAY(client.getStrRequest());
 		Request r = Request(client.getStrRequest());
-		__D_DISPLAY("request created");
+		__D_DISPLAY("Object Request Created");
 
 		// On recupere le serveur associe a la requete
 		Server_config * s = match_server(server_blocks, client.getListen(), r);
@@ -130,8 +132,8 @@ void	process_request(Client& client,
 
 		//Construction reponse
 		construct_response(response, s, r);
-		__D_DISPLAY("response :")
-		__D_DISPLAY(response.get_raw());
+		//__D_DISPLAY("response :")
+		//__D_DISPLAY(*(response.get_raw()));
 		//client.setResponse(response.get_raw(), COMPLETE);
 		client.setResponse(response.get_raw());
 		return;
