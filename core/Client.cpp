@@ -7,7 +7,8 @@ Client::Client(void) : _fd(-2), _ready(false)
 {}
 
 Client::Client(Client const & src) : _fd(src._fd), _listen(src._listen),
-									_request(src._request), _ready(src._ready)
+									_request(src._request), _ready(src._ready),
+									_remote_address(src._remote_address)
 {}
 
 Client::~Client()
@@ -21,6 +22,7 @@ Client &	Client::operator=(Client const & src)
 	_listen = src._listen;
 	_request = src._request;
 	_ready = src._ready;
+	_remote_address = src._remote_address;
 	return *this;
 }
 
@@ -50,6 +52,9 @@ void	Client::setListen(const std::pair<std::string, int>& listen)
 		{ _listen = listen; }
 void	Client::setReady(void) { _ready = true; }
 
+void	Client::setRemoteAddr(const char *remote_addr)
+		{ _remote_address.assign(remote_addr); }
+
 void	Client::setRequest(const char *request, const int len)
 		{ _request.append(request, request + len); }
 
@@ -63,6 +68,8 @@ int					Client::getFd(void) const { return _fd; }
 const std::pair<std::string, int>&
 					Client::getListen(void) const { return _listen; }
 bool				Client::isReady(void) const { return _ready; }
+const std::string&	Client::getRemoteAddress(void) const
+					{ return _remote_address; }
 
 int					Client::getRequestSize(void) const
 					{ return _request.size(); }

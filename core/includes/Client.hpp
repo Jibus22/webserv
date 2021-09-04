@@ -15,6 +15,7 @@ private:
 	std::string					_request;
 	std::queue<std::string*>	_qResponse;
 	bool						_ready;
+	std::string					_remote_address;
 public:
 /*------------------------CONSTRUCTOR / DESTRUCTOR----------------------------*/
 
@@ -37,6 +38,8 @@ public:
 	void		setListen(const std::pair<std::string, int>& listen);
 	void		setReady(void);
 
+	void		setRemoteAddr(const std::string remote_addr);
+
 	void		setRequest(const char *request, const int len);
 
 	void		setResponse(std::string *response);
@@ -46,6 +49,7 @@ public:
 	int									getFd(void) const;
 	const std::pair<std::string, int>&	getListen(void) const;
 	bool								isReady(void) const;
+	const std::string&					getRemoteAddr(void) const;
 
 	int									getRequestSize() const;
 	const std::string&					getStrRequest(void) const;

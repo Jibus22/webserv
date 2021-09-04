@@ -35,9 +35,12 @@ int	accept_new_client(const int kq, const int event_fd,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 	std::map<int, std::pair<std::string, int> >::const_iterator i;
-	Client			newclient;
-	const int		client_fd = accept(event_fd, NULL, NULL);
+	Client				newclient;
+	struct sockaddr_in	sockaddr;
+	socklen_t			len = sizeof(sockaddr);
+	int					client_fd;
 
+	client_fd = accept(event_fd, (struct sockaddr*) &sockaddr, &len);
 	if (client_fd == -1)
 		return sys_err("failed to accept a new client");
 	if (add_read_event(kq, client_fd) == -1)
@@ -48,6 +51,7 @@ int	accept_new_client(const int kq, const int event_fd,
 		return pgm_err("accept_new_client() error: client already exists");
 	newclient.setFd(client_fd);
 	newclient.setListen(i->second);
+	newclient.setRemoteAddr(inet_ntoa(sockaddr.sin_addr));
 	client_map[client_fd] = newclient;
 
 	__D_DISPLAY(std::endl << "--- server socket event: " << event_fd);
