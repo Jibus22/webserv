@@ -3,11 +3,6 @@
 #include <fstream>
 #include <string>
 
-const char* NoServerMatchException::what() const throw()
-{
-	return "There is no server match";
-}
-
 bool	match_server_name(Server_config *server, Request & request)
 {
 	Config_struct::c_name_vector::iterator it = server->name_serv.begin();
@@ -24,14 +19,17 @@ Server_config * match_server(std::vector<Server_config *> server_blocks,
 	(void)requete;
 
 	std::vector<Server_config *> matching_listen;
+	//on recupere une liste avec une tres grande specificite de la correspondance
 	for (std::vector<Server_config *>::iterator it = server_blocks.begin();
 		it != server_blocks.end(); it++)
 	{
 		if((*it)->listen == listen)
 			matching_listen.push_back(*it);
 	}
+	//si un seul match il repond
 	if (matching_listen.size() == 1)
 		return matching_listen.front();
+	//si plus de 1 match on regarde le header host
 	else if (matching_listen.size() > 1)
 	{
 		for (std::vector<Server_config *>::iterator it = matching_listen.begin();
@@ -42,7 +40,11 @@ Server_config * match_server(std::vector<Server_config *> server_blocks,
 		}
 		return matching_listen.front();
 	}
-	throw NoServerMatchException();
+	else
+	//si 0 match
+	{
+		return matching_listen.front();
+	}
 }
 
 
@@ -136,12 +138,6 @@ void	process_request(Client& client,
 		//__D_DISPLAY(*(response.get_raw()));
 		//client.setResponse(response.get_raw(), COMPLETE);
 		client.setResponse(response.get_raw());
-		return;
-	}
-	catch (NoServerMatchException e)
-	{
-		//TODO: Pas de match
-		__D_DISPLAY("No SERVER MATCH");
 		return;
 	}
 	catch (Request::NotTerminatedException e)

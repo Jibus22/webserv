@@ -11,10 +11,4 @@
 void	process_request(Client& client,
 				const std::vector<Server_config*>& server_blocks);
 
-class NoServerMatchException:std::exception
-{
-	const char* what() const throw();
-};
-
-
 #endif
