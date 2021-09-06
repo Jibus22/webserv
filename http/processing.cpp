@@ -73,7 +73,7 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 	while (it != locations.end())
 	{
 		location = *it;
-		if(location->uri.compare(0, location->uri.size(), target) == 0)
+		if((target.compare(0, location->uri.size(), location->uri)) == 0)
 			return location;
 		it++;
 	}
@@ -89,7 +89,8 @@ void	construct_response(Response & response, Server_config * server,
 	//find matching location
 	Location_config * location = match_location(server->location,
 												requete.get_target());
-	__D_DISPLAY("location matched");
+	if (location)
+	{__D_DISPLAY("location matched : " << location->uri);}
 	//check la conf location
 	if (requete.get_method() == "GET")
 	{
