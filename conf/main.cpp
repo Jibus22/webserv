@@ -5,7 +5,7 @@
 
 
 int main(int ac, char **av){
-	if (ac >= 2){
+	if (ac == 2){
 		std::string		file_config = av[1]; 
 		Config_base	 	c_get_prsg(file_config);
 
@@ -16,9 +16,10 @@ int main(int ac, char **av){
 
 	}
 	else 
-		exit (0);
-	
-	
-	
+	{
+		std::cout << "Arguments invalide\n";
+		return (1); 
+	}
+	return (0);
 }
 

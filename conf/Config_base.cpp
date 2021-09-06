@@ -6,7 +6,9 @@
 Config_base::Config_base(std::string &config){
 	init_value(config);
 	open_conf();
-	prsg_main();	
+	prsg_main();
+	if (_in_server == false || _bool_serv == true)
+		print_error("Error file");
 	_file.close();
 }
 
@@ -14,16 +16,23 @@ Config_base::~Config_base(){}
 
 void				Config_base::prsg_main(){
 	std::string		str;
-
+	_in_server = false;
+	
 	while (getline(_file, str)){
 		_error++;
 		braket_on = false;
 		ft_trim(str); 
-		if (str.empty())
+		if (str.empty() )
 			continue ;
 		conf_nginx	conf = enum_prsg(str);
+		
+		if (_in_server == false)
+				print_error("Error file");
 		if (conf == n_bracket_error)
+		{	
+			
 			continue;
+		}
 		if (conf == n_none)
 			print_error("no parametre");
 		if (conf == n_server) {		
@@ -58,8 +67,8 @@ void				Config_base::prsg_main(){
 		if (_bool_locat == true)
 			if (conf == n_name || conf == n_listen || conf == n_body || conf == n_error_page)
 				print_error("invalid param must be server");
-
 		get_container(conf, str);
+		
 	}
 }
 
@@ -368,10 +377,11 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 	size_t				pos = str.find_first_of(" \t");
 	size_t				b = str.find_first_of("{");
 	std::string 		conf;
-
+	
 	if (str == "server{"){
 		conf = str.substr(0, b);
 		pos = str.find_last_of('{');
+		_in_server = true;		
 	}
 	else {
 		conf = str.substr(0, pos);
@@ -416,7 +426,7 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 //---------------------------------------------------------------------------------------//
 //--------------------------------- VERIF PARSING ---------------------------------------//
 //---------------------------------------------------------------------------------------//
-void			Config_base::verif_serveur(){  // -> en cours 
+void			Config_base::verif_serveur(){  
 	if (_server->listen.first.empty()){
 		_server->listen.first = "0.0.0.0";
 		_server->listen.second = 80;
@@ -427,9 +437,6 @@ void			Config_base::verif_serveur(){  // -> en cours
 		_server->m_body_size = 1000000;
 	if (_server->m_body_size > INTMAX_MAX)
 		print_error("value too high");
-
-
-	
 }
 
 void		Config_base::in_location(){	
@@ -444,9 +451,7 @@ void		Config_base::in_location(){
 	_again = false;
 }
 
-void				Config_base::verif_location(){ // -> en cours 
-// Définir la racine avec la racine du serveur + uri 
-// si aucune redéfinition de la racine à l'emplacement
+void				Config_base::verif_location(){
 	std::string one = "/";
 	std::string two = "//";
 	if (_location->root.empty()) {
@@ -512,6 +517,8 @@ Config_base::conf_nginx		Config_base::verif_serv_listen(std::string &str, std::s
 void				Config_base::open_conf(){
 	_file.open(_config.c_str()); // Renvoie un pointeur vers un tableau
 
+	if (_file.peek( )== std::ifstream::traits_type::eof() )
+		print_error("Error file");
 	if (_file.fail() == true)
 		throw std::runtime_error("Open file");
 }
@@ -586,7 +593,6 @@ int			Config_base::error_semilicon(std::string &str){
 	if (search_space(temp) == 1)
 		return (1);
 	return (0);
-
 }
 
 int 		Config_base::error_methode(std::string &temp){
@@ -605,12 +611,9 @@ int		Config_base::conver_to_str(std::string &str){
 	return (nb);
 }
 
-
-
 void 		Config_base::print_error(const std::string str) const {
 	std::cout << "\033[1;33m" ;
 	std::cout << "Error line " << _error << " [ "<< str << " ]" << "\n";
 	std::cout << "\033[0m";
 	exit (0);
 }
-
