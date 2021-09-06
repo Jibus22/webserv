@@ -7,7 +7,7 @@ Config_base::Config_base(std::string &config){
 	init_value(config);
 	open_conf();
 	prsg_main();
-	if (_in_server == false)
+	if (_in_server == false || _bool_serv == true)
 		print_error("Error file");
 	_file.close();
 }
@@ -29,7 +29,10 @@ void				Config_base::prsg_main(){
 		if (_in_server == false)
 				print_error("Error file");
 		if (conf == n_bracket_error)
+		{	
+			
 			continue;
+		}
 		if (conf == n_none)
 			print_error("no parametre");
 		if (conf == n_server) {		
@@ -64,8 +67,8 @@ void				Config_base::prsg_main(){
 		if (_bool_locat == true)
 			if (conf == n_name || conf == n_listen || conf == n_body || conf == n_error_page)
 				print_error("invalid param must be server");
-
 		get_container(conf, str);
+		
 	}
 }
 
@@ -423,7 +426,7 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 //---------------------------------------------------------------------------------------//
 //--------------------------------- VERIF PARSING ---------------------------------------//
 //---------------------------------------------------------------------------------------//
-void			Config_base::verif_serveur(){  // -> en cours 
+void			Config_base::verif_serveur(){  
 	if (_server->listen.first.empty()){
 		_server->listen.first = "0.0.0.0";
 		_server->listen.second = 80;
@@ -434,9 +437,6 @@ void			Config_base::verif_serveur(){  // -> en cours
 		_server->m_body_size = 1000000;
 	if (_server->m_body_size > INTMAX_MAX)
 		print_error("value too high");
-
-
-	
 }
 
 void		Config_base::in_location(){	
@@ -451,11 +451,7 @@ void		Config_base::in_location(){
 	_again = false;
 }
 
-void				Config_base::verif_location(){ // -> en cours 
-// Définir la racine avec la racine du serveur + uri 
-// si aucune redéfinition de la racine à l'emplacement
-	
-
+void				Config_base::verif_location(){
 	std::string one = "/";
 	std::string two = "//";
 	if (_location->root.empty()) {
@@ -495,9 +491,6 @@ void 				Config_base::locat_bracket(std::string &str){
 		print_error("Path non valide");
 	if (search_space(_location->uri) == 1)
 		print_error("No space argument");
-
-
-	
 }
 
 void			Config_base::in_server(){
@@ -526,7 +519,6 @@ void				Config_base::open_conf(){
 
 	if (_file.peek( )== std::ifstream::traits_type::eof() )
 		print_error("Error file");
-
 	if (_file.fail() == true)
 		throw std::runtime_error("Open file");
 }
@@ -601,7 +593,6 @@ int			Config_base::error_semilicon(std::string &str){
 	if (search_space(temp) == 1)
 		return (1);
 	return (0);
-
 }
 
 int 		Config_base::error_methode(std::string &temp){
@@ -620,12 +611,9 @@ int		Config_base::conver_to_str(std::string &str){
 	return (nb);
 }
 
-
-
 void 		Config_base::print_error(const std::string str) const {
 	std::cout << "\033[1;33m" ;
 	std::cout << "Error line " << _error << " [ "<< str << " ]" << "\n";
 	std::cout << "\033[0m";
 	exit (0);
 }
-
