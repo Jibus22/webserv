@@ -61,6 +61,17 @@ bool	get_file_content(std::string const & path, std::string & content)
 	return true;
 }
 
+void	error_page(int erreur, Response & response,
+		Config_struct::c_error_map & error_page)
+{
+	if (error_page[erreur] != "")
+	{
+		std::string content;
+		if (get_file_content(error_page[erreur], content))
+			response.set_body(content);
+	}
+}
+
 Location_config * match_location(Config_struct::c_location_vector & locations,
 											std::string target)
 {
@@ -116,7 +127,8 @@ bool	check_cgi(Response & response, Request & requete,
 	return false;
 }
 
-void	construct_get_response(Response & response, Request &requete)
+void	construct_get_response(Response & response, Request &requete,
+						Server_config * server)
 {
 	std::string content;
 	if (get_file_content(requete.get_target(), content))
@@ -132,6 +144,7 @@ void	construct_get_response(Response & response, Request &requete)
 	{
 		response.set_status_code("404");
 		response.set_status_infos("Not Found");
+		error_page(404, response, server->error_page);
 	}
 }
 
@@ -163,7 +176,7 @@ void	construct_response(Response & response, Server_config * server,
 		return;
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
-		construct_get_response(response, requete);
+		construct_get_response(response, requete, server);
 	else if (requete.get_method() == "POST" &&
 			is_methode_allowed(location, "POST"))
 		construct_post_response(response, requete);
@@ -174,13 +187,14 @@ void	construct_response(Response & response, Server_config * server,
 	{
 		response.set_status_code("405");
 		response.set_status_infos("Method Not Allowed");
+		error_page(405, response, server->error_page);
 	}
 }
 
 void	process_request(Client& client,
 				const std::vector<Server_config *>& server_blocks)
 {
-
+	Response response;
 	try {
 		__D_DISPLAY("request : ");
 		__D_DISPLAY(client.getStrRequest());
@@ -191,14 +205,10 @@ void	process_request(Client& client,
 		Server_config * s = match_server(server_blocks, client.getListen(), r);
 		__D_DISPLAY("server find");
 
-		Response response;
-
 		//Construction reponse
 		construct_response(response, s, r);
 		//__D_DISPLAY("response :")
 		//__D_DISPLAY(*(response.get_raw()));
-		client.setResponse(response.get_raw());
-		return;
 	}
 	catch (Request::NotTerminatedException e)
 	{
@@ -213,8 +223,8 @@ void	process_request(Client& client,
 		__D_DISPLAY("INVALID REQUEST");
 		response.set_status_code("400");
 		response.set_status_infos("Bad Request");
-		return;
 	}
+	client.setResponse(response.get_raw());
 }
 
 /*
