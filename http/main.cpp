@@ -7,7 +7,9 @@
 
 int main() {
 	std::string raw_request("GET /index.html HTTP/1.1\n\
-Host: google.com\n");
+Host: google.com\n\
+TestHeadeRfs:Valeurf\
+\r\n\r\n");
 	Request r = Request(raw_request);
 	std::cout << "Methode : " << r.get_method() << std::endl;
 	std::cout << "Target  : " << r.get_target() << std::endl;

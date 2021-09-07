@@ -1,4 +1,5 @@
 #include "Request.hpp"
+#include "webserv.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -55,14 +56,35 @@ Request::~Request(void){
 	return;
 }
 
+std::string str_to_lower(std::string const & s)
+{
+	std::string str(s);
+	std::string::iterator it = str.begin();
+	std::string::iterator ite = str.end();
+	while (it != ite)
+	{
+		*it = std::tolower(*it);
+		it++;
+	}
+	return str;
+}
+
 void Request::add_header(std::string const header)
 {
-	size_t pos_separateur = header.find(": ");
+	size_t pos_separateur = header.find(":");
 
 	if (pos_separateur == std::string::npos)
-		;//TODO: exception
+		throw InvalidRequest();
 	else
-		this->_headers[header.substr(0, pos_separateur)] = header.substr(pos_separateur + 2);
+	{
+		std::string header_min = str_to_lower(header.substr(0, pos_separateur));
+		if(header[pos_separateur + 1] == ' ')
+			this->_headers[header_min] =
+			header.substr(pos_separateur + 2);
+		else
+			this->_headers[header_min] =
+			header.substr(pos_separateur + 1);
+	}
 }
 
 void Request::parse_first_line(std::string const first_line)
@@ -92,16 +114,18 @@ void	Request::checkTerminatedBody()
 // TODO:  Exception a gerer si requete mal formate
 Request::Request(std::string const & raw_r)
 {
+	//__D_DISPLAY(raw_r);
 	std::string raw_request(raw_r);
 	//stocke le body et le supprime de la string
-	size_t pos_body = raw_request.find("\n\n");
+	size_t pos_body = raw_request.find("\r\n\r\n");
 	if (pos_body == std::string::npos)
 	{
+		__D_DISPLAY("Pas de \\r\\n\\r\\n -> Requete non terminé");
 		throw Request::NotTerminatedException();
 	}
 	else
 	{
-		this->_body = raw_request.substr(pos_body + 2);
+		this->_body = raw_request.substr(pos_body + 4);
 		raw_request.erase(pos_body);
 	}
 
