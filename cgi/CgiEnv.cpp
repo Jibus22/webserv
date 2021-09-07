@@ -3,14 +3,25 @@
 
 /*------------------------CONSTRUCTOR / DESTRUCTOR----------------------------*/
 
-CgiEnv::CgiEnv(void) : _metaVar(METAVAR_NB)
+CgiEnv::CgiEnv(void)
 {
 	initMetaVar();
 }
 
-CgiEnv::CgiEnv(CgiEnv const & src) : _metaVar(src._metaVar)
+CgiEnv::CgiEnv(const Request& request,
+                 		const Location_config& location_block,
+                 		const Server_config& server_block,
+                 		const Client& client)
+{
+	initMetaVar();
+	setMetaVar(request, location_block, server_block, client);
+}
+
+CgiEnv::CgiEnv(CgiEnv const & src) : _metaVar(src._metaVar),
+									_args(src._args)
 {
 	setEnv();
+	setArgv();
 }
 
 CgiEnv::~CgiEnv()
@@ -21,7 +32,9 @@ CgiEnv &	CgiEnv::operator=(CgiEnv const & src)
 	if (this == &src)
 		return *this;
 	_metaVar = src._metaVar;
+	_args = src._args;
 	setEnv();
+	setArgv();
 	return *this;
 }
 
@@ -30,26 +43,56 @@ CgiEnv &	CgiEnv::operator=(CgiEnv const & src)
 
 void	CgiEnv::initMetaVar()
 {
-	_metaVar[SERVER_PROTOCOL] = "SERVER_PROTOCOL = HTTP/1.1";
-	_metaVar[SERVER_SOFTWARE] = "SERVER_SOFTWARE = webserv";
-	_metaVar[GATEWAY_INTERFACE] = "GATEWAY_INTERFACE = CGI/1.1";
-	_metaVar[CONTENT_LENGHT] = "CONTENT_LENGHT = ";
-	_metaVar[CONTENT_TYPE] = "CONTENT_TYPE = ";
-	_metaVar[PATH_INFO] = "PATH_INFO = ";
-	_metaVar[QUERY_STRING] = "QUERY_STRING = ";
-	_metaVar[REQUEST_METHOD] = "REQUEST_METHOD = ";
-	_metaVar[REMOTE_ADDR] = "REMOTE_ADDR = ";
-	_metaVar[SCRIPT_NAME] = "SCRIPT_NAME = ";
-	_metaVar[SERVER_NAME] = "SERVER_NAME = ";
-	_metaVar[SERVER_PORT] = "SERVER_PORT = ";
+	_env[METAVAR_NB] = NULL;
+	_argv[MAX_ARG] = NULL;
+	_argv[MAX_ARG - 1] = NULL;
+
+	_metaVar.reserve(METAVAR_NB);
+	_metaVar[SERVER_PROTOCOL] = "SERVER_PROTOCOL=HTTP/1.1";
+	_metaVar[SERVER_SOFTWARE] = "SERVER_SOFTWARE=webserv";
+	_metaVar[GATEWAY_INTERFACE] = "GATEWAY_INTERFACE=CGI/1.1";
+	_metaVar[CONTENT_LENGHT] = "CONTENT_LENGHT=";
+	_metaVar[CONTENT_TYPE] = "CONTENT_TYPE=";
+	_metaVar[PATH_INFO] = "PATH_INFO=";
+	_metaVar[QUERY_STRING] = "QUERY_STRING=";
+	_metaVar[REQUEST_METHOD] = "REQUEST_METHOD=";
+	_metaVar[REMOTE_ADDR] = "REMOTE_ADDR=";
+	_metaVar[SCRIPT_NAME] = "SCRIPT_NAME=";
+	_metaVar[SERVER_NAME] = "SERVER_NAME=";
+	_metaVar[SERVER_PORT] = "SERVER_PORT=";
+	_metaVar[PATH_TRANSLATED] = "PATH_TRANSLATED=";
 }
 
 void	CgiEnv::setEnv()
 {
 	for (int i = 0; i  < METAVAR_NB; i++)
-		env[i] = _metaVar[i].c_str();
+		env[i] = const_cast<char*>(_metaVar[i].c_str());
 }
 
+//Sets the cstring array argv to use with execve()
+//pathname must be formated as: /absolutepath/name. Ex: "/bin/ls"
+//argv[0] must hold [name | path/name]. Ex: ["ls" | "bin/ls"]
+//argv[n] holds arguments to the bin arguments. Ex: "-la"
+//argv[end] must be NULL.
+void	CgiEnv::setArgs(const Location_config& location_block)
+{
+	Location_config::c_cgi_map::const_iterator	find;
+
+	find = location_block.cgi.find(request.getCgi());
+	if (find == location_block.end())
+		return ;
+	_args.push_back(find->second);//get the cgi filesystem location from conf
+	if (_metaVar[PATH_TRANSLATED].size() > 16)
+		_args.push_back(_metaVar[PATH_TRANSLATED].substr(17));//pathinfo fs loc
+}
+
+void	CgiEnv::setArgv()
+{
+	if (_args.empty() == false)
+		_argv[CGI_ROOT] = const_cast<char*>(_args[CGI_ROOT].c_str());
+	if (_args.size() > 1)
+		_argv[ABS_PATHINFO] = const_cast<char*>(_args[ABS_PATHINFO].c_str());
+}
 
 /*------------------------------GETTERS/SETTERS-------------------------------*/
 
@@ -62,10 +105,10 @@ void	CgiEnv::setEnv()
 //avec root /var/www/website/users/
 //extraire path/info de la target http et la rajouter à root
 
-void	CgiEnv::setMetaVar(const Request& request,
-					const Location_config& location_block,
-					const Server_config& server_block,
-					const Client& client)
+void		CgiEnv::setMetaVar(const Request& request,
+						const Location_config& location_block,
+						const Server_config& server_block,
+						const Client& client)
 {
 	size_t				find, find2;
 	const std::string&	str;
@@ -93,12 +136,13 @@ void	CgiEnv::setMetaVar(const Request& request,
 		_metaVar[SCRIPT_NAME].append(str, 0, find - 1);
 	}
 
-	find2 = find;//PATH_INFO
+	find2 = find;//PATH_INFO && PATH_TRANSLATED
 	while (str.size() > find2 && str[find2] != '?')
 		find2++;
 	if ((find2 - find) > 1 && find2 < str.size())
 	{
-		_metaVar[PATH_INFO].append(location_block.root);
+		_metaVar[PATH_TRANSLATED].append(location_block.root);
+		_metaVar[PATH_TRANSLATED].append(str, find, find2);
 		_metaVar[PATH_INFO].append(str, find, find2);
 	}
 
@@ -113,10 +157,13 @@ void	CgiEnv::setMetaVar(const Request& request,
 	//REMOTE_ADDR
 	_metaVar[SERVER_PORT].append((client.getRemoteAddr()));
 
+	setArgs(location_block);
 	setEnv();
+	setArgv();
 }
 
-const char	*CgiEnv::getEnv(void) const { return _env; }
+char		**CgiEnv::getEnv(void) { return _env; }
+char		**CgiEnv::getArgv(void) { return _argv; }
 
 const std::vector<std::string>&
 			CgiEnv::getMV(void) const { return _metaVar; }
@@ -125,19 +172,8 @@ std::ostream &operator<<(std::ostream &out, CgiEnv const &value)
 {
 	const std::vector<std::string>&	mv = value.getMV();
 
-	out
-	<< mv[SERVER_PROTOCOL] << std::endl
-	<< mv[SERVER_SOFTWARE] << std::endl
-	<< mv[GATEWAY_INTERFACE] << std::endl
-	<< mv[CONTENT_LENGHT] << std::endl
-	<< mv[CONTENT_TYPE] << std::endl
-	<< mv[PATH_INFO] << std::endl
-	<< mv[QUERY_STRING] << std::endl
-	<< mv[REQUEST_METHOD] << std::endl
-	<< mv[REMOTE_ADDR] << std::endl
-	<< mv[SCRIPT_NAME] << std::endl
-	<< mv[SERVER_NAME] << std::endl
-	<< mv[SERVER_PORT] << std::endl;
+	for (int i = 0; i < METAVAR_NB; i++)
+		out << mv[i] << std::endl;
 	return (out);
 }
 
