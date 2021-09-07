@@ -80,6 +80,56 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 	return NULL;
 }
 
+bool	is_methode_allowed(Location_config * location, std::string methode)
+{
+	if (location == NULL && methode == "GET")
+		return true;
+	else if (location == NULL)
+		return false;
+	else
+	{
+		Config_struct::c_methode_vector::iterator it = location->methode.begin();
+		while (it != location->methode.end())
+		{
+			if (*it == methode)
+				return true;
+			it++;
+		}
+		return false;
+	}
+}
+
+void	construct_get_response(Response & response, Request &requete)
+{
+	std::string content;
+	if (get_file_content(requete.get_target(), content))
+	{
+		response.set_status_code("200");
+		response.set_status_infos("OK");
+		response.set_body(content);
+		std::stringstream ss;
+		ss << content.size();
+		response.add_header("Content-Length", ss.str());
+	}
+	else
+	{
+		response.set_status_code("404");
+		response.set_status_infos("Not Found");
+	}
+}
+
+void	construct_post_response(Response & response, Request &requete)
+{
+	(void)response;
+	(void)requete;
+}
+
+void	construct_delete_response(Response & response, Request &requete)
+{
+	(void)response;
+	(void)requete;
+}
+
 void	construct_response(Response & response, Server_config * server,
 														Request & requete)
 {
@@ -92,29 +142,19 @@ void	construct_response(Response & response, Server_config * server,
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
 	//check la conf location
-	if (requete.get_method() == "GET")
+	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
+		construct_get_response(response, requete);
+	else if (requete.get_method() == "POST" &&
+			is_methode_allowed(location, "POST"))
+		construct_post_response(response, requete);
+	else if(requete.get_method() == "DELETE" &&
+			is_methode_allowed(location, "DELETE"))
+		construct_delete_response(response, requete);
+	else
 	{
-		std::string content;
-		if (get_file_content(requete.get_target(), content))
-		{
-			response.set_status_code("200");
-			response.set_status_infos("OK");
-			response.set_body(content);
-			std::stringstream ss;
-			ss << content.size();
-			response.add_header("Content-Length", ss.str());
-		}
-		else
-		{
-			response.set_status_code("404");
-			response.set_status_infos("Not Found");
-		}
+		response.set_status_code("405");
+		response.set_status_infos("Method Not Allowed");
 	}
-	//else
-	//
-
-	(void)response;
-	(void)location;
 }
 
 void	process_request(Client& client,
