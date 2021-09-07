@@ -211,6 +211,8 @@ void	process_request(Client& client,
 		//Requete non valide renvoyer reponse avec code erreur non valide
 		//TODO: Reponse invlaide
 		__D_DISPLAY("INVALID REQUEST");
+		response.set_status_code("400");
+		response.set_status_infos("Bad Request");
 		return;
 	}
 }
