@@ -47,7 +47,6 @@ Server_config * match_server(std::vector<Server_config *> server_blocks,
 	}
 }
 
-
 bool	get_file_content(std::string const & path, std::string & content)
 {
 	__D_DISPLAY("target : " << path);
@@ -99,6 +98,24 @@ bool	is_methode_allowed(Location_config * location, std::string methode)
 	}
 }
 
+bool	chech_cgi(Response & response, Request & requete,
+			Server_config * server, Location_config * location)
+{
+	if (location == NULL)
+		return false;
+	Config_struct::c_cgi_map::iterator it = location->cgi.begin();
+	while (it != location->cgi.end())
+	{
+		if (requete.get_target().find(it->first) != std::string::npos)
+		{
+			process_cgi(response, requete, server, location, it->first);
+			return true;
+		}
+		it++;
+	}
+	return false;
+}
+
 void	construct_get_response(Response & response, Request &requete)
 {
 	std::string content;
@@ -141,6 +158,9 @@ void	construct_response(Response & response, Server_config * server,
 												requete.get_target());
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
+
+	if (chech_cgi(response, requete, server, location))
+		return;
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
 		construct_get_response(response, requete);
@@ -177,7 +197,6 @@ void	process_request(Client& client,
 		construct_response(response, s, r);
 		//__D_DISPLAY("response :")
 		//__D_DISPLAY(*(response.get_raw()));
-		//client.setResponse(response.get_raw(), COMPLETE);
 		client.setResponse(response.get_raw());
 		return;
 	}
