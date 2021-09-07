@@ -98,7 +98,7 @@ bool	is_methode_allowed(Location_config * location, std::string methode)
 	}
 }
 
-bool	chech_cgi(Response & response, Request & requete,
+bool	check_cgi(Response & response, Request & requete,
 			Server_config * server, Location_config * location)
 {
 	if (location == NULL)
@@ -159,7 +159,7 @@ void	construct_response(Response & response, Server_config * server,
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
 
-	if (chech_cgi(response, requete, server, location))
+	if (check_cgi(response, requete, server, location))
 		return;
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
