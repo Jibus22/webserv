@@ -164,7 +164,13 @@ void	construct_response(Response & response, Server_config * server,
 														Request & requete)
 {
 	//TODO: verifier les parametres de server
-	// ...
+	//Verification Body not too big
+	if (requete["Content-Length"] > server.m_body_size)
+	{
+		response.set_status_code("413");
+		response.set_status_infos("Payload Too Large");
+		error_page(413, response, server->error_page);
+	}
 
 	//find matching location
 	Location_config * location = match_location(server->location,
