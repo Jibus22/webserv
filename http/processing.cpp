@@ -127,10 +127,32 @@ bool	check_cgi(Response & response, Request & requete,
 	return false;
 }
 
+
+
+#include <iostream>
+#include <vector>
+#include <dirent.h>
+
+bool is_dir(std::string path)
+{
+	DIR *dir;
+
+    if ((dir = opendir(path.c_str() + 1)) != nullptr) {
+        closedir (dir);
+		return 1;
+    }
+	else
+		return false;
+}
+
+
 void	construct_get_response(Response & response, Request &requete,
 						Server_config * server)
 {
 	std::string content;
+
+	if (is_dir(requete.get_target()))
+	{	__D_DISPLAY("DIRECTORY !!!");}
 	if (get_file_content(requete.get_target(), content))
 	{
 		response.set_status_code("200");
@@ -165,7 +187,10 @@ void	construct_response(Response & response, Server_config * server,
 {
 	//TODO: verifier les parametres de server
 	//Verification Body not too big
-	if (requete["Content-Length"] > server.m_body_size)
+	std::stringstream str(requete["Content-Length"]);
+	unsigned long length;
+	str >> length;
+	if (length > server->m_body_size)
 	{
 		response.set_status_code("413");
 		response.set_status_infos("Payload Too Large");
