@@ -4,7 +4,7 @@
 #include "webserv.hpp"
 #include "CgiEnv.hpp"
 
-void	process_cgi(Response & response,
+int	process_cgi(Response & response,
 					const Request& request,
 					const Location_config& location_block,
 					const Server_config& server_block,
