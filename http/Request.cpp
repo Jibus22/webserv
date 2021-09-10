@@ -16,19 +16,18 @@ const char* Request::InvalidRequest::what() const throw()
 	return "Invalid Request";
 }
 
-std::vector<std::string> & split(const std::string& s, char const separator)
+void split(std::vector<std::string> & output, const std::string& s,
+													char const separator)
 {
-	std::vector<std::string> * output = new std::vector<std::string>();
 	std::string::size_type prev_pos = 0, pos = 0;
 
 	while((pos = s.find(separator, pos)) != std::string::npos)
 	{
 		std::string substring( s.substr(prev_pos, pos-prev_pos) );
-        output->push_back(substring);
+        output.push_back(substring);
         prev_pos = ++pos;
 	}
-    output->push_back(s.substr(prev_pos, pos - prev_pos)); // Last word
-    return *output;
+    output.push_back(s.substr(prev_pos, pos - prev_pos)); // Last word
 }
 
 /*
@@ -69,7 +68,7 @@ std::string str_to_lower(std::string const & s)
 	return str;
 }
 
-void Request::add_header(std::string const header)
+void Request::add_header(std::string const & header)
 {
 	size_t pos_separateur = header.find(":");
 
@@ -87,9 +86,10 @@ void Request::add_header(std::string const header)
 	}
 }
 
-void Request::parse_first_line(std::string const first_line)
+void Request::parse_first_line(std::string const & first_line)
 {
-	std::vector<std::string> & words = split(first_line, ' ');
+	std::vector<std::string> words;
+	split(words, first_line, ' ');
 
 	if(words.size() != 3)
 		throw InvalidRequest();
@@ -130,7 +130,8 @@ Request::Request(std::string const & raw_r)
 	}
 
 	//Separe chaque ligne de la requete
-	std::vector<std::string> & lines = split(raw_request, '\n');
+	std::vector<std::string> lines;
+	split(lines, raw_request, '\n');
 	std::vector<std::string>::iterator it = lines.begin();
 	std::vector<std::string>::iterator ite = lines.end();
 

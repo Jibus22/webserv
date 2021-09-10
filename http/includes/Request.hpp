@@ -15,8 +15,8 @@ private:
 	std::string							_body;
 
 
-	void add_header(std::string const header);
-	void parse_first_line(std::string const first_line);
+	void add_header(std::string const & header);
+	void parse_first_line(std::string const & first_line);
 	void checkTerminatedBody();
 
 public:

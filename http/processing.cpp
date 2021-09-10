@@ -58,6 +58,17 @@ bool	get_file_content(std::string const & path, std::string & content)
 	return true;
 }
 
+void	error_page(int erreur, Response & response,
+		Config_struct::c_error_map & error_page)
+{
+	if (error_page[erreur] != "")
+	{
+		std::string content;
+		if (get_file_content(error_page[erreur], content))
+			response.set_body(content);
+	}
+}
+
 Location_config * match_location(Config_struct::c_location_vector & locations,
 											std::string target)
 {
@@ -95,7 +106,7 @@ bool	is_methode_allowed(Location_config * location, std::string methode)
 	}
 }
 
-bool	chech_cgi(Response & response, Request & requete,
+bool	check_cgi(Response & response, Request & requete,
 			Server_config * server, Location_config * location,
 			const Client& client)
 {
@@ -114,9 +125,32 @@ bool	chech_cgi(Response & response, Request & requete,
 	return false;
 }
 
-void	construct_get_response(Response & response, Request &requete)
+
+
+#include <iostream>
+#include <vector>
+#include <dirent.h>
+
+bool is_dir(std::string path)
+{
+	DIR *dir;
+
+    if ((dir = opendir(path.c_str() + 1)) != nullptr) {
+        closedir (dir);
+		return 1;
+    }
+	else
+		return false;
+}
+
+
+void	construct_get_response(Response & response, Request &requete,
+						Server_config * server)
 {
 	std::string content;
+
+	if (is_dir(requete.get_target()))
+	{	__D_DISPLAY("DIRECTORY !!!");}
 	if (get_file_content(requete.get_target(), content))
 	{
 		response.set_status_code("200");
@@ -130,6 +164,7 @@ void	construct_get_response(Response & response, Request &requete)
 	{
 		response.set_status_code("404");
 		response.set_status_infos("Not Found");
+		error_page(404, response, server->error_page);
 	}
 }
 
@@ -149,7 +184,16 @@ void	construct_response(Response & response, Server_config * server,
 						Request & requete, const Client& client)
 {
 	//TODO: verifier les parametres de server
-	// ...
+	//Verification Body not too big
+	std::stringstream str(requete["Content-Length"]);
+	unsigned long length;
+	str >> length;
+	if (length > server->m_body_size)
+	{
+		response.set_status_code("413");
+		response.set_status_infos("Payload Too Large");
+		error_page(413, response, server->error_page);
+	}
 
 	//find matching location
 	Location_config * location = match_location(server->location,
@@ -157,11 +201,11 @@ void	construct_response(Response & response, Server_config * server,
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
 
-	if (chech_cgi(response, requete, server, location, client))
+	if (check_cgi(response, requete, server, location, client))
 		return;
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
-		construct_get_response(response, requete);
+		construct_get_response(response, requete, server);
 	else if (requete.get_method() == "POST" &&
 			is_methode_allowed(location, "POST"))
 		construct_post_response(response, requete);
@@ -172,13 +216,14 @@ void	construct_response(Response & response, Server_config * server,
 	{
 		response.set_status_code("405");
 		response.set_status_infos("Method Not Allowed");
+		error_page(405, response, server->error_page);
 	}
 }
 
 void	process_request(Client& client,
 				const std::vector<Server_config *>& server_blocks)
 {
-
+	Response response;
 	try {
 		__D_DISPLAY("request : ");
 		__D_DISPLAY(client.getStrRequest());
@@ -189,14 +234,10 @@ void	process_request(Client& client,
 		Server_config * s = match_server(server_blocks, client.getListen(), r);
 		__D_DISPLAY("server find");
 
-		Response response;
-
 		//Construction reponse
 		construct_response(response, s, r, client);
 		//__D_DISPLAY("response :")
 		//__D_DISPLAY(*(response.get_raw()));
-		client.setResponse(response.get_raw());
-		return;
 	}
 	catch (Request::NotTerminatedException e)
 	{
@@ -209,8 +250,10 @@ void	process_request(Client& client,
 		//Requete non valide renvoyer reponse avec code erreur non valide
 		//TODO: Reponse invlaide
 		__D_DISPLAY("INVALID REQUEST");
-		return;
+		response.set_status_code("400");
+		response.set_status_infos("Bad Request");
 	}
+	client.setResponse(response.get_raw());
 }
 
 /*
