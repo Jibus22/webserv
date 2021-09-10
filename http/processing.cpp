@@ -1,7 +1,4 @@
 #include "processing.hpp"
-#include <iostream>
-#include <fstream>
-#include <string>
 
 bool	match_server_name(Server_config *server, Request & request)
 {
@@ -99,7 +96,8 @@ bool	is_methode_allowed(Location_config * location, std::string methode)
 }
 
 bool	chech_cgi(Response & response, Request & requete,
-			Server_config * server, Location_config * location)
+			Server_config * server, Location_config * location,
+			const Client& client)
 {
 	if (location == NULL)
 		return false;
@@ -108,7 +106,7 @@ bool	chech_cgi(Response & response, Request & requete,
 	{
 		if (requete.get_target().find(it->first) != std::string::npos)
 		{
-			process_cgi(response, requete, server, location, it->first);
+			process_cgi(response, requete, *location, *server, client, it->first);
 			return true;
 		}
 		it++;
@@ -148,7 +146,7 @@ void	construct_delete_response(Response & response, Request &requete)
 }
 
 void	construct_response(Response & response, Server_config * server,
-														Request & requete)
+						Request & requete, const Client& client)
 {
 	//TODO: verifier les parametres de server
 	// ...
@@ -159,7 +157,7 @@ void	construct_response(Response & response, Server_config * server,
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
 
-	if (chech_cgi(response, requete, server, location))
+	if (chech_cgi(response, requete, server, location, client))
 		return;
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
@@ -194,7 +192,7 @@ void	process_request(Client& client,
 		Response response;
 
 		//Construction reponse
-		construct_response(response, s, r);
+		construct_response(response, s, r, client);
 		//__D_DISPLAY("response :")
 		//__D_DISPLAY(*(response.get_raw()));
 		client.setResponse(response.get_raw());

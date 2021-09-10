@@ -2,17 +2,15 @@
 #define CGIENV_HPP
 
 #include "Request.hpp"
-#include "Client.hpp"
-#include "CgiMetaVar.hpp"
-#include <string>
-#include <vector>
+#include "Response.hpp"
+#include "webserv.hpp"
 
 # define METAVAR_NB 13
 
 # define SERVER_PROTOCOL 0
 # define SERVER_SOFTWARE 1
 # define GATEWAY_INTERFACE 2
-# define CONTENT_LENGHT 3
+# define CONTENT_LENGTH 3
 # define CONTENT_TYPE 4
 # define PATH_INFO 5
 # define QUERY_STRING 6
@@ -24,9 +22,10 @@
 # define PATH_TRANSLATED 12
 
 
-# define MAX_ARG 2
+# define MAX_ARG 3
 # define CGI_ROOT 0
-# define ABS_PATHINFO 1
+# define FILE_ROOT 1
+# define FILE_ARG 2
 //CgiEnv is a class made to build a CGI/1.1 environment & resolve the location
 //of the cgi in the filesystem, to be able to call execve() properly.
 //It sets meta-variables accordingly to the needs of CGI/1.1 scripts.
@@ -43,23 +42,33 @@ public:
 	CgiEnv(const Request& request,
 					const Location_config& location_block,
 					const Server_config& server_block,
-					const Client& client);
+					const Client& client,
+					const std::string& ext_cgi);
 	~CgiEnv();
 	CgiEnv&	operator=(const CgiEnv& src);
 
 	void		setMetaVar(const Request& request,
 					const Location_config& location_block,
 					const Server_config& server_block,
-					const Client& client);
+					const Client& client,
+					const std::string& ext_cgi);
 
 	char							**getEnv();
 	char							**getArgv();
 	const std::vector<std::string>&	getMV() const;
+	const std::vector<std::string>&	getArgs() const;
 
 private:
 	void		initMetaVar(void);
+	void		initTables();
+	int			setPath(const std::string& target,
+						const std::string& ext_cgi,
+						const Server_config& server_block);
+	int			mapPath(const std::string& path_info,
+						const Server_config& server_block);
 	void		setEnv(void);
-	void		setArgs(const Location_config& location_block);
+	void		setArgs(const Location_config& location_block,
+						const std::string& ext_cgi);
 	void		setArgv();
 };
 

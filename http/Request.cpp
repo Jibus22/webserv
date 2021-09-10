@@ -154,8 +154,18 @@ Request::Request(std::string const & raw_r)
 std::string const & Request::operator[] (std::string const & key_header)
 {return this->_headers[key_header];}
 
-std::string const & Request::get_header(const std::string& key_header)
-{return this->_headers[key_header];}
+std::map<std::string, std::string>::const_iterator
+		Request::get_header(const std::string& key_header, bool& found) const
+{
+	std::map<std::string, std::string>::const_iterator
+			header(_headers.find(key_header));
+
+	if (header == _headers.end())
+		found = false;
+	else
+		found = true;
+	return header;
+}
 
 std::map<std::string, std::string> const & Request::get_headers() const
 {return this->_headers;}

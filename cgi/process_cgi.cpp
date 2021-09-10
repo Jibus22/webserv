@@ -1,13 +1,17 @@
 #include "webserv.hpp"
 
-void	process_cgi(const Request& request,
+void	process_cgi(Response & response,
+					const Request& request,
 					const Location_config& location_block,
 					const Server_config& server_block,
-					const Client& client)
+					const Client& client,
+					const std::string & cgi_ext)
 {
-	CgiEnv	env(request, location_block, server_block, client);
+	CgiEnv	env(request, location_block, server_block, client, cgi_ext);
+	(void)response;
 
-	execve();
+	__D_DISPLAY(env);
+	//execve();
 }
 //int execve(const char *pathname, char *const argv[], char *const envp[]);
 

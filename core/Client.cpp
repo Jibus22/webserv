@@ -12,7 +12,13 @@ Client::Client(Client const & src) : _fd(src._fd), _listen(src._listen),
 {}
 
 Client::~Client()
-{}
+{
+	while (_qResponse.empty() == false)
+	{
+		delete _qResponse.front();
+		_qResponse.pop();
+	}
+}
 
 Client &	Client::operator=(Client const & src)
 {
@@ -52,7 +58,7 @@ void	Client::setListen(const std::pair<std::string, int>& listen)
 		{ _listen = listen; }
 void	Client::setReady(void) { _ready = true; }
 
-void	Client::setRemoteAddr(const char *remote_addr)
+void	Client::setRemoteAddr(const std::string& remote_addr)
 		{ _remote_address.assign(remote_addr); }
 
 void	Client::setRequest(const char *request, const int len)
@@ -68,7 +74,7 @@ int					Client::getFd(void) const { return _fd; }
 const std::pair<std::string, int>&
 					Client::getListen(void) const { return _listen; }
 bool				Client::isReady(void) const { return _ready; }
-const std::string&	Client::getRemoteAddress(void) const
+const std::string&	Client::getRemoteAddr(void) const
 					{ return _remote_address; }
 
 int					Client::getRequestSize(void) const

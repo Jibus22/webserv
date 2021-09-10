@@ -8,7 +8,6 @@
 
 class Client
 {
-private:
 	int							_fd;
 	std::pair<std::string, int>	_listen;
 
@@ -38,7 +37,7 @@ public:
 	void		setListen(const std::pair<std::string, int>& listen);
 	void		setReady(void);
 
-	void		setRemoteAddr(const std::string remote_addr);
+	void		setRemoteAddr(const std::string& remote_addr);
 
 	void		setRequest(const char *request, const int len);
 

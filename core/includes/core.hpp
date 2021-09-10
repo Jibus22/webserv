@@ -1,9 +1,9 @@
 #ifndef CORE_HPP
 #define CORE_HPP
 
-#include <map>
-#include "Client.hpp"
+#include "webserv.hpp"
 #include "conf.hpp"
+#include "Client.hpp"
 
 //__________________________________PROTOTYPES________________________________//
 //--network_endpoint.cpp--
