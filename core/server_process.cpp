@@ -1,19 +1,5 @@
 #include "webserv.hpp"
 
-//Set all our IP:PORT listening sockets in the kqueue so they are monitored
-//for read event
-int	monitor_network_sockets(const int kq,
-				const std::map<int, std::pair<std::string, int> > & server_map)
-{
-	for (std::map<int, std::pair<std::string, int> >::const_iterator
-			i = server_map.begin(); i != server_map.end(); i++)
-	{
-		if (add_read_event(kq, i->first))
-			return -1;
-	}
-	return 0;
-}
-
 //Check if event_fd belongs to server_map, which would means a new client
 //wanna connect
 int	check_new_connection(const int event_fd,
@@ -64,9 +50,7 @@ int	accept_new_client(const int kq, const int event_fd,
 
 //Receive new data, add it to client buffer
 //& process it (HTTP parsing + processing)
-int	read_request(const int event_fd,
-					const std::vector<Server_config*>& server_blocks,
-					std::map<int, Client>& client_map)
+int	read_request(const int event_fd, std::map<int, Client>& client_map)
 {
 	char	buf[RCV_BUF + 1];
 	ssize_t	len;
@@ -78,8 +62,6 @@ int	read_request(const int event_fd,
 
 	__D_DISPLAY(std::endl << "Client " << event_fd << ": " << len
 			<< " bytes had been read.");
-
-	process_request(client, server_blocks);
 	return 0;
 }
 
@@ -116,7 +98,7 @@ int	is_response(const int kq, const struct kevent *event,
 	std::map<int, Client>::iterator	i = client_map.find(event->ident);
 
 	if (i == client_map.end())
-		return pgm_err("send_request : oops, client should exist");
+		return pgm_err("is_response : Oops, client should exist");
 
 	if (i->second.getResponseNb() == 0)
 		return EMPTY;

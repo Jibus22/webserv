@@ -106,18 +106,19 @@ bool	is_methode_allowed(Location_config * location, std::string methode)
 	}
 }
 
-bool	check_cgi(Response & response, Request & requete,
-			Server_config * server, Location_config * location,
-			const Client& client)
+bool	check_cgi(Response& response, const Request& requete,
+			const Server_config& server, const Location_config& location,
+			const Client& client,
+			const std::map<int, Client>& client_map,
+			const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	if (location == NULL)
-		return false;
-	Config_struct::c_cgi_map::iterator it = location->cgi.begin();
-	while (it != location->cgi.end())
+	Config_struct::c_cgi_map::const_iterator it = location.cgi.begin();
+	while (it != location.cgi.end())
 	{
 		if (requete.get_target().find(it->first) != std::string::npos)
 		{
-			process_cgi(response, requete, *location, *server, client, it->first);
+			process_cgi(response, requete, location,
+					server, client, it->first, client_map, server_map);
 			return true;
 		}
 		it++;
@@ -181,7 +182,9 @@ void	construct_delete_response(Response & response, Request &requete)
 }
 
 void	construct_response(Response & response, Server_config * server,
-						Request & requete, const Client& client)
+				Request & requete, const Client& client,
+				const std::map<int, Client>& client_map,
+				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 	//TODO: verifier les parametres de server
 	//Verification Body not too big
@@ -201,8 +204,9 @@ void	construct_response(Response & response, Server_config * server,
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
 
-	if (check_cgi(response, requete, server, location, client))
-		return;
+	if (location && check_cgi(response, requete, *server, *location,
+					client, client_map, server_map))
+		return ;
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
 		construct_get_response(response, requete, server);
@@ -221,7 +225,9 @@ void	construct_response(Response & response, Server_config * server,
 }
 
 void	process_request(Client& client,
-				const std::vector<Server_config *>& server_blocks)
+				const std::vector<Server_config *>& server_blocks,
+				const std::map<int, Client>& client_map,
+				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 	Response response;
 	try {
@@ -235,7 +241,7 @@ void	process_request(Client& client,
 		__D_DISPLAY("server find");
 
 		//Construction reponse
-		construct_response(response, s, r, client);
+		construct_response(response, s, r, client, client_map, server_map);
 		//__D_DISPLAY("response :")
 		//__D_DISPLAY(*(response.get_raw()));
 	}

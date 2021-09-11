@@ -61,10 +61,9 @@ SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 #HTTP
 SRCS3 = $(addprefix $(SRCPATH3)/, Request.cpp Response.cpp processing.cpp)
 #UTILS
-SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp \
-		SiServ.cpp)
+SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp)
 #CGI
-SRCS5 = $(addprefix $(SRCPATH5)/, CgiEnv.cpp process_cgi.cpp)
+SRCS5 = $(addprefix $(SRCPATH5)/, CgiEnv.cpp process_cgi.cpp FtPipe.cpp)
 
 
 ##### OS CONDITIONNAL SRCS #####

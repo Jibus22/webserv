@@ -22,9 +22,7 @@ int		set_write_ready(const int kq, Client& client);
 int		is_response(const int kq, const struct kevent *event,
 					std::map<int, Client>& client_map);
 int		send_response(const int kq, const struct kevent *event, Client& client);
-int		read_request(const int event_fd,
-				const std::vector<Server_config*>& server_blocks,
-					std::map<int, Client>& client_map);
+int		read_request(const int event_fd, std::map<int, Client>& client_map);
 
 int		accept_new_client(const int kq, const int event_fd,
 			std::map<int, Client>& client_map,
@@ -32,9 +30,6 @@ int		accept_new_client(const int kq, const int event_fd,
 
 int		check_new_connection(const int event_fd,
 			const std::map<int, std::pair<std::string, int> >& server_map);
-
-int		monitor_network_sockets(const int kq,
-				const std::map<int, std::pair<std::string, int> > & server_map);
 
 
 #endif
