@@ -133,7 +133,7 @@ bool	check_cgi(Response & response, Request & requete,
 #include <vector>
 #include <dirent.h>
 
-bool is_dir(std::string path)
+bool is_dir(const std::string path)
 {
 	DIR *dir;
 
@@ -145,14 +145,41 @@ bool is_dir(std::string path)
 		return false;
 }
 
+void	handle_index(std::string & target,
+			const Config_struct::c_index_vector & index)
+{
+	std::ifstream		file;
+/*
+	file.open(target.c_str() + 1);
+	if (file.fail() == false)
+		return;
+*/
+	__D_DISPLAY("DIRECTORY");
+	Config_struct::c_index_vector::const_iterator it = index.begin();
+	std::string path;
+	while (it != index.end())
+	{
+		path = target;
+		path.append((*it));
+		file.open(path.c_str() + 1);
+		if (file.fail() == false)
+		{
+			target = path;
+			return;
+		}
+		it++;
+	}
+}
+
+
 
 void	construct_get_response(Response & response, Request &requete,
-						Server_config * server)
+						Server_config * server, Location_config * location)
 {
 	std::string content;
 
 	if (is_dir(requete.get_target()))
-	{	__D_DISPLAY("DIRECTORY !!!");}
+		handle_index(requete.get_target(), location->index);
 	if (get_file_content(requete.get_target(), content))
 	{
 		response.set_status_code("200");
@@ -207,7 +234,7 @@ void	construct_response(Response & response, Server_config * server,
 		return;
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
-		construct_get_response(response, requete, server);
+		construct_get_response(response, requete, server, location);
 	else if (requete.get_method() == "POST" &&
 			is_methode_allowed(location, "POST"))
 		construct_post_response(response, requete);
