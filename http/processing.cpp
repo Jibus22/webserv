@@ -149,7 +149,10 @@ void	handle_root(std::string & target, Location_config * location)
 	if (location == NULL || location->root == "")
 		return;
 	target.erase(0 , location->uri.size());
-	target.insert(0, location->root + "/");
+	if (location->root[location->root.size()] == '/')
+		target.insert(0, location->root);
+	else
+		target.insert(0, location->root + "/");
 }
 
 void	handle_index(std::string & target,
@@ -168,7 +171,7 @@ void	handle_index(std::string & target,
 	{
 		path = target;
 		path.append((*it));
-		file.open(path.c_str();
+		file.open(path.c_str());
 		if (file.fail() == false)
 		{
 			target = path;
