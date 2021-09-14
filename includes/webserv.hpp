@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
+#include <signal.h>
 #include <utility>
 #include <iostream>
 #include <fstream>

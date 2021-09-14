@@ -14,5 +14,6 @@ void	close_client_sockets(const std::map<int, Client>& client_map);
 
 std::vector<Server_config *>	*get_servers_simulation();
 
+long	get_timestamp(const struct timeval& tv_start);
 
 #endif

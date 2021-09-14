@@ -1,19 +1,21 @@
 #include "webserv.hpp"
 
-int		wait_cgi_status(const pid_t c_pid)
-{
-	pid_t	w_pid;
-	int		status, ret = 0;
+#define PIPE_BUFTMP 16//temporary, for testing
 
-	w_pid = waitpid(c_pid, &status, 0);
-	if (WIFEXITED(status))
+#define CGI_TIME_LIMIT 100 //to set in macros.hpp later. time in ms.
+
+int		cgi_exit_status(const int& status)
+{
+	int	ret = 0;
+
+	if (WIFEXITED(status))//option nohang avec un while, pour timestamp?
 	{
 		ret = WEXITSTATUS(status); 
 		if (ret == EXIT_FAILURE)
 			std::cerr << "Oops, cgi exited with error: " << ret << std::endl;
 		else if (ret == EXIT_SUCCESS)
 		{
-			__D_DISPLAY("CGI SUCCESS: " << ret << ", read & process response.");
+			__D_DISPLAY("CGI SUCCESS: " << ret << ", we can process response.");
 		}
 		else
 			std::cout << "Cgi exited with status: "
@@ -28,14 +30,61 @@ int		wait_cgi_status(const pid_t c_pid)
 	return ret;
 }
 
-int		read_cgi_output(const FtPipe& rx)
+bool	is_child_slow(const struct timeval& tv, const pid_t c_pid)
 {
-	char	buf[801];
-	int		ret;
+	if (get_timestamp(tv) > CGI_TIME_LIMIT)
+	{
+		kill(c_pid, SIGTERM);
+		usleep(500);
+		return true;
+	}
+	return false;
+}
 
-	ret = read(rx.read, buf, 800);
-	buf[ret] = 0;
-	std::cout << "READ BUF:\n" << buf << std::endl;
+//WNOHANG flag to waitpid() permits us to read pipe in real time while the child
+//is writing into it. It permits to avoid either a blocking write from the
+//script side, or a loss of data.
+int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
+					std::string& cgi_out)
+{
+	struct timeval	tv;
+	pid_t			w_pid;
+	int				status, ret = 1;
+	char			buf[PIPE_BUFTMP];
+
+	if (gettimeofday(&tv, NULL) == -1)
+		return pgm_perr("gettimeofday");
+	while ((w_pid = waitpid(c_pid, &status, WNOHANG)) == 0)
+	{
+		if (is_child_slow(tv, c_pid))
+			break ;
+		while (ret > 0)
+		{
+			if (is_child_slow(tv, c_pid))
+				break ;
+			ret = read(rx.read, buf, PIPE_BUFTMP - 1);
+			if (ret == -1)
+				return pgm_perr("read");
+			buf[ret] = 0;
+			cgi_out.append(buf);
+		}
+	}
+	close(rx.read);
+	if (w_pid == -1)
+		return pgm_perr("waitpid");
+	return cgi_exit_status(status);
+}
+
+//macosx: PIPE_BUF == 512
+//This is the POSIX length of a pipe message which is guaranteed to not be mixed
+//with other write operation from other threads. It is called 'atomic write'
+int		write_to_child()
+{
+	return 0;
+}
+
+int		process_output()
+{
 	return 0;
 }
 
@@ -48,15 +97,15 @@ int		process_cgi(Response & response,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	pid_t	c_pid;
-	int		ret;
-	CgiEnv	env(request, location_block, server_block, client, cgi_ext);
-	FtPipe	tx, rx;
-	(void)response;
+	CgiEnv		env(request, location_block, server_block, client, cgi_ext);
+	std::string	*cgi_out = new std::string();
+	pid_t		c_pid;
+	int			ret;
+	FtPipe		tx, rx;
 
+	(void)response;
 	__D_DISPLAY(env);
 
-	//créer des pipes
 	if (tx.isPipeError() || rx.isPipeError())
 		return pgm_perr("pipe");
 	c_pid = fork();
@@ -80,10 +129,14 @@ int		process_cgi(Response & response,
 	{
 		close(tx.read);
 		close(rx.write);
-		ret = wait_cgi_status(c_pid);
+		write_to_child();
+		//si il y a un body, l'écrire dans le pipe puis close tx.write
+		ret = read_cgi_output(c_pid, rx, *cgi_out);
+		__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
 		if (ret == EXIT_SUCCESS)
-			read_cgi_output(rx);
+			process_output();
 	}
+	delete cgi_out;
 	return 0;
 }
 //int execve(const char *pathname, char *const argv[], char *const envp[]);

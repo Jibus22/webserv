@@ -57,6 +57,7 @@ int	read_request(const int event_fd, std::map<int, Client>& client_map)
 	Client&	client = client_map[event_fd];
 
 	len = recv(event_fd, buf, RCV_BUF, 0);
+	//checker erreur -1
 	buf[len] = 0;
 	client.setRequest(buf, len);
 
