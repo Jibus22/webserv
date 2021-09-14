@@ -155,8 +155,7 @@ void	handle_root(std::string & target, Location_config * location)
 		target.insert(0, location->root + "/");
 }
 
-void	handle_index(std::string & target,
-			const Config_struct::c_index_vector & index)
+void	handle_index(std::string & target, Location_config * location)
 {
 	std::ifstream		file;
 /*
@@ -165,9 +164,11 @@ void	handle_index(std::string & target,
 		return;
 */
 	__D_DISPLAY("DIRECTORY");
-	Config_struct::c_index_vector::const_iterator it = index.begin();
+	if (location == NULL)
+		return;
+	Config_struct::c_index_vector::const_iterator it = location->index.begin();
 	std::string path;
-	while (it != index.end())
+	while (it != location->index.end())
 	{
 		path = target;
 		path.append((*it));
@@ -189,7 +190,7 @@ void	construct_get_response(Response & response, Request &requete,
 	std::string content;
 
 	if (is_dir(requete.get_target()))
-		handle_index(requete.get_target(), location->index);
+		handle_index(requete.get_target(), location);
 	if (get_file_content(requete.get_target(), content))
 	{
 		response.set_status_code("200");
