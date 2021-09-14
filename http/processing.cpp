@@ -144,6 +144,14 @@ bool is_dir(const std::string path)
 		return false;
 }
 
+void	handle_root(std::string & target, Location_config * location)
+{
+	if (location == NULL || location->root == "")
+		return;
+	target.erase(0 , location->uri.size());
+	target.insert(0, location->root + "/");
+}
+
 void	handle_index(std::string & target,
 			const Config_struct::c_index_vector & index)
 {
@@ -230,6 +238,8 @@ void	construct_response(Response & response, Server_config * server,
 												requete.get_target());
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
+
+	handle_root(requete.get_target(), location);
 
 	if (location && check_cgi(response, requete, *server, *location,
 					client, client_map, server_map))
