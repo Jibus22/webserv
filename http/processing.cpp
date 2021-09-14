@@ -50,7 +50,7 @@ bool	get_file_content(std::string const & path, std::string & content)
 	std::ifstream		file;
 	std::string			line;
 
-	file.open(path.c_str() + 1);
+	file.open(path.c_str());
 	if (file.fail() == true)
 		return false;
 	while (std::getline(file, line))
@@ -136,7 +136,7 @@ bool is_dir(const std::string path)
 {
 	DIR *dir;
 
-    if ((dir = opendir(path.c_str() + 1)) != nullptr) {
+    if ((dir = opendir(path.c_str())) != nullptr) {
         closedir (dir);
 		return 1;
     }
@@ -157,7 +157,7 @@ void	handle_index(std::string & target,
 {
 	std::ifstream		file;
 /*
-	file.open(target.c_str() + 1);
+	file.open(target.c_str());
 	if (file.fail() == false)
 		return;
 */
@@ -168,7 +168,7 @@ void	handle_index(std::string & target,
 	{
 		path = target;
 		path.append((*it));
-		file.open(path.c_str() + 1);
+		file.open(path.c_str();
 		if (file.fail() == false)
 		{
 			target = path;
