@@ -106,7 +106,8 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 	while (it != locations.end())
 	{
 		location = *it;
-		if((target.compare(0, location->uri.size(), location->uri)) == 0)
+		if((target.compare(0, location->uri.size(), location->uri)) == 0) &&
+			(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
 			return location;
 		it++;
 	}
@@ -174,7 +175,10 @@ void	handle_root(std::string & target, Location_config * location)
 {
 	if (location == NULL || location->root == "")
 		return;
-	target.erase(0 , location->uri.size());
+	if (target[location->uri.size() + 1] == '/')
+		target.erase(0 , location->uri.size() + 1);
+	else
+		target.erase(0 , location->uri.size());
 	if (location->root[location->root.size()] == '/')
 		target.insert(0, location->root);
 	else
@@ -269,11 +273,12 @@ void	construct_response(Response & response, Server_config * server,
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
 
-	handle_root(requete.get_target(), location);
-
 	if (location && check_cgi(response, requete, *server, *location,
 					client, client_map, server_map))
 		return ;
+
+	handle_root(requete.get_target(), location);
+
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
 		construct_get_response(response, requete, server, location);
