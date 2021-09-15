@@ -1,5 +1,31 @@
 #include "processing.hpp"
 
+unsigned long	terminated_request(std::string  const & request)
+{
+	size_t pos_body = request.find("\r\n\r\n");
+	if (pos_body == std::string::npos)
+		return 0;
+	//TODO: Content length ou cOnTent_LeNgtH
+	size_t pos_content_length = request.find("Content-Length:");
+	if (pos_content_length == std::string::npos)
+	{
+		__D_DISPLAY(pos_body);
+		//TODO : regarder si il y a quand meme un body et si oui erreur
+		return pos_body + 4;
+	}
+	if (pos_content_length > pos_body)
+		return 0;
+	size_t pos_after_content_length = request.find("\n", pos_content_length);
+	if (pos_after_content_length == std::string::npos)
+		return 0;// TODO: Regarder si cela peux arriver et quoi renvoyer
+	std::string string_length = request.substr(pos_content_length + 15 ,
+		pos_after_content_length);
+	std::stringstream ss(string_length);
+	unsigned long length;
+	ss >> length;
+	return length;
+}
+
 bool	match_server_name(Server_config *server, Request & request)
 {
 	Config_struct::c_name_vector::iterator it = server->name_serv.begin();
@@ -80,7 +106,8 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 	while (it != locations.end())
 	{
 		location = *it;
-		if((target.compare(0, location->uri.size(), location->uri)) == 0)
+		if((target.compare(0, location->uri.size(), location->uri) == 0))// &&
+//(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
 			return location;
 		it++;
 	}
@@ -148,7 +175,10 @@ void	handle_root(std::string & target, Location_config * location)
 {
 	if (location == NULL || location->root == "")
 		return;
-	target.erase(0 , location->uri.size());
+	if (target[location->uri.size() + 1] == '/')
+		target.erase(0 , location->uri.size() + 1);
+	else
+		target.erase(0 , location->uri.size());
 	if (location->root[location->root.size()] == '/')
 		target.insert(0, location->root);
 	else
@@ -243,11 +273,12 @@ void	construct_response(Response & response, Server_config * server,
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
 
-	handle_root(requete.get_target(), location);
-
 	if (location && check_cgi(response, requete, *server, *location,
 					client, client_map, server_map))
 		return ;
+
+	handle_root(requete.get_target(), location);
+
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
 		construct_get_response(response, requete, server, location);
@@ -270,6 +301,13 @@ void	process_request(Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
+	unsigned long len_request;
+	if ((len_request = terminated_request(client.getStrRequest())) == 0)
+	{
+		__D_DISPLAY("Rejected not terminated");
+		return;
+	}
+
 	Response response;
 	try {
 		__D_DISPLAY("request : ");
@@ -301,6 +339,7 @@ void	process_request(Client& client,
 		response.set_status_infos("Bad Request");
 	}
 	client.setResponse(response.get_raw());
+	client.truncateRequest(len_request);
 }
 
 /*
