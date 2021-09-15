@@ -37,6 +37,7 @@ public:
 	std::map<std::string, std::string> const & get_headers() const;
 	std::string const & get_method() const;
 	std::string const & get_target() const;
+	std::string & get_target();
 	std::string const & get_version() const;
 	std::string const & get_body() const;
 

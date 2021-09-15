@@ -50,7 +50,7 @@ bool	get_file_content(std::string const & path, std::string & content)
 	std::ifstream		file;
 	std::string			line;
 
-	file.open(path.c_str() + 1);
+	file.open(path.c_str());
 	if (file.fail() == true)
 		return false;
 	while (std::getline(file, line))
@@ -132,11 +132,11 @@ bool	check_cgi(Response& response, const Request& requete,
 #include <vector>
 #include <dirent.h>
 
-bool is_dir(std::string path)
+bool is_dir(const std::string path)
 {
 	DIR *dir;
 
-    if ((dir = opendir(path.c_str() + 1)) != nullptr) {
+    if ((dir = opendir(path.c_str())) != nullptr) {
         closedir (dir);
 		return 1;
     }
@@ -144,14 +144,53 @@ bool is_dir(std::string path)
 		return false;
 }
 
+void	handle_root(std::string & target, Location_config * location)
+{
+	if (location == NULL || location->root == "")
+		return;
+	target.erase(0 , location->uri.size());
+	if (location->root[location->root.size()] == '/')
+		target.insert(0, location->root);
+	else
+		target.insert(0, location->root + "/");
+}
+
+void	handle_index(std::string & target, Location_config * location)
+{
+	std::ifstream		file;
+/*
+	file.open(target.c_str());
+	if (file.fail() == false)
+		return;
+*/
+	__D_DISPLAY("DIRECTORY");
+	if (location == NULL)
+		return;
+	Config_struct::c_index_vector::const_iterator it = location->index.begin();
+	std::string path;
+	while (it != location->index.end())
+	{
+		path = target;
+		path.append((*it));
+		file.open(path.c_str());
+		if (file.fail() == false)
+		{
+			target = path;
+			return;
+		}
+		it++;
+	}
+}
+
+
 
 void	construct_get_response(Response & response, Request &requete,
-						Server_config * server)
+						Server_config * server, Location_config * location)
 {
 	std::string content;
 
 	if (is_dir(requete.get_target()))
-	{	__D_DISPLAY("DIRECTORY !!!");}
+		handle_index(requete.get_target(), location);
 	if (get_file_content(requete.get_target(), content))
 	{
 		response.set_status_code("200");
@@ -204,12 +243,14 @@ void	construct_response(Response & response, Server_config * server,
 	if (location)
 	{__D_DISPLAY("location matched : " << location->uri);}
 
+	handle_root(requete.get_target(), location);
+
 	if (location && check_cgi(response, requete, *server, *location,
 					client, client_map, server_map))
 		return ;
 	//check la conf location
 	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
-		construct_get_response(response, requete, server);
+		construct_get_response(response, requete, server, location);
 	else if (requete.get_method() == "POST" &&
 			is_methode_allowed(location, "POST"))
 		construct_post_response(response, requete);

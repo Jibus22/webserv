@@ -173,5 +173,6 @@ std::map<std::string, std::string> const & Request::get_headers() const
 
 std::string const & Request::get_method() const {return this->_method;}
 std::string const & Request::get_target() const {return this->_target;}
+std::string & Request::get_target() {return this->_target;}
 std::string const & Request::get_version() const {return this->_version;}
 std::string const & Request::get_body() const {return this->_body;}
