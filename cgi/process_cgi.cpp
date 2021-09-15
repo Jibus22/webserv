@@ -4,6 +4,8 @@
 
 #define CGI_TIME_LIMIT 500 //to set in macros.hpp later. time in ms.
 
+#define WRITE_BUF 10
+
 int		cgi_exit_status(const int& status)
 {
 	int	ret = 0;
@@ -60,6 +62,7 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 			break ;
 		while (ret > 0)
 		{
+			__D_DISPLAY("into read");
 			if (is_child_slow(tv, c_pid))
 				break ;
 			ret = read(rx.read, buf, PIPE_BUFTMP - 1);
@@ -78,8 +81,24 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 //macosx: PIPE_BUF == 512
 //This is the POSIX length of a pipe message which is guaranteed to not be mixed
 //with other write operation from other threads. It is called 'atomic write'
-int		write_to_child()
+int		write_to_child(const std::string& body, const FtPipe& tx)
 {
+	std::string::const_pointer	buf;
+	ssize_t						ret = 1;
+
+	if (body.empty())
+		return 1;
+	__D_DISPLAY("WRITETOCHILD body: " << body);
+	buf = body.data();
+	while (ret > 0)
+	{
+		__D_DISPLAY("into write");
+		ret = write(tx.write, buf, WRITE_BUF);
+		if (ret == -1)
+			return pgm_perr("write");
+		buf += ret;
+	}
+	close(tx.write);
 	return 0;
 }
 
@@ -117,6 +136,7 @@ int		process_cgi(Response & response,
 		close_client_sockets(client_map);
 		tx.hijackStdinReadPipe();
 		rx.hijackStdoutWritePipe();
+		//usleep(500);//wait for the parent to write into tx.write pipe
 		ret = execve((env.getArgv())[0], env.getArgv(), env.getEnv());
 		if (ret == -1)
 		{
@@ -129,7 +149,7 @@ int		process_cgi(Response & response,
 	{
 		close(tx.read);
 		close(rx.write);
-		write_to_child();
+		write_to_child(request.get_body(), tx);
 		//si il y a un body, l'écrire dans le pipe puis close tx.write
 		ret = read_cgi_output(c_pid, rx, *cgi_out);
 		__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
