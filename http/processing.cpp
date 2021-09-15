@@ -106,8 +106,8 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 	while (it != locations.end())
 	{
 		location = *it;
-		if((target.compare(0, location->uri.size(), location->uri)) == 0) &&
-			(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
+		if((target.compare(0, location->uri.size(), location->uri) == 0))// &&
+//(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
 			return location;
 		it++;
 	}
