@@ -2,7 +2,7 @@
 
 #define PIPE_BUFTMP 16//temporary, for testing
 
-#define CGI_TIME_LIMIT 100 //to set in macros.hpp later. time in ms.
+#define CGI_TIME_LIMIT 500 //to set in macros.hpp later. time in ms.
 
 int		cgi_exit_status(const int& status)
 {
@@ -35,7 +35,7 @@ bool	is_child_slow(const struct timeval& tv, const pid_t c_pid)
 	if (get_timestamp(tv) > CGI_TIME_LIMIT)
 	{
 		kill(c_pid, SIGTERM);
-		usleep(500);
+		usleep(1000);
 		return true;
 	}
 	return false;
