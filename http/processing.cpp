@@ -1,5 +1,31 @@
 #include "processing.hpp"
 
+unsigned long	terminated_request(std::string  const & request)
+{
+	size_t pos_body = request.find("\r\n\r\n");
+	if (pos_body == std::string::npos)
+		return 0;
+	//TODO: Content length ou cOnTent_LeNgtH
+	size_t pos_content_length = request.find("Content-Length:");
+	if (pos_content_length == std::string::npos)
+	{
+		__D_DISPLAY(pos_body);
+		//TODO : regarder si il y a quand meme un body et si oui erreur
+		return pos_body + 4;
+	}
+	if (pos_content_length > pos_body)
+		return 0;
+	size_t pos_after_content_length = request.find("\n", pos_content_length);
+	if (pos_after_content_length == std::string::npos)
+		return 0;// TODO: Regarder si cela peux arriver et quoi renvoyer
+	std::string string_length = request.substr(pos_content_length + 15 ,
+		pos_after_content_length);
+	std::stringstream ss(string_length);
+	unsigned long length;
+	ss >> length;
+	return length;
+}
+
 bool	match_server_name(Server_config *server, Request & request)
 {
 	Config_struct::c_name_vector::iterator it = server->name_serv.begin();
@@ -270,6 +296,13 @@ void	process_request(Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
+	unsigned long len_request;
+	if ((len_request = terminated_request(client.getStrRequest())) == 0)
+	{
+		__D_DISPLAY("Rejected not terminated");
+		return;
+	}
+
 	Response response;
 	try {
 		__D_DISPLAY("request : ");
@@ -301,6 +334,7 @@ void	process_request(Client& client,
 		response.set_status_infos("Bad Request");
 	}
 	client.setResponse(response.get_raw());
+	client.truncateRequest(len_request);
 }
 
 /*
