@@ -15,6 +15,7 @@ struct Location_config
 	typedef Config_struct::c_error_map				c_error_map;
 	typedef Config_struct::c_cgi_map				c_cgi_map;
 	typedef Config_struct::c_index_vector			c_index_vector;
+	typedef Config_struct::p_return					p_return;
 
 //------------------> VARIABLE <-------------------
 	c_methode_vector		methode;
@@ -24,6 +25,7 @@ struct Location_config
 	std::string				uri;
 	std::string				upload_dir;
 
+	p_return				return_p;
 	bool					auto_index;
 };
 
