@@ -105,9 +105,50 @@ int		write_to_child(const std::string& body, const FtPipe& tx)
 	return 0;
 }
 
-int		process_output()
+int		process_cgi_out(const std::string& cgi_out)
 {
+	(void)cgi_out;
 	return 0;
+}
+
+void	exec_cgi_script(CgiEnv& env, FtPipe& rx, FtPipe& tx,
+				const std::map<int, Client>& client_map,
+				const std::map<int, std::pair<std::string, int> >& server_map)
+{
+	int	ret;
+
+	close_server_sockets(server_map);
+	close_client_sockets(client_map);
+	tx.hijackStdinReadPipe();
+	rx.hijackStdoutWritePipe();
+	//usleep(500);//wait for the parent to write into tx.write pipe
+	ret = execve((env.getArgv())[0], env.getArgv(), env.getEnv());
+	if (ret == -1)
+	{
+		perror("execve");
+		exit(EXIT_FAILURE);
+	}
+	std::cerr << "iNtO fOrK AfTer eXeCvE & ExIt, sHouLDnT bE prInTEd"
+		<< std::endl;
+}
+
+int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
+				const Request& request)
+{
+	std::string	*cgi_out = new std::string();
+	int			ret;
+
+	close(tx.read);
+	close(rx.write);
+	write_to_child(request.get_body(), tx);
+	ret = read_cgi_output(c_pid, rx, *cgi_out);
+	__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
+	if (ret == EXIT_SUCCESS)
+		process_cgi_out(*cgi_out);
+	else
+		cgi_out->assign("HTTP/1.1 500 Internal Server Error");
+	client.setResponse(cgi_out);
+	return ret;
 }
 
 int		process_cgi(Response & response,
@@ -120,7 +161,6 @@ int		process_cgi(Response & response,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 	CgiEnv		env(request, location_block, server_block, client, cgi_ext);
-	std::string	*cgi_out = new std::string();
 	pid_t		c_pid;
 	int			ret = 0;
 	FtPipe		tx, rx;
@@ -135,34 +175,11 @@ int		process_cgi(Response & response,
 		return pgm_perr("fork");
 	else if (c_pid == 0)//child
 	{
-		close_server_sockets(server_map);
-		close_client_sockets(client_map);
-		tx.hijackStdinReadPipe();
-		rx.hijackStdoutWritePipe();
-		//usleep(500);//wait for the parent to write into tx.write pipe
-		ret = execve((env.getArgv())[0], env.getArgv(), env.getEnv());
-		if (ret == -1)
-		{
-			perror("execve");
-			exit(EXIT_FAILURE);
-		}
-		std::cerr << "iNtO fOrK AfTer eXeCvE & ExIt, sHouLDnT bE prInTEd"
-			<< std::endl;
+		exec_cgi_script(env, rx, tx, client_map, server_map);
 	}
 	else
 	{
-		close(tx.read);
-		close(rx.write);
-		write_to_child(request.get_body(), tx);
-		ret = read_cgi_output(c_pid, rx, *cgi_out);
-		__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
-		if (ret == EXIT_SUCCESS)
-		{
-			process_output();
-			client.setResponse(cgi_out);
-		}
-		else
-			delete cgi_out;
+		ret = write_read_cgi(rx, tx, c_pid, client, request);
 	}
 	return ret;
 }
