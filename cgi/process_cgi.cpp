@@ -92,7 +92,7 @@ int		write_to_child(const std::string& body, const FtPipe& tx)
 	buf = body.data();
 	while (ret > 0)
 	{
-		__D_DISPLAY("into write");
+		//__D_DISPLAY("into write");
 		ret = write(tx.write, buf, WRITE_BUF);
 		if (ret == -1)
 			return pgm_perr("write");

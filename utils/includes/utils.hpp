@@ -15,5 +15,8 @@ void	close_client_sockets(const std::map<int, Client>& client_map);
 std::vector<Server_config *>	*get_servers_simulation();
 
 long	get_timestamp(const struct timeval& tv_start);
+int		ft_string_to_nb(const std::string& value);
+
+size_t	find_nocase_header(const std::string& str, const std::string& header);
 
 #endif

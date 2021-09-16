@@ -31,5 +31,6 @@ int		accept_new_client(const int kq, const int event_fd,
 int		check_new_connection(const int event_fd,
 			const std::map<int, std::pair<std::string, int> >& server_map);
 
+int		is_valid_request(Client& client);
 
 #endif

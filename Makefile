@@ -54,7 +54,7 @@ endif
 ##### SRCS #####
 #CORE
 SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp Client.cpp \
-	   server_process.cpp)
+	   server_process.cpp is_valid_request.cpp)
 #CONF
 SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 		Location_config.cpp Server_config.cpp)
@@ -62,7 +62,7 @@ SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 SRCS3 = $(addprefix $(SRCPATH3)/, Request.cpp Response.cpp processing.cpp)
 #UTILS
 SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp \
-		utils.cpp)
+		utils.cpp find_nocase_header.cpp)
 #CGI
 SRCS5 = $(addprefix $(SRCPATH5)/, CgiEnv.cpp process_cgi.cpp FtPipe.cpp)
 

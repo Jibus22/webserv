@@ -20,5 +20,9 @@
 # define EMPTY 2
 # define READY 1
 
+# define VALID_REQUEST 0
+# define INCOMPLETE_REQUEST 1
+# define CORRUPT_REQUEST 2
+
 
 #endif

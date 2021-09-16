@@ -148,8 +148,14 @@ Request::Request(std::string const & raw_r)
 	}
 
 	//check si body est fini sinon NotTerminatedException
+	/*
 	if (!this->_body.empty())
 		this->checkTerminatedBody();
+		*/
+	//Matéo, cette fonction  ^ me renvoie une exception alors que ça devrait pas
+	//Du coup je l'ai commentée pour le moment. Si j'ai bien lu le code
+	//il m e semble que cette vérification est déjà faie desormais dans mon
+	//pré-parsing
 }
 
 std::string const & Request::operator[] (std::string const & key_header)

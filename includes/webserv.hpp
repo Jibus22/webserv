@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <ctype.h>
 #include <utility>
 #include <iostream>
 #include <fstream>

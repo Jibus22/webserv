@@ -301,13 +301,16 @@ void	process_request(Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
+	/*
 	unsigned long len_request;
 	if ((len_request = terminated_request(client.getStrRequest())) == 0)
 	{
 		__D_DISPLAY("Rejected not terminated");
 		return;
 	}
+	*/
 
+	size_t	len_request = (client.getStrRequest()).size();//TMP!
 	Response response;
 	try {
 		__D_DISPLAY("request : ");

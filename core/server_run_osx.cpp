@@ -36,8 +36,9 @@ static int	run_server(const int kq,
 			else if (eventlist[i].filter == EVFILT_READ)//2.
 			{
 				read_request(event_fd, *client_map);
-				process_request((*client_map)[event_fd], server_blocks,
-						*client_map, server_map);
+				if (is_valid_request((*client_map)[event_fd]) == VALID_REQUEST)
+					process_request((*client_map)[event_fd], server_blocks,
+							*client_map, server_map);
 			}
 			if (is_response(kq, &(eventlist[i]), *client_map) == 0)
 			{
