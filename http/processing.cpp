@@ -135,7 +135,7 @@ bool	is_methode_allowed(Location_config * location, std::string methode)
 
 bool	check_cgi(Response& response, const Request& requete,
 			const Server_config& server, const Location_config& location,
-			const Client& client,
+			Client& client,
 			const std::map<int, Client>& client_map,
 			const std::map<int, std::pair<std::string, int> >& server_map)
 {
@@ -251,7 +251,7 @@ void	construct_delete_response(Response & response, Request &requete)
 }
 
 void	construct_response(Response & response, Server_config * server,
-				Request & requete, const Client& client,
+				Request & requete, Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {

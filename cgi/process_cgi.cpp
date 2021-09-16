@@ -62,7 +62,6 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 			break ;
 		while (ret > 0)
 		{
-			__D_DISPLAY("into read");
 			if (is_child_slow(tv, c_pid))
 				break ;
 			ret = read(rx.read, buf, PIPE_BUFTMP - 1);
@@ -81,22 +80,26 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 //macosx: PIPE_BUF == 512
 //This is the POSIX length of a pipe message which is guaranteed to not be mixed
 //with other write operation from other threads. It is called 'atomic write'
+//but I don't use it here. hohoho.
 int		write_to_child(const std::string& body, const FtPipe& tx)
 {
 	std::string::const_pointer	buf;
-	ssize_t						ret = 1;
+	ssize_t						ret = 1, body_len = body.size();
 
-	if (body.empty())
-		return 1;
 	__D_DISPLAY("WRITETOCHILD body: " << body);
 	buf = body.data();
-	while (ret > 0)
+	while (body_len > 0)
 	{
-		//__D_DISPLAY("into write");
-		ret = write(tx.write, buf, WRITE_BUF);
+		ret = write(tx.write, buf, body_len);
 		if (ret == -1)
 			return pgm_perr("write");
-		buf += ret;
+		if (ret < body_len)
+		{
+			body_len -= ret;
+			buf += ret;
+		}
+		else
+			break;
 	}
 	close(tx.write);
 	return 0;
@@ -111,7 +114,7 @@ int		process_cgi(Response & response,
 				const Request& request,
 				const Location_config& location_block,
 				const Server_config& server_block,
-				const Client& client,
+				Client& client,
 				const std::string& cgi_ext,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
@@ -119,7 +122,7 @@ int		process_cgi(Response & response,
 	CgiEnv		env(request, location_block, server_block, client, cgi_ext);
 	std::string	*cgi_out = new std::string();
 	pid_t		c_pid;
-	int			ret;
+	int			ret = 0;
 	FtPipe		tx, rx;
 
 	(void)response;
@@ -143,21 +146,25 @@ int		process_cgi(Response & response,
 			perror("execve");
 			exit(EXIT_FAILURE);
 		}
-		__D_DISPLAY("iNtO fOrK AfTer eXeCvE & ExIt, sHouLDnT bE prInTEd");
+		std::cerr << "iNtO fOrK AfTer eXeCvE & ExIt, sHouLDnT bE prInTEd"
+			<< std::endl;
 	}
 	else
 	{
 		close(tx.read);
 		close(rx.write);
 		write_to_child(request.get_body(), tx);
-		//si il y a un body, l'écrire dans le pipe puis close tx.write
 		ret = read_cgi_output(c_pid, rx, *cgi_out);
 		__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
 		if (ret == EXIT_SUCCESS)
+		{
 			process_output();
+			client.setResponse(cgi_out);
+		}
+		else
+			delete cgi_out;
 	}
-	delete cgi_out;
-	return 0;
+	return ret;
 }
 //int execve(const char *pathname, char *const argv[], char *const envp[]);
 
