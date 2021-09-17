@@ -12,7 +12,10 @@ first_name = form.getvalue('first_name')
 last_name  = form.getvalue('last_name')
 
 
-print 'Content-type:text/html\r\n\r\n'
+print 'HTTP/1.1 200'
+print 'ContEnt-tYpe: text/html\r\n\r\n'
+#print 'LoCatIon:/Bim/Bam/Boumm\r\n\r\n'
+#print 'LoCatIon:http://Bim/Bam/Boumm\r\n\r\n'
 print '<html>'
 print '<head>'
 print '<title>Hello World - First CGI Program</title>'

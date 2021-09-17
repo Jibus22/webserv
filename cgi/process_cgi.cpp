@@ -1,11 +1,5 @@
 #include "webserv.hpp"
 
-#define PIPE_BUFTMP 16//temporary, for testing
-
-#define CGI_TIME_LIMIT 500 //to set in macros.hpp later. time in ms.
-
-#define WRITE_BUF 10
-
 int		cgi_exit_status(const int& status)
 {
 	int	ret = 0;
@@ -52,7 +46,7 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 	struct timeval	tv;
 	pid_t			w_pid;
 	int				status, ret = 1;
-	char			buf[PIPE_BUFTMP];
+	char			buf[CGI_RD_BUF_LEN];
 
 	if (gettimeofday(&tv, NULL) == -1)
 		return pgm_perr("gettimeofday");
@@ -64,7 +58,7 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 		{
 			if (is_child_slow(tv, c_pid))
 				break ;
-			ret = read(rx.read, buf, PIPE_BUFTMP - 1);
+			ret = read(rx.read, buf, CGI_RD_BUF_LEN - 1);
 			if (ret == -1)
 				return pgm_perr("read");
 			buf[ret] = 0;
@@ -105,12 +99,6 @@ int		write_to_child(const std::string& body, const FtPipe& tx)
 	return 0;
 }
 
-int		process_cgi_out(const std::string& cgi_out)
-{
-	(void)cgi_out;
-	return 0;
-}
-
 void	exec_cgi_script(CgiEnv& env, FtPipe& rx, FtPipe& tx,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
@@ -136,19 +124,23 @@ int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 				const Request& request)
 {
 	std::string	*cgi_out = new std::string();
-	int			ret;
+	int			cgi_exit, cgi_status = CGI_SUCCESS;
 
 	close(tx.read);
 	close(rx.write);
 	write_to_child(request.get_body(), tx);
-	ret = read_cgi_output(c_pid, rx, *cgi_out);
+	cgi_exit = read_cgi_output(c_pid, rx, *cgi_out);
 	__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
-	if (ret == EXIT_SUCCESS)
-		process_cgi_out(*cgi_out);
+	if (cgi_exit == EXIT_SUCCESS)
+		cgi_status = cgi_output(*cgi_out);
 	else
 		cgi_out->assign("HTTP/1.1 500 Internal Server Error");
+	if (cgi_status == CGI_ERR)
+		cgi_out->assign("HTTP/1.1 500 Internal Server Error");
+	else if (cgi_status == CGI_REDIRECT)
+		return CGI_REDIRECT;
 	client.setResponse(cgi_out);
-	return ret;
+	return cgi_status;
 }
 
 int		process_cgi(Response & response,

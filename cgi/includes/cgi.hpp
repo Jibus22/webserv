@@ -14,4 +14,6 @@ int		process_cgi(Response & response,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map);
 
+int		cgi_output(std::string& cgi_out);
+
 #endif
