@@ -80,7 +80,7 @@ int		write_to_child(const std::string& body, const FtPipe& tx)
 	std::string::const_pointer	buf;
 	ssize_t						ret = 1, body_len = body.size();
 
-	__D_DISPLAY("WRITETOCHILD body: " << body);
+	__D_DISPLAY("WRITETOCHILD body: |" << body << "|");
 	buf = body.data();
 	while (body_len > 0)
 	{
@@ -120,8 +120,11 @@ void	exec_cgi_script(CgiEnv& env, FtPipe& rx, FtPipe& tx,
 		<< std::endl;
 }
 
+//If an http body exist, send it to the script.
+//read the script output & parse it. The output can be a document to send back
+//or an absolute URI. If it is a relative URI, reprocess it.
 int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
-				const Request& request)
+				Request& request)
 {
 	std::string	*cgi_out = new std::string();
 	int			cgi_exit, cgi_status = CGI_SUCCESS;
@@ -134,20 +137,21 @@ int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 	if (cgi_exit == EXIT_SUCCESS)
 		cgi_status = cgi_output(*cgi_out);
 	else
-		cgi_out->assign("HTTP/1.1 500 Internal Server Error");
+		cgi_status = CGI_ERR;
 	if (cgi_status == CGI_ERR)
-		cgi_out->assign("HTTP/1.1 500 Internal Server Error");
+		cgi_out->assign("HTTP/1.1 500 Internal Server Error\r\n");
 	else if (cgi_status == CGI_REDIRECT)
+	{
+		request.setTarget(*cgi_out);
+		delete cgi_out;
 		return CGI_REDIRECT;
+	}
 	client.setResponse(cgi_out);
 	return cgi_status;
 }
 
-int		process_cgi(Response & response,
-				const Request& request,
-				const Location_config& location_block,
-				const Server_config& server_block,
-				Client& client,
+int		process_cgi(Request& request, const Location_config& location_block,
+				const Server_config& server_block, Client& client,
 				const std::string& cgi_ext,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
@@ -157,9 +161,7 @@ int		process_cgi(Response & response,
 	int			ret = 0;
 	FtPipe		tx, rx;
 
-	(void)response;
-	__D_DISPLAY(env);
-
+	__D_DISPLAY("ENV:\n" << env);
 	if (tx.isPipeError() || rx.isPipeError())
 		return pgm_perr("pipe");
 	c_pid = fork();
@@ -173,6 +175,7 @@ int		process_cgi(Response & response,
 	{
 		ret = write_read_cgi(rx, tx, c_pid, client, request);
 	}
+	__D_DISPLAY("CGI status (0:SUCCESS - 1:REDIRECT - 2:ERROR): " << ret);
 	return ret;
 }
 //int execve(const char *pathname, char *const argv[], char *const envp[]);

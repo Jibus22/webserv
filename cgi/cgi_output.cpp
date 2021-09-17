@@ -39,7 +39,7 @@ bool	is_relative_uri(size_t val, const std::string& headers)
 //					- If absolute URI -> client redirection -> set response.
 int		cgi_output(std::string& cgi_out)
 {
-	size_t		val, blankline = cgi_out.find("\r\n\r\n");
+	size_t		val, end, blankline = cgi_out.find("\r\n\r\n");
 	std::string	headers;
 
 	if (blankline == std::string::npos)
@@ -48,14 +48,19 @@ int		cgi_output(std::string& cgi_out)
 	if (find_nocase_header(headers, "Content-Type:") != std::string::npos)
 	{
 		if (!is_status_line(cgi_out))
-			cgi_out.insert(0, "HTTP/1.1 200 OK\n");
+			cgi_out.insert(0, "HTTP/1.1 200 OK\r\n");
 		return CGI_SUCCESS;
 	}
 	else if ((val = find_nocase_header(headers, "Location:"))
 					!= std::string::npos)
 	{
-		if (is_relative_uri(val + 9, headers))
+		val += 9;
+		if (is_relative_uri(val, headers))
+		{
+			end = headers.find_first_of('\n', val);
+			cgi_out.assign(headers.substr(val, end - val));
 			return CGI_REDIRECT;
+		}
 	}
 	return CGI_SUCCESS;
 }
