@@ -175,11 +175,11 @@ void	handle_root(std::string & target, Location_config * location)
 {
 	if (location == NULL || location->root == "")
 		return;
-	if (target[location->uri.size() + 1] == '/')
-		target.erase(0 , location->uri.size() + 1);
-	else
+	if (location->uri[location->uri.size()] == '/' || location->uri.size() == 1)
 		target.erase(0 , location->uri.size());
-	if (location->root[location->root.size()] == '/')
+	else
+		target.erase(0 , location->uri.size() + 1);
+	if (location->root[location->root.size() - 1] == '/')
 		target.insert(0, location->root);
 	else
 		target.insert(0, location->root + "/");
