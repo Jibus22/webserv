@@ -36,6 +36,7 @@ public:
 		get_header(const std::string& key_header, bool& found) const;
 	std::map<std::string, std::string> const & get_headers() const;
 	std::string const & get_method() const;
+	void				setTarget(const std::string& newtarget);
 	std::string const & get_target() const;
 	std::string & get_target();
 	std::string const & get_version() const;

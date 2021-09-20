@@ -1,13 +1,24 @@
 #include "webserv.hpp"
 
+//Check the end of the chunked request which must be '0\r\n\r\n'
+//If the request is bigger than 1MB, returns error.
 std::string		*check_transfer_encoding(const std::string& request,
 						size_t value_start, size_t body_pos, int& status)
 {
+	size_t	chunked_end, value_end;
+
+	if (request.size() > 1000000)
+		return new std::string("HTTP/1.1 413 Payload Too Large");
 	if (find_nocase_header(request, "Content-Length") != std::string::npos)
 		return new std::string("HTTP/1.1 400 Bad Request");
-	(void)value_start;
-	(void)body_pos;
-	(void)status;
+	value_end = request.find_first_of('\n', value_start);
+	if (find_nocase_header(request.substr(value_start,
+					(value_end - value_start)), "chunked") != std::string::npos)
+	{
+		chunked_end = request.find("0\r\n\r\n", body_pos);
+		if (chunked_end == std::string::npos)
+			return NULL;
+	}
 	status = VALID_REQUEST;
 	return NULL;
 }

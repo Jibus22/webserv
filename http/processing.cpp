@@ -1,31 +1,5 @@
 #include "processing.hpp"
 
-unsigned long	terminated_request(std::string  const & request)
-{
-	size_t pos_body = request.find("\r\n\r\n");
-	if (pos_body == std::string::npos)
-		return 0;
-	//TODO: Content length ou cOnTent_LeNgtH
-	size_t pos_content_length = request.find("Content-Length:");
-	if (pos_content_length == std::string::npos)
-	{
-		__D_DISPLAY(pos_body);
-		//TODO : regarder si il y a quand meme un body et si oui erreur
-		return pos_body + 4;
-	}
-	if (pos_content_length > pos_body)
-		return 0;
-	size_t pos_after_content_length = request.find("\n", pos_content_length);
-	if (pos_after_content_length == std::string::npos)
-		return 0;// TODO: Regarder si cela peux arriver et quoi renvoyer
-	std::string string_length = request.substr(pos_content_length + 15 ,
-		pos_after_content_length);
-	std::stringstream ss(string_length);
-	unsigned long length;
-	ss >> length;
-	return length;
-}
-
 bool	match_server_name(Server_config *server, Request & request)
 {
 	Config_struct::c_name_vector::iterator it = server->name_serv.begin();
@@ -108,7 +82,10 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 		location = *it;
 		if((target.compare(0, location->uri.size(), location->uri) == 0))// &&
 //(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
+		{
+			__D_DISPLAY("location matched : " << location->uri);
 			return location;
+		}
 		it++;
 	}
 	return NULL;
@@ -133,24 +110,25 @@ bool	is_methode_allowed(Location_config * location, std::string methode)
 	}
 }
 
-bool	check_cgi(Response& response, const Request& requete,
-			const Server_config& server, const Location_config& location,
-			const Client& client,
+int		check_cgi(Request& requete, const Server_config& server,
+			const Location_config& location, Client& client,
 			const std::map<int, Client>& client_map,
 			const std::map<int, std::pair<std::string, int> >& server_map)
 {
+	int	ret = -1;
 	Config_struct::c_cgi_map::const_iterator it = location.cgi.begin();
+
 	while (it != location.cgi.end())
 	{
 		if (requete.get_target().find(it->first) != std::string::npos)
 		{
-			process_cgi(response, requete, location,
+			ret = process_cgi(requete, location,
 					server, client, it->first, client_map, server_map);
-			return true;
+			return ret;
 		}
 		it++;
 	}
-	return false;
+	return ret;
 }
 
 
@@ -250,15 +228,17 @@ void	construct_delete_response(Response & response, Request &requete)
 	(void)requete;
 }
 
-void	construct_response(Response & response, Server_config * server,
-				Request & requete, const Client& client,
+int		construct_response(Response & response, Server_config * server,
+				Request & requete, Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 	//TODO: verifier les parametres de server
-	//Verification Body not too big
-	std::stringstream str(requete["Content-Length"]);
-	unsigned long length;
+	std::stringstream	str(requete["Content-Length"]);
+	unsigned long		length;
+	int					ret = 0;
+	Location_config		*location;
+
 	str >> length;
 	if (length > server->m_body_size)
 	{
@@ -267,15 +247,18 @@ void	construct_response(Response & response, Server_config * server,
 		error_page(413, response, server->error_page);
 	}
 
-	//find matching location
-	Location_config * location = match_location(server->location,
-												requete.get_target());
-	if (location)
-	{__D_DISPLAY("location matched : " << location->uri);}
+	location = match_location(server->location, requete.get_target());
+	if (!location)
+		;//return error ???
 
-	if (location && check_cgi(response, requete, *server, *location,
-					client, client_map, server_map))
-		return ;
+	while (location && (ret = check_cgi(requete, *server, *location,
+					client, client_map, server_map)) >= 0)
+	{
+		if (ret == CGI_REDIRECT)
+			location = match_location(server->location, requete.get_target());
+		else
+			return 1;
+	}
 
 	handle_root(requete.get_target(), location);
 
@@ -294,6 +277,7 @@ void	construct_response(Response & response, Server_config * server,
 		response.set_status_infos("Method Not Allowed");
 		error_page(405, response, server->error_page);
 	}
+	return 0;
 }
 
 void	process_request(Client& client,
@@ -301,17 +285,9 @@ void	process_request(Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	/*
-	unsigned long len_request;
-	if ((len_request = terminated_request(client.getStrRequest())) == 0)
-	{
-		__D_DISPLAY("Rejected not terminated");
-		return;
-	}
-	*/
-
 	size_t	len_request = (client.getStrRequest()).size();//TMP!
 	Response response;
+
 	try {
 		__D_DISPLAY("request : ");
 		__D_DISPLAY(client.getStrRequest());
@@ -323,7 +299,11 @@ void	process_request(Client& client,
 		__D_DISPLAY("server find");
 
 		//Construction reponse
-		construct_response(response, s, r, client, client_map, server_map);
+		if (construct_response(response, s, r, client, client_map, server_map))
+		{
+			client.truncateRequest(len_request);
+			return ;
+		}
 		//__D_DISPLAY("response :")
 		//__D_DISPLAY(*(response.get_raw()));
 	}
@@ -344,37 +324,3 @@ void	process_request(Client& client,
 	client.setResponse(response.get_raw());
 	client.truncateRequest(len_request);
 }
-
-/*
-void	process_request(Client& client,
-				const std::vector<Server_config*>& server_blocks)
-{
-	Response	test;
-	Request		test2;
-	const char	*request = client.getRawRequest();
-	std::string	*response;
-
-	__D_DISPLAY(client);
-
-	for (int i = 0; i < client.getRequestSize(); i++)
-	{
-		if (*request == 'x')
-		{
-			response = new std::string(client.getRawRequest(), request + 1);
-			response->insert(0, "Response: ");
-			client.truncateRequest(request + 1);
-			client.setResponse(response);
-
-			//--------------//
-			__D_DISPLAY("X had been found into the request!");
-			__D_DISPLAY("Truncated request: |" << client.getStrRequest() << "|");
-			__D_DISPLAY("Response: |" << client.getStrResponse() << "|");
-		}
-		request++;
-	}
-
-	(void)server_blocks;
-	(void)test;
-	(void)test2;
-}
-*/

@@ -24,5 +24,11 @@
 # define INCOMPLETE_REQUEST 1
 # define CORRUPT_REQUEST 2
 
+# define CGI_RD_BUF_LEN 16
+# define CGI_TIME_LIMIT 500//in ms.
+
+# define CGI_ERR 2
+# define CGI_REDIRECT 1
+# define CGI_SUCCESS 0
 
 #endif

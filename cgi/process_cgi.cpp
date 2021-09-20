@@ -1,11 +1,5 @@
 #include "webserv.hpp"
 
-#define PIPE_BUFTMP 16//temporary, for testing
-
-#define CGI_TIME_LIMIT 500 //to set in macros.hpp later. time in ms.
-
-#define WRITE_BUF 10
-
 int		cgi_exit_status(const int& status)
 {
 	int	ret = 0;
@@ -52,7 +46,7 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 	struct timeval	tv;
 	pid_t			w_pid;
 	int				status, ret = 1;
-	char			buf[PIPE_BUFTMP];
+	char			buf[CGI_RD_BUF_LEN];
 
 	if (gettimeofday(&tv, NULL) == -1)
 		return pgm_perr("gettimeofday");
@@ -62,10 +56,9 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 			break ;
 		while (ret > 0)
 		{
-			__D_DISPLAY("into read");
 			if (is_child_slow(tv, c_pid))
 				break ;
-			ret = read(rx.read, buf, PIPE_BUFTMP - 1);
+			ret = read(rx.read, buf, CGI_RD_BUF_LEN - 1);
 			if (ret == -1)
 				return pgm_perr("read");
 			buf[ret] = 0;
@@ -81,50 +74,94 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 //macosx: PIPE_BUF == 512
 //This is the POSIX length of a pipe message which is guaranteed to not be mixed
 //with other write operation from other threads. It is called 'atomic write'
+//but I don't use it here. hohoho.
 int		write_to_child(const std::string& body, const FtPipe& tx)
 {
 	std::string::const_pointer	buf;
-	ssize_t						ret = 1;
+	ssize_t						ret = 1, body_len = body.size();
 
-	if (body.empty())
-		return 1;
-	__D_DISPLAY("WRITETOCHILD body: " << body);
+	__D_DISPLAY("WRITETOCHILD body: |" << body << "|");
 	buf = body.data();
-	while (ret > 0)
+	while (body_len > 0)
 	{
-		//__D_DISPLAY("into write");
-		ret = write(tx.write, buf, WRITE_BUF);
+		ret = write(tx.write, buf, body_len);
 		if (ret == -1)
 			return pgm_perr("write");
-		buf += ret;
+		if (ret < body_len)
+		{
+			body_len -= ret;
+			buf += ret;
+		}
+		else
+			break;
 	}
 	close(tx.write);
 	return 0;
 }
 
-int		process_output()
+void	exec_cgi_script(CgiEnv& env, FtPipe& rx, FtPipe& tx,
+				const std::map<int, Client>& client_map,
+				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	return 0;
+	int	ret;
+
+	close_server_sockets(server_map);
+	close_client_sockets(client_map);
+	tx.hijackStdinReadPipe();
+	rx.hijackStdoutWritePipe();
+	//usleep(500);//wait for the parent to write into tx.write pipe
+	ret = execve((env.getArgv())[0], env.getArgv(), env.getEnv());
+	if (ret == -1)
+	{
+		perror("execve");
+		exit(EXIT_FAILURE);
+	}
+	std::cerr << "iNtO fOrK AfTer eXeCvE & ExIt, sHouLDnT bE prInTEd"
+		<< std::endl;
 }
 
-int		process_cgi(Response & response,
-				const Request& request,
-				const Location_config& location_block,
-				const Server_config& server_block,
-				const Client& client,
+//If an http body exist, send it to the script.
+//read the script output & parse it. The output can be a document to send back
+//or an absolute URI. If it is a relative URI, reprocess it.
+int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
+				Request& request)
+{
+	std::string	*cgi_out = new std::string();
+	int			cgi_exit, cgi_status = CGI_SUCCESS;
+
+	close(tx.read);
+	close(rx.write);
+	write_to_child(request.get_body(), tx);
+	cgi_exit = read_cgi_output(c_pid, rx, *cgi_out);
+	__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
+	if (cgi_exit == EXIT_SUCCESS)
+		cgi_status = cgi_output(*cgi_out);
+	else
+		cgi_status = CGI_ERR;
+	if (cgi_status == CGI_ERR)
+		cgi_out->assign("HTTP/1.1 500 Internal Server Error\r\n");
+	else if (cgi_status == CGI_REDIRECT)
+	{
+		request.setTarget(*cgi_out);
+		delete cgi_out;
+		return CGI_REDIRECT;
+	}
+	client.setResponse(cgi_out);
+	return cgi_status;
+}
+
+int		process_cgi(Request& request, const Location_config& location_block,
+				const Server_config& server_block, Client& client,
 				const std::string& cgi_ext,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 	CgiEnv		env(request, location_block, server_block, client, cgi_ext);
-	std::string	*cgi_out = new std::string();
 	pid_t		c_pid;
-	int			ret;
+	int			ret = 0;
 	FtPipe		tx, rx;
 
-	(void)response;
-	__D_DISPLAY(env);
-
+	__D_DISPLAY("ENV:\n" << env);
 	if (tx.isPipeError() || rx.isPipeError())
 		return pgm_perr("pipe");
 	c_pid = fork();
@@ -132,32 +169,14 @@ int		process_cgi(Response & response,
 		return pgm_perr("fork");
 	else if (c_pid == 0)//child
 	{
-		close_server_sockets(server_map);
-		close_client_sockets(client_map);
-		tx.hijackStdinReadPipe();
-		rx.hijackStdoutWritePipe();
-		//usleep(500);//wait for the parent to write into tx.write pipe
-		ret = execve((env.getArgv())[0], env.getArgv(), env.getEnv());
-		if (ret == -1)
-		{
-			perror("execve");
-			exit(EXIT_FAILURE);
-		}
-		__D_DISPLAY("iNtO fOrK AfTer eXeCvE & ExIt, sHouLDnT bE prInTEd");
+		exec_cgi_script(env, rx, tx, client_map, server_map);
 	}
 	else
 	{
-		close(tx.read);
-		close(rx.write);
-		write_to_child(request.get_body(), tx);
-		//si il y a un body, l'écrire dans le pipe puis close tx.write
-		ret = read_cgi_output(c_pid, rx, *cgi_out);
-		__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
-		if (ret == EXIT_SUCCESS)
-			process_output();
+		ret = write_read_cgi(rx, tx, c_pid, client, request);
 	}
-	delete cgi_out;
-	return 0;
+	__D_DISPLAY("CGI status (0:SUCCESS - 1:REDIRECT - 2:ERROR): " << ret);
+	return ret;
 }
 //int execve(const char *pathname, char *const argv[], char *const envp[]);
 
