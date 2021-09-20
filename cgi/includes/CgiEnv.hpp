@@ -26,6 +26,7 @@
 # define CGI_ROOT 0
 # define FILE_ROOT 1
 # define FILE_ARG 2
+
 //CgiEnv is a class made to build a CGI/1.1 environment & resolve the location
 //of the cgi in the filesystem, to be able to call execve() properly.
 //It sets meta-variables accordingly to the needs of CGI/1.1 scripts.

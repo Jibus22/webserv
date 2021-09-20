@@ -9,11 +9,13 @@ static int	run_server(const int kq,
 	int						i, event_fd, new_events;
 	struct kevent			eventlist[MAX_EVENTS];
 	std::map<int, Client>	*client_map = new std::map<int, Client>;
+	//struct timespec			ts = {5, 0};
 
 	for (;;)//Main loop to wait new events
 	{
 		__D_DISPLAY("waiting new event...");
 		new_events = kevent(kq, NULL, 0, eventlist, MAX_EVENTS, NULL);
+		__D_DISPLAY("new event:" << new_events);
 		if (new_events == -1)
 			return sys_err("kevent new event failed");
 		for (i = 0; i < new_events; i++)//loop to process triggered events
