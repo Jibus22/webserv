@@ -15,8 +15,8 @@ private:
 	std::string							_body;
 
 
-	void add_header(std::string const header);
-	void parse_first_line(std::string const first_line);
+	void add_header(std::string const & header);
+	void parse_first_line(std::string const & first_line);
 	void checkTerminatedBody();
 
 public:
@@ -32,10 +32,13 @@ public:
 	Request(std::string const & raw_request);
 
 	std::string const & operator[] (std::string const & key_header);
-	std::string const & get_header(const std::string& key_header);
+	std::map<std::string, std::string>::const_iterator
+		get_header(const std::string& key_header, bool& found) const;
 	std::map<std::string, std::string> const & get_headers() const;
 	std::string const & get_method() const;
+	void				setTarget(const std::string& newtarget);
 	std::string const & get_target() const;
+	std::string & get_target();
 	std::string const & get_version() const;
 	std::string const & get_body() const;
 

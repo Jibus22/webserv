@@ -2,8 +2,9 @@
 
 //Server engine. System is set to notify any event on any server
 //socket descriptors & client socket descriptor which are monitored.
-int	run_server(const int kq, const std::vector<Server_config*> & server_blocks,
-				const std::map<int, std::pair<std::string, int> > & server_map)
+static int	run_server(const int kq,
+				const std::vector<Server_config*>& server_blocks,
+				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 	int						i, event_fd, new_events;
 	struct kevent			eventlist[MAX_EVENTS];
@@ -34,7 +35,10 @@ int	run_server(const int kq, const std::vector<Server_config*> & server_blocks,
 			}
 			else if (eventlist[i].filter == EVFILT_READ)//2.
 			{
-				read_request(event_fd, server_blocks, *client_map);
+				read_request(event_fd, *client_map);
+				if (is_valid_request((*client_map)[event_fd]) == VALID_REQUEST)
+					process_request((*client_map)[event_fd], server_blocks,
+							*client_map, server_map);
 			}
 			if (is_response(kq, &(eventlist[i]), *client_map) == 0)
 			{
@@ -43,6 +47,21 @@ int	run_server(const int kq, const std::vector<Server_config*> & server_blocks,
 		}
 	}
 	delete client_map;
+	return 0;
+}
+
+//Set all our IP:PORT listening sockets in the kqueue so they are monitored
+//for read event
+static int	monitor_network_sockets(const int kq,
+				const std::map<int, std::pair<std::string, int> > & server_map)
+{
+	for (std::map<int, std::pair<std::string, int> >::const_iterator
+			i = server_map.begin(); i != server_map.end(); i++)
+	{
+		if (add_read_event(kq, i->first))
+			return -1;
+	}
+	return 0;
 }
 
 //Creates kqueue and add server sockets to it so they are monitored

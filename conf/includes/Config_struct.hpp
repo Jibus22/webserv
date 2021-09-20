@@ -34,11 +34,10 @@ struct Config_struct
 	typedef std::vector<Location_config *> 				c_location_vector;
 
 
-
-
 	typedef std::map<std::string, std::string>			c_cgi_map;
 	typedef std::map<int, std::string>					c_error_map; 						
 	typedef std::pair <std::string, int>				p_listen;
+	typedef std::pair <int, std::string>				p_return; 
 	
 //------------------> VARIABLE <------------------
 	c_serv_vector	*_main_server;

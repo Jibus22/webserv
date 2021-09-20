@@ -32,6 +32,7 @@ public :
 		n_braket,
 		n_none,
 		n_bracket_error,
+		n_return,
 	};
 
 //------------------------> TYPE DEF  <-----------------------
@@ -40,6 +41,7 @@ public :
 		typedef Config_struct::c_cgi_map				c_cgi_map;
 		typedef Config_struct::c_error_map				c_error_map;
 		typedef Config_struct::p_listen					p_listen;
+		typedef Config_struct::p_return					p_return;
 		typedef Config_struct::c_serv_vector			c_serv_vector;
 		typedef Config_struct::c_index_vector			c_index_vector;
 
@@ -56,7 +58,8 @@ private :
 		void				verif_serveur();	
 		void				verif_location();
 		void 				locat_bracket(std::string &buff);
-		conf_nginx			verif_serv_listen(std::string &str, std::string &conf);
+		conf_nginx			verif_serv_listen_return(std::string &str, std::string &conf);
+		conf_nginx			verif_error_upload(const std::string &conf) const;
 		conf_nginx			verif_locat(std::string &str, std::string &conf);
 		conf_nginx			verif_locat_bracket(std:: string &str, std::string &conf);
 		void				in_server();
@@ -73,11 +76,11 @@ private :
 		void				error_page_prsg(std::string &str, c_error_map &prsg);
 		void				index_prsg(std::string &str, c_index_vector &prsg);
 		void				body_size_prsg(std::string &str, size_t &prsg);
+		void				return_prsg(std::string &str, p_return &prsg);
 
 		void				init_value(std:: string &path);
 		void				ft_trim(std::string &str);
 		void 				print_error(const std::string str) const ;
-		conf_nginx			case_conf(const std::string &conf) const;
 		void				find_and_replace(std::string &str, std::string &src, std::string &dest);
 		int					search_space(std::string &str);
 		int 				error_methode(std::string &temp);
@@ -91,8 +94,10 @@ private :
 		Config_struct		_main_config;
 
 		bool				_bool_serv;
+		bool				_in_server;
 		bool				_bool_locat;
 		bool				_again;
+		bool				_bool_return;
 		size_t				_error;
 
 		std::ifstream		_file;

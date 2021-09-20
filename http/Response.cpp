@@ -27,7 +27,7 @@ Response::~Response(void){
 	return;
 }
 
-void Response::set_status_code(int status_code)
+void Response::set_status_code(std::string const status_code)
 {this->_status_code = status_code;}
 
 void Response::set_status_infos(std::string const & status_infos)

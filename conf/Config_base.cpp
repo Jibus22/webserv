@@ -6,7 +6,9 @@
 Config_base::Config_base(std::string &config){
 	init_value(config);
 	open_conf();
-	prsg_main();	
+	prsg_main();
+	if (_in_server == false || _bool_serv == true)
+		print_error("Error file");
 	_file.close();
 }
 
@@ -14,16 +16,22 @@ Config_base::~Config_base(){}
 
 void				Config_base::prsg_main(){
 	std::string		str;
-
+	_in_server = false;
+	
 	while (getline(_file, str)){
 		_error++;
 		braket_on = false;
 		ft_trim(str); 
-		if (str.empty())
+		if (str.empty() )
 			continue ;
 		conf_nginx	conf = enum_prsg(str);
+		
+		if (_in_server == false)
+				print_error("Error file");
 		if (conf == n_bracket_error)
+		{	
 			continue;
+		}
 		if (conf == n_none)
 			print_error("no parametre");
 		if (conf == n_server) {		
@@ -42,6 +50,7 @@ void				Config_base::prsg_main(){
 				_location = NULL;
 				_bool_locat = false;	
 				_again = true;
+				_bool_return = true;
 			}
 			else if (_bool_serv == true){
 				if (_server->location.empty())
@@ -58,8 +67,8 @@ void				Config_base::prsg_main(){
 		if (_bool_locat == true)
 			if (conf == n_name || conf == n_listen || conf == n_body || conf == n_error_page)
 				print_error("invalid param must be server");
-
 		get_container(conf, str);
+		
 	}
 }
 
@@ -127,6 +136,17 @@ void			Config_base::get_container(conf_nginx &conf, std::string &str){
 				basic_prsg(str, _location->upload_dir);
 			else
 				print_error("upload_dir must be location");	
+			break;
+		case n_return :
+			if (_bool_locat){
+				if (_bool_return == false)
+					print_error("return existe deja");
+				_bool_return = false;
+				return_prsg(str, _location->return_p);
+			}
+			else
+				print_error("return must be server");
+			break;
 		default :
 				break;
 		}
@@ -164,12 +184,6 @@ void			Config_base::listen_prsg(std::string &str, p_listen &prsg){
 }
 
 
-std::string Config_base::ft_pop_back(std::string str){
-	size_t			position = str.size() - 1;
-
-	std::string temp; temp = str.substr(0, position);
-	return (temp);
-}
 
 
 void		Config_base::name_serv_prsg(std::string &str, c_name_vector &prsg){
@@ -224,6 +238,36 @@ void		Config_base::methode_prsg(std::string &str, c_methode_vector &prsg){
 	}
 }
 
+void		Config_base::return_prsg(std::string &str, p_return &prsg){
+	size_t		position = str.find_first_of(" \t");
+	int			nb = 0;
+
+
+	if (error_semilicon(str) == 1)
+		print_error("No space after semicolon");
+	if (position == std::string::npos)
+		print_error("error return ");
+	std::string number_error = str.substr(0, position); 
+	for (size_t i = 0; i < number_error.length(); i++)
+		if (std::isalpha(number_error[i]))
+			print_error("Only number");
+	position = str.find_first_not_of(" \t", position);
+	str.erase(0, position);
+	if (search_space(str) == 1)
+		print_error("No space arguments");
+	if (str[0] == ';')
+		print_error("Error No path");
+	if (str[str.size() - 1 ] == ';')
+		str = ft_pop_back(str);
+	std::stringstream ss;  
+  	ss << number_error;  
+  	ss >> nb; 
+	if (nb < 300 || nb > 399)
+		print_error("error number errror 300 - 399");
+	prsg.first = nb;
+	prsg.second = str;
+}
+
 void		Config_base::index_prsg(std::string &str, c_index_vector &prsg){
 	size_t		position;
 	size_t		semilicon = 0;
@@ -258,7 +302,6 @@ void 		Config_base::basic_prsg(std::string &str, std::string &prsg) {
 		str = ft_pop_back(str);
 	}
 	prsg = str;	
-	
 }
 
 void 		Config_base::cgi_ext_prsg(std::string &str, c_cgi_map &prsg){
@@ -368,10 +411,11 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 	size_t				pos = str.find_first_of(" \t");
 	size_t				b = str.find_first_of("{");
 	std::string 		conf;
-
+	
 	if (str == "server{"){
 		conf = str.substr(0, b);
 		pos = str.find_last_of('{');
+		_in_server = true;		
 	}
 	else {
 		conf = str.substr(0, pos);
@@ -390,7 +434,7 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 		case 5 :
 			return	(conf == "index" ? n_index : n_none);
 		case 6 :
-			return (verif_serv_listen(str, conf));
+			return (verif_serv_listen_return(str, conf));
 		case 7 :
 			return	(conf == "cgi_ext" ? n_cgi_ext : n_none);
 		case 8 :
@@ -398,7 +442,7 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 		case 9 :
 			return	(conf == "autoindex" ? n_auto_index : n_none);
 		case 10 :
-			return	(case_conf(conf));
+			return	(verif_error_upload(conf));
 		case 11 :
 			return	(conf == "server_name" ? n_name : n_none);
 		case 13 :
@@ -416,7 +460,7 @@ Config_base::conf_nginx		Config_base::enum_prsg(std:: string &str){
 //---------------------------------------------------------------------------------------//
 //--------------------------------- VERIF PARSING ---------------------------------------//
 //---------------------------------------------------------------------------------------//
-void			Config_base::verif_serveur(){  // -> en cours 
+void			Config_base::verif_serveur(){  
 	if (_server->listen.first.empty()){
 		_server->listen.first = "0.0.0.0";
 		_server->listen.second = 80;
@@ -427,14 +471,12 @@ void			Config_base::verif_serveur(){  // -> en cours
 		_server->m_body_size = 1000000;
 	if (_server->m_body_size > INTMAX_MAX)
 		print_error("value too high");
-
-
-	
 }
 
 void		Config_base::in_location(){	
 	if (_bool_serv == false)
 		print_error("définition de LOCATION hors du serveur");
+	
 	if (_server->location.empty())
 			verif_serveur();
 	if (_bool_locat == true)
@@ -444,11 +486,10 @@ void		Config_base::in_location(){
 	_again = false;
 }
 
-void				Config_base::verif_location(){ // -> en cours 
-// Définir la racine avec la racine du serveur + uri 
-// si aucune redéfinition de la racine à l'emplacement
+void				Config_base::verif_location(){
 	std::string one = "/";
 	std::string two = "//";
+
 	if (_location->root.empty()) {
 		_location->root = one + _location->uri;
 		find_and_replace(_location->root, two, one);
@@ -457,6 +498,7 @@ void				Config_base::verif_location(){ // -> en cours
 		_location->methode.push_back("GET");
 	if (_location->index.empty())
 		_location->index.push_back("index.html");
+
 }
 
 Config_base::conf_nginx		Config_base::verif_locat(std::string &str, std::string &conf){
@@ -495,16 +537,32 @@ void			Config_base::in_server(){
 	_bool_serv = true;
 }
 
-Config_base::conf_nginx		Config_base::verif_serv_listen(std::string &str, std::string &conf) {
+Config_base::conf_nginx		Config_base::verif_serv_listen_return(std::string &str, std::string &conf) {
 	if (conf == "listen")
 		return (n_listen);
-	if (conf == "server" ) {
+	else if (conf == "server" ) {
 		if (str != "{")
 			print_error("mauvais bracket server");
 		return (n_server);
 	}
+	
+	else if (conf == "return") 
+	{
+		return (n_return);
+	}
 	return	(n_none);
 }
+
+Config_base::conf_nginx		Config_base::verif_error_upload(const std::string &conf) const {
+	
+	if (conf == "error_page")
+		return (n_error_page);
+	else if (conf == "upload_dir")
+			return (n_upload_d);
+	return (n_none);
+}
+
+
 //---------------------------------------------------------------------------------------//
 //----------------------------------- FILL INIT OPEN ------------------------------------//
 //---------------------------------------------------------------------------------------//
@@ -512,6 +570,8 @@ Config_base::conf_nginx		Config_base::verif_serv_listen(std::string &str, std::s
 void				Config_base::open_conf(){
 	_file.open(_config.c_str()); // Renvoie un pointeur vers un tableau
 
+	if (_file.peek( )== std::ifstream::traits_type::eof() )
+		print_error("Error file");
 	if (_file.fail() == true)
 		throw std::runtime_error("Open file");
 }
@@ -537,6 +597,14 @@ Config_struct::c_serv_vector *Config_base::get_vector() const {
 //---------------------------------------------------------------------------------------//
 //----------------------------------- OTHER FUNCTION ------------------------------------//
 //---------------------------------------------------------------------------------------//
+
+std::string Config_base::ft_pop_back(std::string str){
+	size_t			position = str.size() - 1;
+
+	std::string temp; temp = str.substr(0, position);
+	return (temp);
+}
+
 void				Config_base::ft_trim(std::string& str){
 	if (str.empty())
 		return ;
@@ -561,14 +629,7 @@ void 		Config_base::find_and_replace(std::string &str, std::string &src, std::st
 	}
 }
 
-Config_base::conf_nginx		Config_base::case_conf(const std::string &conf) const {
-	if (conf == "error_page")
-		return (n_error_page);
-	else if (conf == "upload_dir")
-		return (n_upload_d);
-	else
-		return (n_none);
-}
+
 
 int			Config_base::search_space(std::string &str){
 	size_t 		space = std::count(str.begin(), str.end(), ' ');
@@ -586,7 +647,6 @@ int			Config_base::error_semilicon(std::string &str){
 	if (search_space(temp) == 1)
 		return (1);
 	return (0);
-
 }
 
 int 		Config_base::error_methode(std::string &temp){
@@ -605,12 +665,9 @@ int		Config_base::conver_to_str(std::string &str){
 	return (nb);
 }
 
-
-
 void 		Config_base::print_error(const std::string str) const {
 	std::cout << "\033[1;33m" ;
 	std::cout << "Error line " << _error << " [ "<< str << " ]" << "\n";
 	std::cout << "\033[0m";
 	exit (0);
 }
-

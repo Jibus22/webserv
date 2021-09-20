@@ -27,6 +27,8 @@ std::ostream& operator<<(std::ostream& os, Location_config &ref){
 	  os << "CGI_EXT exec = "  << "{" << it->first << "}" << "\nCGI_EXT chemin = " << "{" << it->second  << "}" << std::endl;
 
   os << "UPLOAD_DIR = " <<  "{" << ref.upload_dir << "}" << "\n";
+
+  os << "ERROR NUMBER = " << "{" << ref.return_p.first << "}" << "\n" << "ERROR URL = " << "{" << ref.return_p.second << "}" << "\n";
   
   return (os);
 }

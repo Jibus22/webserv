@@ -1,4 +1,5 @@
 #include "Request.hpp"
+#include "webserv.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -15,19 +16,18 @@ const char* Request::InvalidRequest::what() const throw()
 	return "Invalid Request";
 }
 
-std::vector<std::string> & split(const std::string& s, char const separator)
+void split(std::vector<std::string> & output, const std::string& s,
+													char const separator)
 {
-	std::vector<std::string> * output = new std::vector<std::string>();
 	std::string::size_type prev_pos = 0, pos = 0;
 
 	while((pos = s.find(separator, pos)) != std::string::npos)
 	{
 		std::string substring( s.substr(prev_pos, pos-prev_pos) );
-        output->push_back(substring);
+        output.push_back(substring);
         prev_pos = ++pos;
 	}
-    output->push_back(s.substr(prev_pos, pos - prev_pos)); // Last word
-    return *output;
+    output.push_back(s.substr(prev_pos, pos - prev_pos)); // Last word
 }
 
 /*
@@ -55,19 +55,41 @@ Request::~Request(void){
 	return;
 }
 
-void Request::add_header(std::string const header)
+std::string str_to_lower(std::string const & s)
 {
-	size_t pos_separateur = header.find(": ");
-
-	if (pos_separateur == std::string::npos)
-		;//TODO: exception
-	else
-		this->_headers[header.substr(0, pos_separateur)] = header.substr(pos_separateur + 2);
+	std::string str(s);
+	std::string::iterator it = str.begin();
+	std::string::iterator ite = str.end();
+	while (it != ite)
+	{
+		*it = std::tolower(*it);
+		it++;
+	}
+	return str;
 }
 
-void Request::parse_first_line(std::string const first_line)
+void Request::add_header(std::string const & header)
 {
-	std::vector<std::string> & words = split(first_line, ' ');
+	size_t pos_separateur = header.find(":");
+
+	if (pos_separateur == std::string::npos)
+		throw InvalidRequest();
+	else
+	{
+		std::string header_min = str_to_lower(header.substr(0, pos_separateur));
+		if(header[pos_separateur + 1] == ' ')
+			this->_headers[header_min] =
+			header.substr(pos_separateur + 2);
+		else
+			this->_headers[header_min] =
+			header.substr(pos_separateur + 1);
+	}
+}
+
+void Request::parse_first_line(std::string const & first_line)
+{
+	std::vector<std::string> words;
+	split(words, first_line, ' ');
 
 	if(words.size() != 3)
 		throw InvalidRequest();
@@ -92,21 +114,24 @@ void	Request::checkTerminatedBody()
 // TODO:  Exception a gerer si requete mal formate
 Request::Request(std::string const & raw_r)
 {
+	//__D_DISPLAY(raw_r);
 	std::string raw_request(raw_r);
 	//stocke le body et le supprime de la string
-	size_t pos_body = raw_request.find("\n\n");
+	size_t pos_body = raw_request.find("\r\n\r\n");
 	if (pos_body == std::string::npos)
 	{
+		__D_DISPLAY("Pas de \\r\\n\\r\\n -> Requete non terminé");
 		throw Request::NotTerminatedException();
 	}
 	else
 	{
-		this->_body = raw_request.substr(pos_body + 2);
+		this->_body = raw_request.substr(pos_body + 4);
 		raw_request.erase(pos_body);
 	}
 
 	//Separe chaque ligne de la requete
-	std::vector<std::string> & lines = split(raw_request, '\n');
+	std::vector<std::string> lines;
+	split(lines, raw_request, '\n');
 	std::vector<std::string>::iterator it = lines.begin();
 	std::vector<std::string>::iterator ite = lines.end();
 
@@ -123,20 +148,39 @@ Request::Request(std::string const & raw_r)
 	}
 
 	//check si body est fini sinon NotTerminatedException
+	/*
 	if (!this->_body.empty())
 		this->checkTerminatedBody();
+		*/
+	//Matéo, cette fonction  ^ me renvoie une exception alors que ça devrait pas
+	//Du coup je l'ai commentée pour le moment. Si j'ai bien lu le code
+	//il m e semble que cette vérification est déjà faie desormais dans mon
+	//pré-parsing
 }
 
 std::string const & Request::operator[] (std::string const & key_header)
 {return this->_headers[key_header];}
 
-std::string const & Request::get_header(const std::string& key_header)
-{return this->_headers[key_header];}
+std::map<std::string, std::string>::const_iterator
+		Request::get_header(const std::string& key_header, bool& found) const
+{
+	std::map<std::string, std::string>::const_iterator
+			header(_headers.find(key_header));
+
+	if (header == _headers.end())
+		found = false;
+	else
+		found = true;
+	return header;
+}
 
 std::map<std::string, std::string> const & Request::get_headers() const
 {return this->_headers;}
 
 std::string const & Request::get_method() const {return this->_method;}
+void				Request::setTarget(const std::string& newtarget)
+					{_target = newtarget;}
 std::string const & Request::get_target() const {return this->_target;}
+std::string & Request::get_target() {return this->_target;}
 std::string const & Request::get_version() const {return this->_version;}
 std::string const & Request::get_body() const {return this->_body;}
