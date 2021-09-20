@@ -190,7 +190,22 @@ void	handle_index(std::string & target, Location_config * location)
 	}
 }
 
+void	handle_return(Response & response, Location_config *location)
+{
+	std::stringstream sstream;
+    sstream << location->return_p.first;
 
+	response.set_status_code(sstream.str());
+	if (location->return_p.first == 301)
+		response.set_status_infos("Moved Permanently");
+	else if (location->return_p.first == 302)
+		response.set_status_infos("Found");
+	else if (location->return_p.first == 307)
+		response.set_status_infos("Temporary Redirect");
+	else if (location->return_p.first == 308)
+		response.set_status_infos("Permanent Redirect");
+	response.add_header("Location", location->return_p.second);
+}
 
 void	construct_get_response(Response & response, Request &requete,
 						Server_config * server, Location_config * location)
@@ -233,7 +248,6 @@ int		construct_response(Response & response, Server_config * server,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	//TODO: verifier les parametres de server
 	std::stringstream	str(requete["Content-Length"]);
 	unsigned long		length;
 	int					ret = 0;
@@ -248,9 +262,16 @@ int		construct_response(Response & response, Server_config * server,
 	}
 
 	location = match_location(server->location, requete.get_target());
-	if (!location)
-		;//return error ???
 
+	if (location)
+		{__D_DISPLAY("code return : " << location->return_p.first);}
+	if (location && location->return_p.first != 0)
+	{
+		handle_return(response, location);
+		return 0;
+	}
+
+	//CGI
 	while (location && (ret = check_cgi(requete, *server, *location,
 					client, client_map, server_map)) >= 0)
 	{
@@ -304,8 +325,8 @@ void	process_request(Client& client,
 			client.truncateRequest(len_request);
 			return ;
 		}
-		//__D_DISPLAY("response :")
-		//__D_DISPLAY(*(response.get_raw()));
+		__D_DISPLAY("response :")
+		__D_DISPLAY(*(response.get_raw()));
 	}
 	catch (Request::NotTerminatedException e)
 	{
