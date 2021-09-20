@@ -1,28 +1,51 @@
 #include "webserv.hpp"
 
-//temporary function to simulate all ports given back by the file parsing
-std::vector<int>	bunch_of_ports_simulation()
+void	display_servermap(std::map<int, std::pair<std::string, int> >& srvmp)
 {
-	std::vector<int>	ports;
-	int					nb = 8080;
-
-	for (int i = 0; i < 6; i++, nb++)
-		ports.push_back(nb);
-	return ports;
+	__D_DISPLAY("Display map of servers");
+	for (std::map<int, std::pair<std::string, int> >::const_iterator i
+			= srvmp.begin(); i != srvmp.end(); i++)
+	{
+		__D_DISPLAY("fd: " << i->first << " - ip: " << i->second.first
+				<< " - port: " << i->second.second);
+	}
 }
 
-int	main(void)
+std::vector<Server_config *>	*load_configuration(int ac, char *av[])
 {
-	std::vector<int>	ports(bunch_of_ports_simulation());
-	std::vector<int>	network_sockets;
+	std::vector<Server_config *>	*conf = NULL;
+	std::string						*file;
+	Config_base						*parser;
 
-	if (create_network_sockets(ports, network_sockets) == -1)
-		return -1;
-	if (__APPLE__)
-		run_darwin_server(network_sockets);
+	if (ac == 2)
+	{
+		file = new std::string(av[1]);
+		parser = new Config_base(*file);
+		conf = parser->get_vector();
+		delete file;
+		delete parser;
+	}
+	else if (_DEBUG)
+		conf = get_servers_simulation();
 	else
-		std::cout << "kernel isn't darwin" << std::endl;
-	close_listening_ports(network_sockets, 0);
+		pgm_err("conf file missing");
+	return conf;
+}
+
+int	main(int ac, char *av[])
+{
+	std::vector<Server_config *>				*conf;
+	std::map<int, std::pair<std::string, int> >	*server_map;
+
+	conf = load_configuration(ac, av);
+	server_map = create_network_sockets(*conf);
+	if (server_map == NULL)
+		return -1;
+	display_servermap(*server_map);
+	start_server(*conf, *server_map);
+	close_server_sockets(*server_map, 0);
+	delete server_map;
+	delete conf;
 
 	return 0;
 }
