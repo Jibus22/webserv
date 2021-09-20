@@ -59,7 +59,8 @@ SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp Client.cpp \
 SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 		Location_config.cpp Server_config.cpp)
 #HTTP
-SRCS3 = $(addprefix $(SRCPATH3)/, Request.cpp Response.cpp processing.cpp)
+SRCS3 = $(addprefix $(SRCPATH3)/, Request.cpp Response.cpp processing.cpp \
+		processing_utils.cpp)
 #UTILS
 SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp \
 		utils.cpp find_nocase_header.cpp)

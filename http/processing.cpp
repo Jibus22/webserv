@@ -44,31 +44,6 @@ Server_config * match_server(std::vector<Server_config *> server_blocks,
 	}
 }
 
-bool	get_file_content(std::string const & path, std::string & content)
-{
-	__D_DISPLAY("target : " << path);
-	std::ifstream		file;
-	std::string			line;
-
-	file.open(path.c_str());
-	if (file.fail() == true)
-		return false;
-	while (std::getline(file, line))
-		content.append(line + "\n");
-	return true;
-}
-
-void	error_page(int erreur, Response & response,
-		Config_struct::c_error_map & error_page)
-{
-	if (error_page[erreur] != "")
-	{
-		std::string content;
-		if (get_file_content(error_page[erreur], content))
-			response.set_body(content);
-	}
-}
-
 Location_config * match_location(Config_struct::c_location_vector & locations,
 											std::string target)
 {
@@ -89,6 +64,17 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 		it++;
 	}
 	return NULL;
+}
+
+void	error_page(int erreur, Response & response,
+		Config_struct::c_error_map & error_page)
+{
+	if (error_page[erreur] != "")
+	{
+		std::string content;
+		if (get_file_content(error_page[erreur], content))
+			response.set_body(content);
+	}
 }
 
 bool	is_methode_allowed(Location_config * location, std::string methode)
@@ -129,24 +115,6 @@ int		check_cgi(Request& requete, const Server_config& server,
 		it++;
 	}
 	return ret;
-}
-
-
-
-#include <iostream>
-#include <vector>
-#include <dirent.h>
-
-bool is_dir(const std::string path)
-{
-	DIR *dir;
-
-    if ((dir = opendir(path.c_str())) != nullptr) {
-        closedir (dir);
-		return 1;
-    }
-	else
-		return false;
 }
 
 void	handle_root(std::string & target, Location_config * location)
