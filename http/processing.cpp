@@ -124,18 +124,14 @@ int		check_cgi(Request& requete, const Server_config& server,
 		{
 			ret = process_cgi(requete, location,
 					server, client, it->first, client_map, server_map);
+			__D_DISPLAY("CGI status (0:SUCCESS - 1:REDIRECT - 2:ERROR): "
+					<< ret);
 			return ret;
 		}
 		it++;
 	}
 	return ret;
 }
-
-
-
-#include <iostream>
-#include <vector>
-#include <dirent.h>
 
 bool is_dir(const std::string path)
 {
