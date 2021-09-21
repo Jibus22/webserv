@@ -12,5 +12,6 @@ void	process_request(Client& client,
 
 bool is_dir(const std::string path);
 bool	get_file_content(std::string const & path, std::string & content);
+void	auto_index(Response & response, std::string  const & target);
 
 #endif

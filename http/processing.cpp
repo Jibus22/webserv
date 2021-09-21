@@ -182,7 +182,10 @@ void	construct_get_response(Response & response, Request &requete,
 
 	if (is_dir(requete.get_target()))
 		handle_index(requete.get_target(), location);
-	if (get_file_content(requete.get_target(), content))
+	if (is_dir(requete.get_target()) && location->auto_index == true)
+		auto_index(response, requete.get_target());
+	else if (!is_dir(requete.get_target()) &&
+		get_file_content(requete.get_target(), content))
 	{
 		response.set_status_code("200");
 		response.set_status_infos("OK");
@@ -216,17 +219,27 @@ int		construct_response(Response & response, Server_config * server,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	std::stringstream	str(requete["Content-Length"]);
-	unsigned long		length;
+
 	int					ret = 0;
 	Location_config		*location;
 
-	str >> length;
-	if (length > server->m_body_size)
+	if (requete["Content-Length"] != "")
 	{
-		response.set_status_code("413");
-		response.set_status_infos("Payload Too Large");
-		error_page(413, response, server->error_page);
+		std::stringstream	str(requete["Content-Length"]);
+		unsigned long		length;
+		str >> length;
+		if (length > server->m_body_size)
+		{
+			__D_DISPLAY("Payload too large");
+			__D_DISPLAY("length" <<  requete["Content-Length"]);
+			__D_DISPLAY("length" <<  length);
+			__D_DISPLAY("m_body_size" <<  server->m_body_size);
+
+			response.set_status_code("413");
+			response.set_status_infos("Payload Too Large");
+			error_page(413, response, server->error_page);
+			return 0;
+		}
 	}
 
 	location = match_location(server->location, requete.get_target());
