@@ -61,8 +61,7 @@ int	read_request(const int event_fd, std::map<int, Client>& client_map)
 	buf[len] = 0;
 	client.setRequest(buf, len);
 
-	__D_DISPLAY(std::endl << "Client " << event_fd << ": " << len
-			<< " bytes had been read.");
+	__D_DISPLAY_RECV(event_fd, len);
 	return 0;
 }
 
@@ -77,20 +76,15 @@ int	send_response(const int kq, const struct kevent *event, Client& client)
 	if (event->data < static_cast<long>(client.getResponseSize()))
 	{
 		len = send(event->ident, client.getRawResponse(), event->data, 0);
+		__D_DISPLAY_SEND(client.getFd(), len, 1, client.getStrResponse());
 		client.truncateResponse(len);
-		//__D_DISPLAY("1. just sent:\n" << client.getStrResponse());
-		__D_DISPLAY("2. length of sent message : " <<
-				(client.getStrResponse()).size() << std::endl);
 		return set_write_ready(kq, client);
 	}
 	else
 	{
 		len = send(event->ident, client.getRawResponse(),
 				client.getResponseSize(), 0);
-		//__D_DISPLAY("2. just sent:\n" << client.getStrResponse());
-		__D_DISPLAY("2. just sent:\n" << (client.getStrResponse()).substr(0, 100));
-		__D_DISPLAY("2. length of sent message : " <<
-				(client.getStrResponse()).size() << std::endl);
+		__D_DISPLAY_SEND(client.getFd(), len, 2, client.getStrResponse());
 		client.clearResponse();
 	}
 	return 0;

@@ -33,6 +33,7 @@
 #endif
 
 #include "macros.hpp"
+#include "colorResources.hpp"
 
 #include "conf.hpp"
 #include "core.hpp"

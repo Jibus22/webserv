@@ -24,4 +24,10 @@ size_t	find_nocase_header(const std::string& str, const std::string& header);
 
 int		is_file_exist(const char *filename);
 
+//display.cpp
+const std::string	display_headers(const std::string& response);
+void				__D_DISPLAY_RECV(int client_id, int len);
+void				__D_DISPLAY_SEND(int client_id, int len,
+						int send_id, const std::string& response);
+
 #endif

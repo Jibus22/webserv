@@ -308,8 +308,8 @@ void	process_request(Client& client,
 			client.truncateRequest(len_request);
 			return ;
 		}
-		__D_DISPLAY("response :")
-		__D_DISPLAY(*(response.get_raw()));
+		//__D_DISPLAY("response :")
+		//__D_DISPLAY(*(response.get_raw()));
 	}
 	catch (Request::NotTerminatedException e)
 	{

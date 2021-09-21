@@ -63,7 +63,7 @@ SRCS3 = $(addprefix $(SRCPATH3)/, Request.cpp Response.cpp processing.cpp \
 		processing_utils.cpp directory_listing.cpp)
 #UTILS
 SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp \
-		utils.cpp find_nocase_header.cpp)
+		utils.cpp find_nocase_header.cpp display.cpp)
 #CGI
 SRCS5 = $(addprefix $(SRCPATH5)/, CgiEnv.cpp process_cgi.cpp FtPipe.cpp \
 		cgi_output.cpp)
