@@ -78,14 +78,19 @@ int	send_response(const int kq, const struct kevent *event, Client& client)
 	{
 		len = send(event->ident, client.getRawResponse(), event->data, 0);
 		client.truncateResponse(len);
-		__D_DISPLAY("1. just sent: " << client.getStrResponse());
+		//__D_DISPLAY("1. just sent:\n" << client.getStrResponse());
+		__D_DISPLAY("2. length of sent message : " <<
+				(client.getStrResponse()).size() << std::endl);
 		return set_write_ready(kq, client);
 	}
 	else
 	{
 		len = send(event->ident, client.getRawResponse(),
 				client.getResponseSize(), 0);
-		__D_DISPLAY("2. just sent: " << client.getStrResponse());
+		//__D_DISPLAY("2. just sent:\n" << client.getStrResponse());
+		__D_DISPLAY("2. just sent:\n" << (client.getStrResponse()).substr(0, 100));
+		__D_DISPLAY("2. length of sent message : " <<
+				(client.getStrResponse()).size() << std::endl);
 		client.clearResponse();
 	}
 	return 0;

@@ -18,6 +18,7 @@ std::vector<Server_config *>	*get_servers_simulation();
 
 long	get_timestamp(const struct timeval& tv_start);
 int		ft_string_to_nb(const std::string& value);
+std::string	ft_int_to_string(int val);
 
 size_t	find_nocase_header(const std::string& str, const std::string& header);
 

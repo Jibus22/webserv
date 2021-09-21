@@ -26,6 +26,14 @@ int		ft_string_to_nb(const std::string& value)
 	return nb;
 }
 
+std::string	ft_int_to_string(int val)
+{
+  std::stringstream	ss;
+
+  ss << val;
+  return ss.str();
+}
+
 int		is_file_exist(const char *filename)
 {
 	struct stat	buf;
