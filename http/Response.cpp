@@ -39,6 +39,9 @@ void Response::add_header(std::string const & key_header, std::string const & va
 void Response::set_body(std::string const & body)
 {this->_body = body;}
 
+void Response::append(std::string const & body)
+{this->_body.append(body);}
+
 //std::string const * Response::get_raw()
 std::string * Response::get_raw()
 {
