@@ -66,6 +66,7 @@ void	CgiEnv::initMetaVar()
 	_metaVar.push_back("SERVER_NAME=");
 	_metaVar.push_back("SERVER_PORT=");
 	_metaVar.push_back("PATH_TRANSLATED=");
+	_metaVar.push_back("REDIRECT_STATUS=200");//Pour php-cgi...
 }
 
 //takes the address of each string of _metaVar vector to be formated as char**,
@@ -230,4 +231,3 @@ std::ostream &operator<<(std::ostream &out, const CgiEnv& value)
 		out << *i << std::endl;
 	return (out);
 }
-

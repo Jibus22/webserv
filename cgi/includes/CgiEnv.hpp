@@ -5,7 +5,7 @@
 #include "Response.hpp"
 #include "webserv.hpp"
 
-# define METAVAR_NB 13
+# define METAVAR_NB 14
 
 # define SERVER_PROTOCOL 0
 # define SERVER_SOFTWARE 1
@@ -20,6 +20,7 @@
 # define SERVER_NAME 10
 # define SERVER_PORT 11
 # define PATH_TRANSLATED 12
+# define REDIRECT_STATUS 13
 
 
 # define MAX_ARG 3

@@ -19,10 +19,10 @@ print 'Content-Type: text/html\r\n\r\n'
 print '<!DOCTYPE html>'
 print '<html>'
 print '<head>'
-print '<title>Hello World - First CGI Program</title>'
+print '<title>Coucouuu haan</title>'
 print '</head>'
 print '<body>'
-print '<h2>Hello World! This is my first CGI program</h2>'
-print "<h2>Hello %s %s</h2>" % (first_name, last_name)
+print '<h2>Hello you... Do you wonder what are your name & last name ? Check it out below</h2>'
+print "<h2>Your name is %s %s. Try to remember</h2>" % (first_name, last_name)
 print '</body>'
 print '</html>'
