@@ -36,6 +36,10 @@ void Response::set_status_infos(std::string const & status_infos)
 void Response::add_header(std::string const & key_header, std::string const & value)
 {this->_headers[key_header] = value;}
 
+std::string const & Response::get_body()
+{return this->_body;}
+
+
 void Response::set_body(std::string const & body)
 {this->_body = body;}
 

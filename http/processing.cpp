@@ -214,6 +214,41 @@ void	construct_delete_response(Response & response, Request &requete)
 	(void)requete;
 }
 
+void	method_not_allowed(Response & response, Server_config * server,
+		Location_config * location)
+{
+	std::string  str;
+	bool get = false;
+	bool post = false;
+	bool del = false;
+
+	response.set_status_code("405");
+	response.set_status_infos("Method Not Allowed");
+	Config_struct::c_methode_vector::iterator it = location->methode.begin();
+	Config_struct::c_methode_vector::iterator ite = location->methode.end();
+	while (it != ite)
+	{
+		if (*it == "GET")
+			get = true;
+		else if (*it == "POST")
+			post = true;
+		else if (*it == "DELETE")
+			del = true;
+		it++;
+	}
+	if (get)
+		str.append("GET");
+	if (get && (post || del))
+		str.append(", ");
+	if (post)
+		str.append("POST");
+	if (post && del)
+		str.append(", ");
+	if (del)
+		str.append("DELETE");
+	error_page(405, response, server->error_page);
+}
+
 int		construct_response(Response & response, Server_config * server,
 				Request & requete, Client& client,
 				const std::map<int, Client>& client_map,
@@ -274,11 +309,7 @@ int		construct_response(Response & response, Server_config * server,
 			is_methode_allowed(location, "DELETE"))
 		construct_delete_response(response, requete);
 	else
-	{
-		response.set_status_code("405");
-		response.set_status_infos("Method Not Allowed");
-		error_page(405, response, server->error_page);
-	}
+		method_not_allowed(response, server, location);
 	return 0;
 }
 
