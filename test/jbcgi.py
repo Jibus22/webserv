@@ -13,8 +13,8 @@ last_name  = form.getvalue('last_name')
 
 
 print 'HTTP/1.1 200'
-#print 'ContEnt-tYpe: text/html\r\n\r\n'
-print 'LoCatIon:/foo/jbcgi.pl/path/info?query=string\r\n\r\n'
+print 'ContEnt-tYpe: text/html\r\n\r\n'
+#print 'LoCatIon:/foo/jbcgi.pl/path/info?query=string\r\n\r\n'
 #print 'LoCatIon:http://Bim/Bam/Boumm\r\n\r\n'
 print '<html>'
 print '<head>'

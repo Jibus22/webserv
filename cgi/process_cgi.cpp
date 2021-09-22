@@ -99,6 +99,11 @@ int		write_to_child(const std::string& body, const FtPipe& tx)
 	return 0;
 }
 
+//int execve(const char *pathname, char *const argv[], char *const envp[]);
+//pathname must be formated as: /absolutepath/name. Ex: "/bin/ls"
+//argv[0] must hold [name | path/name]. Ex: ["ls" | "bin/ls"]
+//argv[n] holds arguments to the bin arguments. Ex: "-la"
+//argv[end] must be NULL.
 void	exec_cgi_script(CgiEnv& env, FtPipe& rx, FtPipe& tx,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
@@ -144,7 +149,7 @@ int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 	{
 		request.setTarget(*cgi_out);
 		delete cgi_out;
-		return CGI_REDIRECT;
+		return cgi_status;
 	}
 	client.setResponse(cgi_out);
 	return cgi_status;
@@ -162,11 +167,13 @@ int		process_cgi(Request& request, const Location_config& location_block,
 	FtPipe		tx, rx;
 
 	__D_DISPLAY("ENV:\n" << env);
+	if (!is_file_exist(((env.getArgs())[1]).c_str()))
+		return http_error(client, "HTTP/1.1 404 Not Found\r\n", 2);
 	if (tx.isPipeError() || rx.isPipeError())
-		return pgm_perr("pipe");
+		return http_error(client, "HTTP/1.1 500 Internal Server Error\r\n", 2);
 	c_pid = fork();
 	if (c_pid == -1)
-		return pgm_perr("fork");
+		return http_error(client, "HTTP/1.1 500 Internal Server Error\r\n", 2);
 	else if (c_pid == 0)//child
 	{
 		exec_cgi_script(env, rx, tx, client_map, server_map);
@@ -175,12 +182,5 @@ int		process_cgi(Request& request, const Location_config& location_block,
 	{
 		ret = write_read_cgi(rx, tx, c_pid, client, request);
 	}
-	__D_DISPLAY("CGI status (0:SUCCESS - 1:REDIRECT - 2:ERROR): " << ret);
 	return ret;
 }
-//int execve(const char *pathname, char *const argv[], char *const envp[]);
-
-//pathname must be formated as: /absolutepath/name. Ex: "/bin/ls"
-//argv[0] must hold [name | path/name]. Ex: ["ls" | "bin/ls"]
-//argv[n] holds arguments to the bin arguments. Ex: "-la"
-//argv[end] must be NULL.

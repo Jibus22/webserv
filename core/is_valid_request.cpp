@@ -8,9 +8,9 @@ std::string		*check_transfer_encoding(const std::string& request,
 	size_t	chunked_end, value_end;
 
 	if (request.size() > 1000000)
-		return new std::string("HTTP/1.1 413 Payload Too Large");
+		return new std::string("HTTP/1.1 413 Payload Too Large\r\n");
 	if (find_nocase_header(request, "Content-Length") != std::string::npos)
-		return new std::string("HTTP/1.1 400 Bad Request");
+		return new std::string("HTTP/1.1 400 Bad Request\r\n");
 	value_end = request.find_first_of('\n', value_start);
 	if (find_nocase_header(request.substr(value_start,
 					(value_end - value_start)), "chunked") != std::string::npos)
@@ -31,19 +31,55 @@ std::string		*check_content_length(const std::string& request,
 	size_t		content_length;
 
 	if (find_nocase_header(request, "Transfer-Encoding") != std::string::npos)
-		return new std::string("HTTP/1.1 400 Bad Request");
+		return new std::string("HTTP/1.1 400 Bad Request\r\n");
 	value_end = request.find_first_of('\n', value_start);
 	body_len = request.size() - body_pos;
 	content_length = ft_string_to_nb(request.substr(value_start,
 						(value_end - value_start)));
 	if (content_length == INT_MAX)
-		return new std::string("HTTP/1.1 400 Bad Request");
+		return new std::string("HTTP/1.1 400 Bad Request\r\n");
 	if (body_len < content_length)
 		return NULL;
 	else if (body_len > content_length)
-		return new std::string("HTTP/1.1 400 Bad Request");
+		return new std::string("HTTP/1.1 400 Bad Request\r\n");
 	status = VALID_REQUEST;
 	return NULL;
+}
+
+//Check syntax of request line and 'Host:' header
+int				is_basics(const std::string& request, size_t blankline)
+{
+	size_t		pos, space = 0, end_request_line = request.find_first_of('\n');
+
+	if (blankline < 24)//Minimal length of request line + Host header
+		return 0;
+	for (size_t i = 0; i < end_request_line; i++)
+	{
+		if (request[i] == ' ')
+			space++;
+		if (space == 0)
+		{
+			if (!isupper(request[i]))
+				return 0;
+		}
+		else if (space == 1)
+		{
+			if (i < 3 || request[i + 1] != '/')
+				return 0;
+			space = 41;
+		}
+		else if (space == 42)
+		{
+			pos = request.find("HTTP/1.1", i + 1);
+			if (pos == std::string::npos || pos > i + 1)
+				return 0;
+			break;
+		}
+	}
+	pos = find_nocase_header(request, "Host:");
+	if (pos == std::string::npos || pos > blankline)
+		return 0;
+	return 42;
 }
 
 //look for blank line, check if request line can exists & if headers don't size
@@ -60,12 +96,13 @@ std::string		*parse_request(const Client& client, int& status)
 	if (blankline == std::string::npos)
 	{
 		if (request.size() > 2048)//2KB of headers without blank line = error
-			return new std::string("HTTP/1.1 431 Request Header Fields Too Large");
+			return new std::string("HTTP/1.1 431 Request Header"
+					" Fields Too Large\r\n");
 		else
 			return NULL;
 	}
-	if (blankline <= 14)// == request line mauvaise
-		return new std::string("HTTP/1.1 400 Bad Request");
+	if (!is_basics(request, blankline))
+		return new std::string("HTTP/1.1 400 Bad Request\r\n");
 	hdr_pos = find_nocase_header(request, "Content-Length:");
 	if (hdr_pos < blankline)
 		return check_content_length(request,
@@ -75,7 +112,7 @@ std::string		*parse_request(const Client& client, int& status)
 		return check_transfer_encoding(request,
 				request.find_first_of(':', hdr_pos) + 1, blankline + 4, status);
 	if (request.size() > blankline + 4)
-		return new std::string("HTTP/1.1 400 Bad Request");
+		return new std::string("HTTP/1.1 400 Bad Request\r\n");
 	status = VALID_REQUEST;
 	return NULL;
 }

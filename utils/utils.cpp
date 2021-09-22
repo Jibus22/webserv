@@ -25,3 +25,20 @@ int		ft_string_to_nb(const std::string& value)
 	strm >> nb;
 	return nb;
 }
+
+std::string	ft_int_to_string(int val)
+{
+  std::stringstream	ss;
+
+  ss << val;
+  return ss.str();
+}
+
+int		is_file_exist(const char *filename)
+{
+	struct stat	buf;
+
+	if (stat(filename, &buf) == 0)
+		return 1;
+	return 0;
+}
