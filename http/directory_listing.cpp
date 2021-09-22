@@ -24,9 +24,17 @@ void	auto_index(Response & response, std::string const & target)
 	{
 		response.append("<li><a href=\"");
 		response.append(fic->d_name);
+		if(fic->d_type == DT_DIR)
+			response.append("/");
+
 		response.append("\"> ");
 		response.append(fic->d_name);
+		if(fic->d_type == DT_DIR)
+			response.append("/");
 		response.append("</a></li>\n");
 	}
 	response.append("</ul></body></html>");
+	std::stringstream ss;
+	ss << response.get_body().size();
+	response.add_header("Content-Length", ss.str());
 }

@@ -74,7 +74,12 @@ void	error_page(int erreur, Response & response,
 		std::string content;
 		if (get_file_content(error_page[erreur], content))
 			response.set_body(content);
+		std::stringstream ss;
+		ss << content.size();
+		response.add_header("Content-Length", ss.str());
 	}
+	else
+		response.add_header("Content-Length", "0");
 }
 
 bool	is_methode_allowed(Location_config * location, std::string methode)
@@ -154,6 +159,7 @@ void	handle_index(std::string & target, Location_config * location)
 			target = path;
 			return;
 		}
+		file.close();
 		it++;
 	}
 }
@@ -173,6 +179,7 @@ void	handle_return(Response & response, Location_config *location)
 	else if (location->return_p.first == 308)
 		response.set_status_infos("Permanent Redirect");
 	response.add_header("Location", location->return_p.second);
+	response.add_header("Content-Length", "0");
 }
 
 void	construct_get_response(Response & response, Request &requete,
@@ -192,6 +199,7 @@ void	construct_get_response(Response & response, Request &requete,
 		response.set_body(content);
 		std::stringstream ss;
 		ss << content.size();
+		__D_DISPLAY("content : "<< ss.str());
 		response.add_header("Content-Length", ss.str());
 	}
 	else
@@ -246,6 +254,8 @@ void	method_not_allowed(Response & response, Server_config * server,
 		str.append(", ");
 	if (del)
 		str.append("DELETE");
+	response.add_header("Allow", str);
+	response.add_header("Content-Length", "0");
 	error_page(405, response, server->error_page);
 }
 
@@ -353,6 +363,7 @@ void	process_request(Client& client,
 		__D_DISPLAY("INVALID REQUEST");
 		response.set_status_code("400");
 		response.set_status_infos("Bad Request");
+		response.add_header("Content-Length", "0");
 	}
 	client.setResponse(response.get_raw());
 	client.truncateRequest(len_request);
