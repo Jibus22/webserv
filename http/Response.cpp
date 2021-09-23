@@ -53,7 +53,7 @@ std::string * Response::get_raw()
 	raw_response->append(this->_status_code);
 	raw_response->append(" ");
 	raw_response->append(this->_status_infos);
-	raw_response->append("\n");
+	raw_response->append("\r\n");
 	std::map<std::string, std::string>::iterator it = this->_headers.begin();
 	std::map<std::string, std::string>::iterator ite = this->_headers.end();
 	while(it != ite)
@@ -61,10 +61,10 @@ std::string * Response::get_raw()
 		raw_response->append(it->first);
 		raw_response->append(": ");
 		raw_response->append(it->second);
-		raw_response->append("\n");
+		raw_response->append("\r\n");
 		it++;
 	}
-	raw_response->append("\n");
+	raw_response->append("\r\n");
 	raw_response->append(this->_body);
 	return raw_response;
 }
