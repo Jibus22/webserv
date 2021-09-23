@@ -11,12 +11,12 @@ first_name = form.getvalue('first_name')
 last_name  = form.getvalue('last_name')
 
 
-print 'HTTP/1.1 200'
+print 'HTTP/1.1 200 OK'
 print 'Content-Type: text/html\r\n\r\n'
 #print 'LoCatIon:/foo/jbcgi.pl/path/info?query=string\r\n\r\n'
 #print 'LoCatIon:http://Bim/Bam/Boumm\r\n\r\n'
 
-print '<!DOCTYPE html>'
+#print '<!DOCTYPE html>'
 print '<html>'
 print '<head>'
 print '<title>Coucouuu haan</title>'

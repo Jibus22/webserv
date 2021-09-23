@@ -46,18 +46,42 @@
 			<li><a href="/cgi/printenv.py">printenv</a></li>
 			</p>
 
-			<p>Test de cgi qui imprime les entrées nom/prénom d'un formulaire http
+			<p>Test de cgi qui imprime les entrées nom/prénom d'un formulaire http en GET
 			<form action = "/cgi/get_name.py" method = "get">
 				First Name: <input type = "text" name = "first_name">  <br />
 				Last Name: <input type = "text" name = "last_name" />
 				<input type = "submit" value = "Submit" />
 			</form>
+			</p>
+
+			<p>Test de cgi formulaire http en POST
+			<form action = "/cgi/get_name.py" method = "post">
+				Your bank account ID: <input type = "text" name = "first_name">  <br />
+				Your bank account password: <input type = "password" name = "last_name" />
+				<input type = "submit" value = "Submit" />
+			</form>
+			</p>
+
+			<p> Test de script qui fait 2 redirections client, différentes.
+			<form action = "/cgi/clientredirect.pl" method = "get">
+				<input type = "checkbox" name = "like" value = "on"> J'aime ce webserv
+				<input type = "checkbox" name = "dontlike" value = "on"> J'ai des gros doutes sur ce webserv
+				<input type = "submit" value = "Send" />
+			</form>
+			</p>
+
+			<p> Test de script qui fait 2 redirections locales différentes.
+			<form action = "/cgi/localredirect.pl" method = "get">
+				<input type = "checkbox" name = "like" value = "on"> J'aime la californie
+				<input type = "checkbox" name = "dontlike" value = "on"> J'aime la page d'accueil
+				<input type = "submit" value = "Send" />
+			</form>
+			</p>
 
 			<p>Test de cgi php qui imprime phpinfo
 			<li><a href="/cgi/phpinfo.php">phptest</a></li>
 			</p>
 
-			</p>
 
             </article>
                 <div id="fleche">

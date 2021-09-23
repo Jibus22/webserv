@@ -95,6 +95,8 @@ void	CgiEnv::setArgs(const Location_config& location_block,
 	_args.reserve(MAX_ARG);
 	_args.push_back(match->second);//get the cgi filesystem location from conf
 	script_path = location_block.root;
+	if (script_path[script_path.size() - 1] != '/')
+		script_path.push_back('/');
 	script_name = (_metaVar[SCRIPT_NAME].substr(12));
 	script_path.append(script_name, location_block.uri.size(), std::string::npos);
 	_args.push_back(script_path);
