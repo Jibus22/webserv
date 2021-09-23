@@ -33,3 +33,6 @@
 
 # Folders
 private/
+
+# osx shit
+*.DS_Store

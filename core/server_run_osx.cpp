@@ -13,9 +13,9 @@ static int	run_server(const int kq,
 
 	for (;;)//Main loop to wait new events
 	{
-		__D_DISPLAY("waiting new event...");
+		__D_DISPLAY(WHITE_C << "\t\t\t\t....waiting new event...." << RESET_C);
 		new_events = kevent(kq, NULL, 0, eventlist, MAX_EVENTS, NULL);
-		__D_DISPLAY("new event:" << new_events);
+		__D_DISPLAY(WHITE_C << "\t\t\t\tnew events: " << new_events << RESET_C);
 		if (new_events == -1)
 			return sys_err("kevent new event failed");
 		for (i = 0; i < new_events; i++)//loop to process triggered events

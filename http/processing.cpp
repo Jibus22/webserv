@@ -1,5 +1,6 @@
 #include "processing.hpp"
 
+//return true si le server name match le header host de la requete
 bool	match_server_name(Server_config *server, Request & request)
 {
 	Config_struct::c_name_vector::iterator it = server->name_serv.begin();
@@ -10,6 +11,7 @@ bool	match_server_name(Server_config *server, Request & request)
 }
 
 //TODO: gere le 0.0.0.0
+//Renvoie un pointeur sur le server qui est associe a la requete
 Server_config * match_server(std::vector<Server_config *> server_blocks,
 					std::pair<std::string, int> listen, Request & requete)
 {
@@ -44,31 +46,7 @@ Server_config * match_server(std::vector<Server_config *> server_blocks,
 	}
 }
 
-bool	get_file_content(std::string const & path, std::string & content)
-{
-	__D_DISPLAY("target : " << path);
-	std::ifstream		file;
-	std::string			line;
-
-	file.open(path.c_str());
-	if (file.fail() == true)
-		return false;
-	while (std::getline(file, line))
-		content.append(line + "\n");
-	return true;
-}
-
-void	error_page(int erreur, Response & response,
-		Config_struct::c_error_map & error_page)
-{
-	if (error_page[erreur] != "")
-	{
-		std::string content;
-		if (get_file_content(error_page[erreur], content))
-			response.set_body(content);
-	}
-}
-
+// Trouve la location associé a l'URI de la requete
 Location_config * match_location(Config_struct::c_location_vector & locations,
 											std::string target)
 {
@@ -91,6 +69,24 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 	return NULL;
 }
 
+//Ajoute dans la reponse la page d'erreur associe a l'erreur defini dans la conf
+void	error_page(int erreur, Response & response,
+		Config_struct::c_error_map & error_page)
+{
+	if (error_page[erreur] != "")
+	{
+		std::string content;
+		if (get_file_content(error_page[erreur], content))
+			response.set_body(content);
+		std::stringstream ss;
+		ss << content.size();
+		response.add_header("Content-Length", ss.str());
+	}
+	else
+		response.add_header("Content-Length", "0");
+}
+
+//renvoie true si methode autorisé false sinon
 bool	is_methode_allowed(Location_config * location, std::string methode)
 {
 	if (location == NULL && methode == "GET")
@@ -133,32 +129,23 @@ int		check_cgi(Request& requete, const Server_config& server,
 	return ret;
 }
 
-bool is_dir(const std::string path)
-{
-	DIR *dir;
-
-    if ((dir = opendir(path.c_str())) != nullptr) {
-        closedir (dir);
-		return 1;
-    }
-	else
-		return false;
-}
-
+//Met a jour la target avec la directive root
 void	handle_root(std::string & target, Location_config * location)
 {
 	if (location == NULL || location->root == "")
 		return;
-	if (target[location->uri.size() + 1] == '/')
-		target.erase(0 , location->uri.size() + 1);
-	else
+	if (location->uri[location->uri.size()] == '/' || location->uri.size() == 1)
 		target.erase(0 , location->uri.size());
-	if (location->root[location->root.size()] == '/')
+	else
+		target.erase(0 , location->uri.size() + 1);
+	if (location->root[location->root.size() - 1] == '/')
 		target.insert(0, location->root);
 	else
 		target.insert(0, location->root + "/");
 }
 
+//si la target est un directory teste si le fichier existe dans le dossier
+//et met a jour la requete avec le fichier qui doit etre renvoye
 void	handle_index(std::string & target, Location_config * location)
 {
 	std::ifstream		file;
@@ -182,26 +169,57 @@ void	handle_index(std::string & target, Location_config * location)
 			target = path;
 			return;
 		}
+		file.close();
 		it++;
 	}
 }
 
 
+//Si une redirection doit etre fait met le code et le status dans la reponse
+void	handle_return(Response & response, Location_config *location)
+{
+	std::stringstream sstream;
+    sstream << location->return_p.first;
+
+	response.set_status_code(sstream.str());
+	if (location->return_p.first == 301)
+		response.set_status_infos("Moved Permanently");
+	else if (location->return_p.first == 302)
+		response.set_status_infos("Found");
+	else if (location->return_p.first == 307)
+		response.set_status_infos("Temporary Redirect");
+	else if (location->return_p.first == 308)
+		response.set_status_infos("Permanent Redirect");
+	response.add_header("Location", location->return_p.second);
+	response.add_header("Content-Length", "0");
+}
 
 void	construct_get_response(Response & response, Request &requete,
 						Server_config * server, Location_config * location)
 {
 	std::string content;
 
+	//si la target est un repertoire cherche le fichier a repondre
 	if (is_dir(requete.get_target()))
 		handle_index(requete.get_target(), location);
-	if (get_file_content(requete.get_target(), content))
+
+	// si la target est un repertoire et que l'autoindex est active
+	//renvoie l'autoindex
+	//sinon si la target est un fichier et qu'il peut etre recupéré
+	//set la reponse a 200 et renvoie le fichier
+	//sinon
+	//renvoie une erreur car fichier untrouvable
+	if (is_dir(requete.get_target()) && location->auto_index == true)
+		auto_index(response, requete.get_target());
+	else if (!is_dir(requete.get_target()) &&
+		get_file_content(requete.get_target(), content))
 	{
 		response.set_status_code("200");
 		response.set_status_infos("OK");
 		response.set_body(content);
 		std::stringstream ss;
 		ss << content.size();
+		__D_DISPLAY("content : "<< ss.str());
 		response.add_header("Content-Length", ss.str());
 	}
 	else
@@ -224,29 +242,84 @@ void	construct_delete_response(Response & response, Request &requete)
 	(void)requete;
 }
 
+//set le code 405 rt le message associe et les headers
+//Header allow qui donne les methodes autorisé pour cette ressource
+void	method_not_allowed(Response & response, Server_config * server,
+		Location_config * location)
+{
+	std::string  str;
+	bool get = false;
+	bool post = false;
+	bool del = false;
+
+	response.set_status_code("405");
+	response.set_status_infos("Method Not Allowed");
+	Config_struct::c_methode_vector::iterator it = location->methode.begin();
+	Config_struct::c_methode_vector::iterator ite = location->methode.end();
+	while (it != ite)
+	{
+		if (*it == "GET")
+			get = true;
+		else if (*it == "POST")
+			post = true;
+		else if (*it == "DELETE")
+			del = true;
+		it++;
+	}
+	if (get)
+		str.append("GET");
+	if (get && (post || del))
+		str.append(", ");
+	if (post)
+		str.append("POST");
+	if (post && del)
+		str.append(", ");
+	if (del)
+		str.append("DELETE");
+	response.add_header("Allow", str);
+	response.add_header("Content-Length", "0");
+	error_page(405, response, server->error_page);
+}
+
 int		construct_response(Response & response, Server_config * server,
 				Request & requete, Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	//TODO: verifier les parametres de server
-	std::stringstream	str(requete["Content-Length"]);
-	unsigned long		length;
+
 	int					ret = 0;
 	Location_config		*location;
 
-	str >> length;
-	if (length > server->m_body_size)
+	if (requete["Content-Length"] != "")
 	{
-		response.set_status_code("413");
-		response.set_status_infos("Payload Too Large");
-		error_page(413, response, server->error_page);
+		std::stringstream	str(requete["Content-Length"]);
+		unsigned long		length;
+		str >> length;
+		if (length > server->m_body_size)
+		{
+			__D_DISPLAY("Payload too large");
+			__D_DISPLAY("length" <<  requete["Content-Length"]);
+			__D_DISPLAY("length" <<  length);
+			__D_DISPLAY("m_body_size" <<  server->m_body_size);
+
+			response.set_status_code("413");
+			response.set_status_infos("Payload Too Large");
+			error_page(413, response, server->error_page);
+			return 0;
+		}
 	}
 
 	location = match_location(server->location, requete.get_target());
-	if (!location)
-		;//return error ???
 
+	if (location)
+		{__D_DISPLAY("code return : " << location->return_p.first);}
+	if (location && location->return_p.first != 0)
+	{
+		handle_return(response, location);
+		return 0;
+	}
+
+	//CGI
 	while (location && (ret = check_cgi(requete, *server, *location,
 					client, client_map, server_map)) >= 0)
 	{
@@ -268,11 +341,7 @@ int		construct_response(Response & response, Server_config * server,
 			is_methode_allowed(location, "DELETE"))
 		construct_delete_response(response, requete);
 	else
-	{
-		response.set_status_code("405");
-		response.set_status_infos("Method Not Allowed");
-		error_page(405, response, server->error_page);
-	}
+		method_not_allowed(response, server, location);
 	return 0;
 }
 
@@ -316,6 +385,7 @@ void	process_request(Client& client,
 		__D_DISPLAY("INVALID REQUEST");
 		response.set_status_code("400");
 		response.set_status_infos("Bad Request");
+		response.add_header("Content-Length", "0");
 	}
 	client.setResponse(response.get_raw());
 	client.truncateRequest(len_request);

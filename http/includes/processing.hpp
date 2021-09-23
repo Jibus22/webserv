@@ -10,4 +10,8 @@ void	process_request(Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map);
 
+bool is_dir(const std::string path);
+bool	get_file_content(std::string const & path, std::string & content);
+void	auto_index(Response & response, std::string  const & target);
+
 #endif

@@ -66,6 +66,7 @@ void	CgiEnv::initMetaVar()
 	_metaVar.push_back("SERVER_NAME=");
 	_metaVar.push_back("SERVER_PORT=");
 	_metaVar.push_back("PATH_TRANSLATED=");
+	_metaVar.push_back("REDIRECT_STATUS=200");//Pour php-cgi...
 }
 
 //takes the address of each string of _metaVar vector to be formated as char**,
@@ -94,6 +95,8 @@ void	CgiEnv::setArgs(const Location_config& location_block,
 	_args.reserve(MAX_ARG);
 	_args.push_back(match->second);//get the cgi filesystem location from conf
 	script_path = location_block.root;
+	if (script_path[script_path.size() - 1] != '/')
+		script_path.push_back('/');
 	script_name = (_metaVar[SCRIPT_NAME].substr(12));
 	script_path.append(script_name, location_block.uri.size(), std::string::npos);
 	_args.push_back(script_path);
@@ -230,4 +233,3 @@ std::ostream &operator<<(std::ostream &out, const CgiEnv& value)
 		out << *i << std::endl;
 	return (out);
 }
-
