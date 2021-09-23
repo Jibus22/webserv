@@ -58,11 +58,41 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 	while (it != locations.end())
 	{
 		location = *it;
-		if((target.compare(0, location->uri.size(), location->uri) == 0))// &&
-//(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
+		if (location->uri == "/")
 		{
 			__D_DISPLAY("location matched : " << location->uri);
 			return location;
+		}
+		else if (location->uri[location->uri.size() - 1] == '/')
+		{
+			// cas ou location uri fini par /
+
+			//on compare jusque avant le / de la location URI
+			//ca match si compare == 0 et si soit la target est fini apres la comparaison
+			// soit si il y a un / apres
+			//Par exemple /dir/
+			//doit matcher avec /dir /dir/ /dir/test.html
+			// mais pas /directory
+			if((target.compare(0, location->uri.size() - 1,
+			location->uri, 0, location->uri.size() - 1) == 0)
+			&& (target.size() == location->uri.size() - 1 ||
+				target[location->uri.size() - 1] == '/'))
+			{
+				__D_DISPLAY("location matched : " << location->uri);
+				return location;
+			}
+		}
+		else
+		{
+			//cas ou location fini pas par /
+
+			//pareil mais longueur de comparaison change
+			if((target.compare(0, location->uri.size(), location->uri) == 0) &&
+(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
+			{
+				__D_DISPLAY("location matched : " << location->uri);
+				return location;
+			}
 		}
 		it++;
 	}
