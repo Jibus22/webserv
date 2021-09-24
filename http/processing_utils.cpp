@@ -21,6 +21,8 @@ bool	get_file_content(std::string const & path, std::string & content)
 	std::ifstream		file;
 	std::string			line;
 
+	if (is_dir(path))
+		return false;
 	file.open(path.c_str());
 	if (file.fail() == true)
 		return false;
