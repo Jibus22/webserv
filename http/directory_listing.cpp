@@ -4,11 +4,16 @@
 
 void	auto_index(Response & response, std::string const & target)
 {
-	response.set_status_code("200");
-	response.set_status_infos("OK");
 	DIR * dir;
 	struct dirent * fic;
+	std::string 	prefix;
 
+	if (target[target.size() - 1] != '/')
+	{
+		prefix = target.substr(target.rfind('/') + 1) + '/';
+	}
+	response.set_status_code("200");
+	response.set_status_infos("OK");
 	dir = opendir(target.c_str());
 	response.append("\
 	<html>\n\
@@ -23,6 +28,7 @@ void	auto_index(Response & response, std::string const & target)
 	while ((fic = readdir(dir)) != NULL)
 	{
 		response.append("<li><a href=\"");
+		response.append(prefix);
 		response.append(fic->d_name);
 		if(fic->d_type == DT_DIR)
 			response.append("/");
