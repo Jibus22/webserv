@@ -341,8 +341,13 @@ int		construct_response(Response & response, Server_config * server,
 
 	location = match_location(server->location, requete.get_target());
 
-	if (location)
-		{__D_DISPLAY("code return : " << location->return_p.first);}
+	if (!location)
+	{
+		response.set_status_code("404");
+		response.set_status_infos("Not Found");
+		error_page(404, response, server->error_page);
+		return 0;
+	}
 	if (location && location->return_p.first != 0)
 	{
 		handle_return(response, location);
