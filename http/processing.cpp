@@ -143,10 +143,14 @@ int		check_cgi(Request& requete, const Server_config& server,
 {
 	int	ret = -1;
 	Config_struct::c_cgi_map::const_iterator it = location.cgi.begin();
-
+	size_t pos;
 	while (it != location.cgi.end())
 	{
-		if (requete.get_target().find(it->first) != std::string::npos)
+		if ((pos = requete.get_target().find(it->first)) != std::string::npos &&
+	(	requete.get_target().size() == pos + it->first.size() ||
+		requete.get_target()[pos + it->first.size()] == '/'
+	)
+		)
 		{
 			ret = process_cgi(requete, location,
 					server, client, it->first, client_map, server_map);
