@@ -230,10 +230,19 @@ void	construct_get_response(Response & response, Request &requete,
 	}
 }
 
-void	construct_post_response(Response & response, Request &requete)
+void	construct_post_response(Response & response, Request &request)
 {
+	/*
+	std::string	value;
+
+	if (request.getHeader("content-type", value) == false)
+		return;
+	if (value.find("multipart/form-data") == std::string::npos)
+		return;
+		*/
+
+	(void)request;
 	(void)response;
-	(void)requete;
 }
 
 void	construct_delete_response(Response & response, Request &requete)

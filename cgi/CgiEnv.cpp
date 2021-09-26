@@ -195,10 +195,10 @@ void		CgiEnv::setMetaVar(const Request& request,
 		_metaVar[SERVER_NAME].append(server_block.name_serv[0]);
 	else
 		_metaVar[SERVER_NAME].append((client.getListen()).first);
-	hdr = request.get_header("content-length", found);
+	hdr = request.getHeader("content-length", found);
 	if (found == true)
 		_metaVar[CONTENT_LENGTH].append(hdr->second);
-	hdr = request.get_header("content-type", found);
+	hdr = request.getHeader("content-type", found);
 	if (found == true)
 		_metaVar[CONTENT_TYPE].append(hdr->second);
 

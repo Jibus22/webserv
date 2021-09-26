@@ -33,7 +33,9 @@ public:
 
 	std::string const & operator[] (std::string const & key_header);
 	std::map<std::string, std::string>::const_iterator
-		get_header(const std::string& key_header, bool& found) const;
+		getHeader(const std::string& key_header, bool& found) const;
+	bool
+		getHeader(const std::string& key, std::string& value) const;
 	std::map<std::string, std::string> const & get_headers() const;
 	std::string const & get_method() const;
 	void				setTarget(const std::string& newtarget);
