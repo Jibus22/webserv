@@ -359,7 +359,7 @@ void	process_request(Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	size_t	len_request = (client.getStrRequest()).size();//TMP!
+	size_t	len_request = client.getRequestSize();//TMP!
 	Response response;
 
 	try {

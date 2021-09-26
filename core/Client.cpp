@@ -7,8 +7,8 @@ Client::Client(void) : _fd(-2), _ready(false)
 {}
 
 Client::Client(Client const & src) : _fd(src._fd), _listen(src._listen),
-									_request(src._request), _ready(src._ready),
-									_remote_address(src._remote_address)
+									_remote_address(src._remote_address),
+									_request(src._request), _ready(src._ready)
 {}
 
 Client::~Client()
