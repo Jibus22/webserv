@@ -41,12 +41,16 @@ bool	complete_match(std::string::const_iterator hdr,
 	return false;
 }
 
-size_t	find_nocase_header(const std::string& str, const std::string& header)
+//search into str, for exact match with header, while ignoring case, & return
+//position of match.
+size_t	find_nocase_header(const std::string& str,
+					const std::string& header, size_t start)
 {
 	size_t						pos = 0;
 	std::string::const_iterator hdr = header.begin(), hdrend = header.end(),
 								i = str.begin(), iend = str.end();
 
+	i += start;
 	if (hdr == hdrend)
 		return std::string::npos;
 	while (i != iend)

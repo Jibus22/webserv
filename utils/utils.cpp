@@ -51,3 +51,16 @@ int		is_file_exist(const std::string& filename)
 		return 1;
 	return 0;
 }
+
+std::string str_to_lower(std::string const & s)
+{
+	std::string str(s);
+	std::string::iterator it = str.begin();
+	std::string::iterator ite = str.end();
+	while (it != ite)
+	{
+		*it = std::tolower(*it);
+		it++;
+	}
+	return str;
+}

@@ -238,19 +238,17 @@ void	construct_get_response(Response & response, Request &requete,
 	}
 }
 
-void	construct_post_response(Response & response, Request &request)
+int	http_post(Request& request)
 {
-	/*
 	std::string	value;
 
 	if (request.getHeader("content-type", value) == false)
-		return;
-	if (value.find("multipart/form-data") == std::string::npos)
-		return;
-		*/
+		return 1;
+	if (value.find("multipart/form-data") != std::string::npos)
+		return 1;
+		//return formdata_process(request, value);
 
-	(void)request;
-	(void)response;
+	return 1;
 }
 
 void	construct_delete_response(Response & response, Request &requete)
@@ -353,7 +351,7 @@ int		construct_response(Response & response, Server_config * server,
 		construct_get_response(response, requete, server, location);
 	else if (requete.get_method() == "POST" &&
 			is_methode_allowed(location, "POST"))
-		construct_post_response(response, requete);
+		return http_post(requete);
 	else if(requete.get_method() == "DELETE" &&
 			is_methode_allowed(location, "DELETE"))
 		construct_delete_response(response, requete);
