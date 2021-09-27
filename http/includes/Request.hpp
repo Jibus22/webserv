@@ -13,6 +13,7 @@ private:
 	std::string							_version;
 	std::map<std::string, std::string>	_headers;
 	std::string							_body;
+	size_t								_blankline;
 
 
 	void add_header(std::string const & header);

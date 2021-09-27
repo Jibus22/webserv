@@ -23,8 +23,7 @@ void split(std::vector<std::string> & output, const std::string& s,
 
 	while((pos = s.find(separator, pos)) != std::string::npos)
 	{
-		std::string substring( s.substr(prev_pos, pos-prev_pos) );
-        output.push_back(substring);
+        output.push_back(s.substr(prev_pos, pos - prev_pos));
         prev_pos = ++pos;
 	}
     output.push_back(s.substr(prev_pos, pos - prev_pos)); // Last word
@@ -110,7 +109,34 @@ void	Request::checkTerminatedBody()
 		throw NotTerminatedException();
 }
 
+//Fulfill all private variables (start line, headers, body)
+Request::Request(std::string const& request)
+{
+	std::string	*start_line[3] = {&_method, &_target, &_version};
+	size_t	start = 0, endline = 0, separator = 0;
 
+	_blankline = request.find("\r\n\r\n");
+	_body = request.substr(_blankline + 4);
+	for (size_t i = 0; i < 3; i++)
+	{
+		if (i < 2)
+			separator = request.find(' ', start);
+		else
+			separator = request.find('\n', start);
+		*(start_line[i]) = request.substr(start, separator - start);
+		start = separator + 1;
+	}
+	while (endline < _blankline)
+	{
+		separator = request.find(':', start);
+		endline = request.find('\n', separator);
+		_headers[str_to_lower(request.substr(start, separator - start))]
+			= request.substr(separator + 1, endline - (separator + 1));
+		start = endline + 1;
+	}
+}
+
+/*
 // TODO:  Exception a gerer si requete mal formate
 Request::Request(std::string const & raw_r)
 {
@@ -148,15 +174,13 @@ Request::Request(std::string const & raw_r)
 	}
 
 	//check si body est fini sinon NotTerminatedException
-	/*
-	if (!this->_body.empty())
-		this->checkTerminatedBody();
-		*/
+	//if (!this->_body.empty())
+		//this->checkTerminatedBody();
 	//Matéo, cette fonction  ^ me renvoie une exception alors que ça devrait pas
 	//Du coup je l'ai commentée pour le moment. Si j'ai bien lu le code
 	//il m e semble que cette vérification est déjà faie desormais dans mon
 	//pré-parsing
-}
+}*/
 
 std::string const & Request::operator[] (std::string const & key_header)
 {return this->_headers[key_header];}

@@ -42,3 +42,12 @@ int		is_file_exist(const char *filename)
 		return 1;
 	return 0;
 }
+
+int		is_file_exist(const std::string& filename)
+{
+	struct stat	buf;
+
+	if (stat(filename.c_str(), &buf) == 0)
+		return 1;
+	return 0;
+}

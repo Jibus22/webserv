@@ -158,18 +158,26 @@ void	handle_index(std::string & target, Location_config * location)
 	if (location == NULL)
 		return;
 	Config_struct::c_index_vector::const_iterator it = location->index.begin();
-	std::string path;
+	//std::string path;
 	while (it != location->index.end())
 	{
+		if (is_file_exist(target + *it))
+		{
+			target.append(*it);
+			return;
+		}
+			/*
 		path = target;
 		path.append((*it));
 		file.open(path.c_str());
 		if (file.fail() == false)
 		{
 			target = path;
+			file.close();
 			return;
 		}
 		file.close();
+		*/
 		it++;
 	}
 }
@@ -365,7 +373,7 @@ void	process_request(Client& client,
 	try {
 		__D_DISPLAY("request : ");
 		__D_DISPLAY(client.getStrRequest());
-		Request r = Request(client.getStrRequest());
+		Request r(client.getStrRequest());
 		__D_DISPLAY("Object Request Created");
 
 		// On recupere le serveur associe a la requete

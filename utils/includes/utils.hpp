@@ -23,6 +23,7 @@ std::string	ft_int_to_string(int val);
 size_t	find_nocase_header(const std::string& str, const std::string& header);
 
 int		is_file_exist(const char *filename);
+int		is_file_exist(const std::string& filename);
 
 //display.cpp
 const std::string	display_headers(const std::string& response);
