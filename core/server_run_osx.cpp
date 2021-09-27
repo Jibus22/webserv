@@ -37,14 +37,15 @@ static int	run_server(const int kq,
 			}
 			else if (eventlist[i].filter == EVFILT_READ)//2.
 			{
-				read_request(event_fd, *client_map);
-				if (is_valid_request((*client_map)[event_fd]) == VALID_REQUEST)
-					process_request((*client_map)[event_fd], server_blocks,
+				Client&	client = (*client_map)[event_fd];
+				read_request(eventlist[i], client);
+				if (is_valid_request(client) == VALID_REQUEST)
+					process_request(client, server_blocks,
 							*client_map, server_map);
 			}
-			if (is_response(kq, &(eventlist[i]), *client_map) == 0)
+			if (is_response(kq, eventlist[i], *client_map) == 0)
 			{
-				send_response(kq, &(eventlist[i]), (*client_map)[event_fd]);
+				send_response(kq, eventlist[i], (*client_map)[event_fd]);
 			}
 		}
 	}

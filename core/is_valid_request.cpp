@@ -7,8 +7,6 @@ std::string		*check_transfer_encoding(const std::string& request,
 {
 	size_t	chunked_end, value_end;
 
-	if (request.size() > 1000000)
-		return new std::string("HTTP/1.1 413 Payload Too Large\r\n");
 	if (find_nocase_header(request, "Content-Length") != std::string::npos)
 		return new std::string("HTTP/1.1 400 Bad Request\r\n");
 	value_end = request.find_first_of('\n', value_start);

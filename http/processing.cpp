@@ -192,18 +192,26 @@ void	handle_index(std::string & target, Location_config * location)
 	if (location == NULL)
 		return;
 	Config_struct::c_index_vector::const_iterator it = location->index.begin();
-	std::string path;
+	//std::string path;
 	while (it != location->index.end())
 	{
+		if (is_file_exist(target + *it))
+		{
+			target.append(*it);
+			return;
+		}
+			/*
 		path = target;
 		path.append((*it));
 		file.open(path.c_str());
 		if (file.fail() == false)
 		{
 			target = path;
+			file.close();
 			return;
 		}
 		file.close();
+		*/
 		it++;
 	}
 }
@@ -264,10 +272,17 @@ void	construct_get_response(Response & response, Request &requete,
 	}
 }
 
-void	construct_post_response(Response & response, Request &requete)
+int	http_post(Request& request)
 {
-	(void)response;
-	(void)requete;
+	std::string	value;
+
+	if (request.getHeader("content-type", value) == false)
+		return 1;
+	if (value.find("multipart/form-data") != std::string::npos)
+		return 1;
+		//return formdata_process(request, value);
+
+	return 1;
 }
 
 void	construct_delete_response(Response & response, Request &requete)
@@ -375,7 +390,7 @@ int		construct_response(Response & response, const Server_config * server,
 		construct_get_response(response, requete, server, location);
 	else if (requete.get_method() == "POST" &&
 			is_methode_allowed(location, "POST"))
-		construct_post_response(response, requete);
+		return http_post(requete);
 	else if(requete.get_method() == "DELETE" &&
 			is_methode_allowed(location, "DELETE"))
 		construct_delete_response(response, requete);
@@ -389,13 +404,13 @@ void	process_request(Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	size_t	len_request = (client.getStrRequest()).size();//TMP!
+	size_t	len_request = client.getRequestSize();//TMP!
 	Response response;
 
 	try {
 		__D_DISPLAY("request : ");
 		__D_DISPLAY(client.getStrRequest());
-		Request r = Request(client.getStrRequest());
+		Request r(client.getStrRequest());
 		__D_DISPLAY("Object Request Created");
 
 		// On recupere le serveur associe a la requete

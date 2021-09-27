@@ -68,5 +68,11 @@ int		cgi_output(std::string& cgi_out)
 			return CGI_REDIRECT;
 		}
 	}
+	if (find_nocase_header(headers, "Content-Length:") == std::string::npos)
+	{
+		cont_len = "Content-Length:" +
+			ft_int_to_string(cgi_out.size() - (blankline + 4)) + "\r\n";
+			cgi_out.insert(blankline + 3, cont_len);
+	}
 	return CGI_SUCCESS;
 }

@@ -10,11 +10,12 @@ class Client
 {
 	int							_fd;
 	std::pair<std::string, int>	_listen;
+	std::string					_remote_address;
 
 	std::string					_request;
+
 	std::queue<std::string*>	_qResponse;
 	bool						_ready;
-	std::string					_remote_address;
 public:
 /*------------------------CONSTRUCTOR / DESTRUCTOR----------------------------*/
 

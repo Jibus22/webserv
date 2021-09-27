@@ -168,7 +168,7 @@ int		process_cgi(Request& request, const Location_config& location_block,
 
 	__D_DISPLAY("ENV:\n" << env);
 	if (!is_file_exist(((env.getArgs())[1]).c_str()))
-		return http_error(client, "HTTP/1.1 404 Not Found\r\n", 2);
+		return http_error(client, "HTTP/1.1 404 Not Found\r\n\r\n", 2);
 	if (tx.isPipeError() || rx.isPipeError())
 		return http_error(client, "HTTP/1.1 500 Internal Server Error\r\n", 2);
 	c_pid = fork();

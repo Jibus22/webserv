@@ -42,22 +42,53 @@
                 <h1>J'aime les CGI</h1>
             </div>
 
-			<p>Test de cgi qui imprime ses variables d'environnement.
+			<h3>Test de cgi qui imprime ses variables d'environnement.</h3>
 			<li><a href="/cgi/printenv.py">printenv</a></li>
-			</p>
 
-			<p>Test de cgi qui imprime les entrées nom/prénom d'un formulaire http
+			<h3>Test de cgi qui imprime les entrées nom/prénom d'un formulaire http en GET</h3>
 			<form action = "/cgi/get_name.py" method = "get">
 				First Name: <input type = "text" name = "first_name">  <br />
 				Last Name: <input type = "text" name = "last_name" />
 				<input type = "submit" value = "Submit" />
 			</form>
 
+			<h3>Test de cgi formulaire http en POST</h3>
+			<form action = "/cgi/get_name.py" method = "post">
+				Your bank account ID: <input type = "text" name = "first_name">  <br />
+				Your bank account password: <input type = "password" name = "last_name" />
+				<input type = "submit" value = "Submit (no worries this is very very safe)" />
+			</form>
+
+			<h3> Test de script qui fait 2 redirections client, différentes.</h3>
+			<form action = "/cgi/clientredirect.pl" method = "get">
+				<input type = "checkbox" name = "like" value = "on"> J'aime ce webserv
+				<input type = "checkbox" name = "dontlike" value = "on"> J'ai des gros doutes sur ce webserv
+				<input type = "submit" value = "Send" />
+			</form>
+
+			<h3> Test de script qui fait 2 redirections locales différentes.</h3>
+			<form action = "/cgi/localredirect.pl" method = "get">
+				<input type = "checkbox" name = "like" value = "on"> J'aime la californie
+				<input type = "checkbox" name = "dontlike" value = "on"> J'aime la page d'accueil
+				<input type = "submit" value = "Send" />
+			</form>
+
+			<h3>Select files to upload</h3>
+			<form name="upload" method="POST" enctype="multipart/form-data" action="/upload">
+				<input type="file" name="file1"><br>
+				<input type="file" name="file2"><br>
+				<input type="file" name="file3"><br>
+				<input type="file" name="file4"><br>
+				<input type="file" name="file5"><br>
+				<input type="file" name="file6"><br>
+				<input type="submit" name="submit" value="Upload">
+				<input type="hidden" name="test" value="value">
+			</form>
+
 			<p>Test de cgi php qui imprime phpinfo
 			<li><a href="/cgi/phpinfo.php">phptest</a></li>
 			</p>
 
-			</p>
 
             </article>
                 <div id="fleche">
