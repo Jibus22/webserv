@@ -330,7 +330,7 @@ void	method_not_allowed(Response & response, Server_config * server,
 	error_page(405, response, server->error_page);
 }
 
-int		construct_response(Response & response, const Server_config * server,
+int		construct_response(Response & response, Server_config * server,
 				Request & requete, Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
