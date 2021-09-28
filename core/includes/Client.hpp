@@ -15,6 +15,7 @@ class Client
 	std::string					_request;
 
 	std::queue<std::string*>	_qResponse;
+	size_t						_offset;
 	bool						_ready;
 public:
 /*------------------------CONSTRUCTOR / DESTRUCTOR----------------------------*/
@@ -28,7 +29,7 @@ public:
 
 	void		truncateRequest(const int len);
 	void		truncateRequest(const char *end);
-	void		truncateResponse(const int len);
+	void		setOffset(const ssize_t len);
 	void		clearResponse(void);
 
 

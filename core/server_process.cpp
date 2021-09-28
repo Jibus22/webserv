@@ -60,16 +60,16 @@ int	read_request(const struct kevent& event, Client& client)
 		buflen = RCV_BUF;
 	else
 		buflen = event.data;
-	buf = (char*)std::malloc(sizeof(*buf) * buflen);
+	buf = new char [buflen];
 	len = recv(event.ident, buf, buflen, 0);
 	__D_DISPLAY_RECV(event.ident, len);
 	if (len == -1)
 	{
-		std::free(buf);
+		delete [] buf;
 		return -1;
 	}
 	client.setRequest(buf, len);
-	std::free(buf);
+	delete [] buf;
 
 	return 0;
 }
@@ -78,7 +78,7 @@ int	read_request(const struct kevent& event, Client& client)
 //be sent. Removes data that has been sent from the response buffer
 int	send_response(const int kq, const struct kevent& event, Client& client)
 {
-	int	len;
+	ssize_t	len;
 
 	//event->data contains space remaining in the write buffer
 	__D_DISPLAY("data flag from write event: " << event.data);
@@ -86,7 +86,7 @@ int	send_response(const int kq, const struct kevent& event, Client& client)
 	{
 		len = send(event.ident, client.getRawResponse(), event.data, 0);
 		__D_DISPLAY_SEND(client.getFd(), len, 1, client.getStrResponse());
-		client.truncateResponse(len);
+		client.setOffset(len);
 		return set_write_ready(kq, client);
 	}
 	else

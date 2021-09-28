@@ -3,12 +3,13 @@
 
 /*------------------------CONSTRUCTOR / DESTRUCTOR----------------------------*/
 
-Client::Client(void) : _fd(-2), _ready(false)
+Client::Client(void) : _fd(-2), _offset(0), _ready(false)
 {}
 
 Client::Client(Client const & src) : _fd(src._fd), _listen(src._listen),
 									_remote_address(src._remote_address),
-									_request(src._request), _ready(src._ready)
+									_request(src._request),
+									_offset(src._offset), _ready(src._ready)
 {}
 
 Client::~Client()
@@ -28,6 +29,7 @@ Client &	Client::operator=(Client const & src)
 	_listen = src._listen;
 	_request = src._request;
 	_ready = src._ready;
+	_offset = src._offset;
 	_remote_address = src._remote_address;
 	return *this;
 }
@@ -41,12 +43,12 @@ void	Client::truncateRequest(const char *end)
 			const char	*begin = _request.data();
 			_request.erase(0, (end - begin));
 		}
-void	Client::truncateResponse(const int len)
-		{ (_qResponse.front())->erase(0, len); }
+void	Client::setOffset(const ssize_t len) { _offset += len; }
 void	Client::clearResponse(void)
 {
 	delete _qResponse.front();
 	_qResponse.pop();
+	_offset = 0;
 	_ready = false;
 }
 
@@ -91,7 +93,7 @@ size_t				Client::getResponseSize(void) const
 const std::string&	Client::getStrResponse(void) const
 					{ return *(_qResponse.front()); }
 const char*			Client::getRawResponse(void) const
-					{ return (_qResponse.front())->data(); }
+					{ return (_qResponse.front())->data() + _offset; }
 
 
 

@@ -28,9 +28,9 @@ size_t	find_nocase_header(const std::string& str,
 long		get_timestamp(const struct timeval& tv_start);
 int			ft_string_to_nb(const std::string& value);
 std::string	ft_int_to_string(int val);
-int			is_file_exist(const char *filename);
-int			is_file_exist(const std::string& filename);
 std::string	str_to_lower(std::string const & s);
+bool		is_file_exist(const char *filename);
+bool		is_file_exist(const std::string& filename);
 
 //display.cpp
 const std::string	display_headers(const std::string& response);

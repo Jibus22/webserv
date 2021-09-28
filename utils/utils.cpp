@@ -34,22 +34,14 @@ std::string	ft_int_to_string(int val)
   return ss.str();
 }
 
-int		is_file_exist(const char *filename)
+bool	is_file_exist(const char *filename)
 {
-	struct stat	buf;
-
-	if (stat(filename, &buf) == 0)
-		return 1;
-	return 0;
+	return (access(filename, F_OK) == 0);
 }
 
-int		is_file_exist(const std::string& filename)
+bool	is_file_exist(const std::string& filename)
 {
-	struct stat	buf;
-
-	if (stat(filename.c_str(), &buf) == 0)
-		return 1;
-	return 0;
+	return (access(filename.c_str(), F_OK) == 0);
 }
 
 std::string str_to_lower(std::string const & s)
