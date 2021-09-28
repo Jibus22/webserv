@@ -46,19 +46,18 @@ bool	complete_match(std::string::const_iterator hdr,
 size_t	find_nocase_header(const std::string& str,
 					const std::string& header, size_t start)
 {
-	size_t						pos = 0;
+	size_t						pos = 0 + start;
 	std::string::const_iterator hdr = header.begin(), hdrend = header.end(),
-								i = str.begin(), iend = str.end();
+								it = str.begin() + start, itend = str.end();
 
-	i += start;
 	if (hdr == hdrend)
 		return std::string::npos;
-	while (i != iend)
+	while (it != itend)
 	{
-		if (insensitive_case_match(*i, *hdr))
-			if (complete_match(hdr, hdrend, i, iend))
+		if (insensitive_case_match(*it, *hdr))
+			if (complete_match(hdr, hdrend, it, itend))
 				return pos;
-		i++;
+		it++;
 		pos++;
 	}
 	return std::string::npos;

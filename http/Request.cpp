@@ -194,16 +194,18 @@ Request::getHeader(const std::string& key, std::string& value) const
 	return true;
 }
 
-std::map<std::string, std::string> const & Request::get_headers() const
-{return this->_headers;}
+std::map<std::string, std::string> const&
+							Request::get_headers() const {return this->_headers;}
 
-std::string const & Request::get_method() const {return this->_method;}
-void				Request::setTarget(const std::string& newtarget)
-					{_target = newtarget;}
-std::string const & Request::get_target() const {return this->_target;}
-std::string & Request::get_target() {return this->_target;}
-std::string const & Request::get_version() const {return this->_version;}
-std::string const & Request::get_body() const {return this->_body;}
+std::string const &			Request::get_method() const {return this->_method;}
+void						Request::setTarget(const std::string& newtarget)
+							{_target = newtarget;}
+std::string const&			Request::get_target() const {return this->_target;}
+std::string&				Request::get_target() {return this->_target;}
+std::string const&			Request::get_version() const {return this->_version;}
+std::string const&			Request::get_body() const {return this->_body;}
+const std::string&			Request::getRequest() const {return _request;}
+size_t						Request::getBodyPos() const {return _blankline + 4;}
 
 
 /*------------------------------OVERLOAD OPERATORS----------------------------*/

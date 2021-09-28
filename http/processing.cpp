@@ -238,16 +238,16 @@ void	construct_get_response(Response & response, Request &requete,
 	}
 }
 
-int	http_post(Request& request)
+int		http_post(Request& request, Location_config& location)
 {
-	std::string	value;
+	std::string		value;
 
-	if (request.getHeader("content-type", value) == false)
+	if (request.getHeader("content-type", value) == false
+				|| location.upload_dir.empty())
 		return 1;
 	if (value.find("multipart/form-data") != std::string::npos)
-		return 1;
-		//return formdata_process(request, value);
-
+		return formdata_process(request.getRequest(), value,
+						location.upload_dir, request.getBodyPos());
 	return 1;
 }
 
@@ -297,7 +297,7 @@ void	method_not_allowed(Response & response, Server_config * server,
 }
 
 int		construct_response(Response & response, Server_config * server,
-				Request & requete, Client& client,
+				Request & request, Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
@@ -305,15 +305,15 @@ int		construct_response(Response & response, Server_config * server,
 	int					ret = 0;
 	Location_config		*location;
 
-	if (requete["Content-Length"] != "")
+	if (request["Content-Length"] != "")
 	{
-		std::stringstream	str(requete["Content-Length"]);
+		std::stringstream	str(request["Content-Length"]);
 		unsigned long		length;
 		str >> length;
 		if (length > server->m_body_size)
 		{
 			__D_DISPLAY("Payload too large");
-			__D_DISPLAY("length" <<  requete["Content-Length"]);
+			__D_DISPLAY("length" <<  request["Content-Length"]);
 			__D_DISPLAY("length" <<  length);
 			__D_DISPLAY("m_body_size" <<  server->m_body_size);
 
@@ -324,7 +324,7 @@ int		construct_response(Response & response, Server_config * server,
 		}
 	}
 
-	location = match_location(server->location, requete.get_target());
+	location = match_location(server->location, request.get_target());
 
 	if (location)
 		{__D_DISPLAY("code return : " << location->return_p.first);}
@@ -335,26 +335,26 @@ int		construct_response(Response & response, Server_config * server,
 	}
 
 	//CGI
-	while (location && (ret = check_cgi(requete, *server, *location,
+	while (location && (ret = check_cgi(request, *server, *location,
 					client, client_map, server_map)) >= 0)
 	{
 		if (ret == CGI_REDIRECT)
-			location = match_location(server->location, requete.get_target());
+			location = match_location(server->location, request.get_target());
 		else
 			return 1;
 	}
 
-	handle_root(requete.get_target(), location);
+	handle_root(request.get_target(), location);
 
 	//check la conf location
-	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
-		construct_get_response(response, requete, server, location);
-	else if (requete.get_method() == "POST" &&
+	if (request.get_method() == "GET" && is_methode_allowed(location, "GET"))
+		construct_get_response(response, request, server, location);
+	else if (request.get_method() == "POST" &&
 			is_methode_allowed(location, "POST"))
-		return http_post(requete);
-	else if(requete.get_method() == "DELETE" &&
+		return http_post(request, *location);
+	else if(request.get_method() == "DELETE" &&
 			is_methode_allowed(location, "DELETE"))
-		construct_delete_response(response, requete);
+		construct_delete_response(response, request);
 	else
 		method_not_allowed(response, server, location);
 	return 0;

@@ -52,6 +52,8 @@ public:
 	std::string &		get_target();
 	std::string const & get_version() const;
 	std::string const & get_body() const;
+	const std::string&	getRequest() const;
+	size_t				getBodyPos() const;
 
 	void				setTarget(const std::string& newtarget);
 
