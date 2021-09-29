@@ -1,4 +1,5 @@
 #include "Response.hpp"
+#include "webserv.hpp"
 #include <iostream>
 #include <string>
 #include <map>
@@ -6,7 +7,7 @@
 /*
 ** CANONICAL FUNCS
 */
-Response::Response(void){
+Response::Response(void):_body_path(false){
 	return;
 }
 
@@ -20,6 +21,7 @@ Response &	Response::operator=(Response const & rhs){
 	this->_status_infos = rhs._status_infos;
 	this->_headers = rhs._headers;
 	this->_body = rhs._body;
+	this->_body_path = rhs._body_path;
 	return *this;
 }
 
@@ -41,7 +43,16 @@ std::string const & Response::get_body()
 
 
 void Response::set_body(std::string const & body)
-{this->_body = body;}
+{
+	this->_body_path = false;
+	this->_body = body;
+}
+
+void Response::set_body_path(std::string const & body)
+{
+	this->_body_path = true;
+	this->_body = body;
+}
 
 void Response::append(std::string const & body)
 {this->_body.append(body);}
@@ -65,6 +76,11 @@ std::string * Response::get_raw()
 		it++;
 	}
 	raw_response->append("\r\n");
-	raw_response->append(this->_body);
+	if (this->_body_path == false)
+	{
+		get_file_content(this->_body, *raw_response);
+	}
+	else
+		raw_response->append(this->_body);
 	return raw_response;
 }
