@@ -99,9 +99,9 @@ static int		write_to_file(const std::string& request,
 	if (fd == -1)
 		return -1;
 	ret = write(fd, addr, len);
+	close(fd);
 	if (ret == -1)
 		return -1;
-	close(fd);
 	return 0;
 }
 

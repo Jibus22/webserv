@@ -90,6 +90,12 @@ size_t				Client::getResponseSize(void) const
 		return 0;
 	return (_qResponse.front())->size();
 }
+size_t				Client::getLenToSend(void) const
+{
+	if (_qResponse.empty())
+		return 0;
+	return (_qResponse.front())->size() - _offset;
+}
 const std::string&	Client::getStrResponse(void) const
 					{ return *(_qResponse.front()); }
 const char*			Client::getRawResponse(void) const

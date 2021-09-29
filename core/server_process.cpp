@@ -83,7 +83,7 @@ int	send_response(const int kq, const struct kevent& event, Client& client)
 
 	//event->data contains space remaining in the write buffer
 	__D_DISPLAY("data flag from write event: " << event.data);
-	if (event.data < static_cast<long>(client.getResponseSize()))
+	if (event.data < static_cast<long>(client.getLenToSend()))
 	{
 		len = send(event.ident, client.getRawResponse(), event.data, 0);
 		__D_DISPLAY_SEND(client.getFd(), len, 1, client.getStrResponse());
@@ -93,7 +93,7 @@ int	send_response(const int kq, const struct kevent& event, Client& client)
 	else
 	{
 		len = send(event.ident, client.getRawResponse(),
-				client.getResponseSize(), 0);
+				client.getLenToSend(), 0);
 		__D_DISPLAY_SEND(client.getFd(), len, 2, client.getStrResponse());
 		client.clearResponse();
 	}

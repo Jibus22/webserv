@@ -57,6 +57,7 @@ public:
 	const char*							getRawRequest(void) const;
 
 	size_t								getResponseSize() const;
+	size_t								getLenToSend() const;
 	const std::string&					getStrResponse(void) const;
 	const char*							getRawResponse(void) const;
 };

@@ -136,26 +136,35 @@ bool	is_methode_allowed(Location_config * location, std::string methode)
 	}
 }
 
-int		check_cgi(Request& requete, const Server_config& server,
+//Look for cgi_ext directives into location block and its values, to compare
+//with the target, to find cgi file extension
+int		check_cgi(Request& request, const Server_config& server,
 			const Location_config& location, Client& client,
 			const std::map<int, Client>& client_map,
 			const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	int	ret = -1;
-	Config_struct::c_cgi_map::const_iterator it = location.cgi.begin();
-	size_t pos;
-	while (it != location.cgi.end())
+	Config_struct::c_cgi_map::const_iterator
+						it = location.cgi.begin(),
+						end = location.cgi.end();
+	const std::string&	target = request.get_target();
+	int					ret = -1;
+	size_t				pos, len;
+
+	while (it != end)
 	{
-		if ((pos = requete.get_target().find(it->first)) != std::string::npos &&
-	(	requete.get_target().size() == pos + it->first.size() ||
-		requete.get_target()[pos + it->first.size()] == '/'
-	)
-		)
+		pos = target.find(it->first);
+		if (pos != std::string::npos)
 		{
-			ret = process_cgi(requete, location,
-					server, client, it->first, client_map, server_map);
-			__D_DISPLAY("CGI status (0:SUCCESS - 1:REDIRECT - 2:ERROR): "
-					<< ret);
+			len = pos + it->first.size();
+			if (len < target.size() &&
+					(target[len] != '/' && target[len] != '?'))
+			{
+				it++;
+				continue ;
+			}
+			ret = process_cgi(request, location, server, client, it->first,
+					client_map, server_map);
+		__D_DISPLAY("CGI status (0:SUCCESS - 1:REDIRECT - 2:ERROR): " << ret);
 			return ret;
 		}
 		it++;

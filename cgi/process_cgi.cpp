@@ -75,26 +75,13 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 //This is the POSIX length of a pipe message which is guaranteed to not be mixed
 //with other write operation from other threads. It is called 'atomic write'
 //but I don't use it here. hohoho.
-int		write_to_child(const std::string& body, const FtPipe& tx)
+int		write_to_child(const Request& request, const FtPipe& tx)
 {
-	std::string::const_pointer	buf;
-	ssize_t						ret = 1, body_len = body.size();
+	ssize_t	ret;
 
-	__D_DISPLAY("WRITETOCHILD body: |" << body << "|");
-	buf = body.data();
-	while (body_len > 0)
-	{
-		ret = write(tx.write, buf, body_len);
-		if (ret == -1)
-			return pgm_perr("write");
-		if (ret < body_len)
-		{
-			body_len -= ret;
-			buf += ret;
-		}
-		else
-			break;
-	}
+	ret = write(tx.write, request.getBodyAddr(), request.getBodySize());
+	if (ret == -1)
+		return pgm_perr("write");
 	close(tx.write);
 	return 0;
 }
@@ -136,7 +123,7 @@ int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 
 	close(tx.read);
 	close(rx.write);
-	write_to_child(request.get_body(), tx);
+	write_to_child(request, tx);
 	cgi_exit = read_cgi_output(c_pid, rx, *cgi_out);
 	__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
 	if (cgi_exit == EXIT_SUCCESS)

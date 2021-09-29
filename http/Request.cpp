@@ -1,32 +1,5 @@
 #include "Request.hpp"
 #include "webserv.hpp"
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <map>
-#include <vector>
-
-/*
-void split(std::vector<std::string> & output, const std::string& s,
-													char const separator)
-{
-	std::string::size_type prev_pos = 0, pos = 0;
-
-	while((pos = s.find(separator, pos)) != std::string::npos)
-	{
-        output.push_back(s.substr(prev_pos, pos - prev_pos));
-        prev_pos = ++pos;
-	}
-    output.push_back(s.substr(prev_pos, pos - prev_pos)); // Last word
-}*/
-
-/*
-** CANONICAL FUNCS
-*/
-/*
-Request::Request(void){
-	return;
-}*/
 
 /*------------------------CONSTRUCTOR / DESTRUCTOR----------------------------*/
 
@@ -37,7 +10,6 @@ Request::Request(std::string const& request) : _request(request)
 	size_t	start = 0, endline = 0, separator = 0;
 
 	_blankline = request.find("\r\n\r\n");
-	//_body = request.substr(_blankline + 4);
 	for (size_t i = 0; i < 3; i++)
 	{
 		if (i < 2)
@@ -67,13 +39,75 @@ Request &	Request::operator=(Request const & rhs){
 	this->_method = rhs._method;
 	this->_target = rhs._target;
 	this->_headers = rhs._headers;
-	this->_body = rhs._body;
 	return *this;
 }
 
 
 Request::~Request(void){
 	return;
+}
+
+
+/*------------------------------GETTERS/SETTERS-------------------------------*/
+
+std::map<std::string, std::string>::const_iterator
+		Request::getHeader(const std::string& key_header, bool& found) const
+{
+	std::map<std::string, std::string>::const_iterator
+			header(_headers.find(key_header));
+
+	if (header == _headers.end())
+		found = false;
+	else
+		found = true;
+	return header;
+}
+
+bool
+Request::getHeader(const std::string& key, std::string& value) const
+{
+	std::map<std::string, std::string>::const_iterator
+			header(_headers.find(key));
+
+	if (header == _headers.end())
+		return false;
+	value = header->second;
+	return true;
+}
+
+std::map<std::string, std::string> const&
+					Request::get_headers() const {return this->_headers;}
+
+std::string const&	Request::get_method() const {return this->_method;}
+void				Request::setTarget(const std::string& newtarget)
+					{_target = newtarget;}
+std::string const&	Request::get_target() const {return this->_target;}
+std::string&		Request::get_target() {return this->_target;}
+std::string const&	Request::get_version() const {return this->_version;}
+const std::string&	Request::getRequest() const {return _request;}
+size_t				Request::getBodyPos() const {return _blankline + 4;}
+size_t				Request::getBodySize() const
+					{return _request.size() - (_blankline + 4);}
+const char*			Request::getBodyAddr() const
+					{return &(_request[_blankline + 4]);}
+
+
+/*------------------------------OVERLOAD OPERATORS----------------------------*/
+
+std::string const & Request::operator[] (std::string const & key_header)
+{return this->_headers[key_header];}
+
+
+/*------------------------------EXCEPTIONS------------------------------------*/
+
+const char* Request::NotTerminatedException::what() const throw()
+{
+	return "Request not Terminated";
+}
+
+const char* Request::InvalidRequest::what() const throw()
+{
+	return "Invalid Request";
 }
 
 /*
@@ -166,62 +200,24 @@ Request::Request(std::string const & raw_r)
 	//pré-parsing
 }*/
 
-
-/*------------------------------GETTERS/SETTERS-------------------------------*/
-
-std::map<std::string, std::string>::const_iterator
-		Request::getHeader(const std::string& key_header, bool& found) const
+/*
+void split(std::vector<std::string> & output, const std::string& s,
+													char const separator)
 {
-	std::map<std::string, std::string>::const_iterator
-			header(_headers.find(key_header));
+	std::string::size_type prev_pos = 0, pos = 0;
 
-	if (header == _headers.end())
-		found = false;
-	else
-		found = true;
-	return header;
-}
+	while((pos = s.find(separator, pos)) != std::string::npos)
+	{
+        output.push_back(s.substr(prev_pos, pos - prev_pos));
+        prev_pos = ++pos;
+	}
+    output.push_back(s.substr(prev_pos, pos - prev_pos)); // Last word
+}*/
 
-bool
-Request::getHeader(const std::string& key, std::string& value) const
-{
-	std::map<std::string, std::string>::const_iterator
-			header(_headers.find(key));
-
-	if (header == _headers.end())
-		return false;
-	value = header->second;
-	return true;
-}
-
-std::map<std::string, std::string> const&
-							Request::get_headers() const {return this->_headers;}
-
-std::string const &			Request::get_method() const {return this->_method;}
-void						Request::setTarget(const std::string& newtarget)
-							{_target = newtarget;}
-std::string const&			Request::get_target() const {return this->_target;}
-std::string&				Request::get_target() {return this->_target;}
-std::string const&			Request::get_version() const {return this->_version;}
-std::string const&			Request::get_body() const {return this->_body;}
-const std::string&			Request::getRequest() const {return _request;}
-size_t						Request::getBodyPos() const {return _blankline + 4;}
-
-
-/*------------------------------OVERLOAD OPERATORS----------------------------*/
-
-std::string const & Request::operator[] (std::string const & key_header)
-{return this->_headers[key_header];}
-
-
-/*------------------------------EXCEPTIONS------------------------------------*/
-
-const char* Request::NotTerminatedException::what() const throw()
-{
-	return "Request not Terminated";
-}
-
-const char* Request::InvalidRequest::what() const throw()
-{
-	return "Invalid Request";
-}
+/*
+** CANONICAL FUNCS
+*/
+/*
+Request::Request(void){
+	return;
+}*/

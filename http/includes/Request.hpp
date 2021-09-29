@@ -12,7 +12,6 @@ private:
 	std::string							_target;
 	std::string							_version;
 	std::map<std::string, std::string>	_headers;
-	std::string							_body;
 	size_t								_blankline;
 	const std::string&					_request;
 
@@ -51,9 +50,10 @@ public:
 	std::string const & get_target() const;
 	std::string &		get_target();
 	std::string const & get_version() const;
-	std::string const & get_body() const;
 	const std::string&	getRequest() const;
 	size_t				getBodyPos() const;
+	size_t				getBodySize() const;
+	const char*			getBodyAddr() const;
 
 	void				setTarget(const std::string& newtarget);
 
