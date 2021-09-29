@@ -6,7 +6,8 @@
 int		sys_err(const std::string& msg);
 int		pgm_err(const std::string& msg);
 int		pgm_perr(const std::string& msg);
-int		http_error(Client& client, const std::string& msg, int ret);
+int		http_error(Client& client, const std::map<int, std::string>& err,
+					int http_status, int ret);
 
 //close_fd.cpp
 int		close_server_sockets(std::map<int, std::pair<std::string, int> >&
@@ -31,6 +32,7 @@ std::string	ft_int_to_string(int val);
 std::string	str_to_lower(std::string const & s);
 bool		is_file_exist(const char *filename);
 bool		is_file_exist(const std::string& filename);
+int			get_file_size(const char *file);
 
 //display.cpp
 const std::string	display_headers(const std::string& response);

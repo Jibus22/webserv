@@ -56,9 +56,10 @@ int	read_request(const struct kevent& event, Client& client)
 	ssize_t	len, buflen;
 
 	__D_DISPLAY("data flag from read event: [" << event.data << "]");
+	/*
 	if (_DEBUG)
 		buflen = RCV_BUF;
-	else
+	else*/
 		buflen = event.data;
 	buf = new char [buflen];
 	len = recv(event.ident, buf, buflen, 0);

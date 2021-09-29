@@ -56,3 +56,12 @@ std::string str_to_lower(std::string const & s)
 	}
 	return str;
 }
+
+int		get_file_size(const char *file)
+{
+	struct stat	buf;
+
+	if (stat(file, &buf) == -1)
+		return -1;
+	return buf.st_size;
+}

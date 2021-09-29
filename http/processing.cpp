@@ -238,7 +238,7 @@ void	construct_get_response(Response & response, Request &requete,
 	}
 }
 
-int		http_post(Request& request, Location_config& location)
+int		http_post(const Request& request, const Location_config& location)
 {
 	std::string		value;
 

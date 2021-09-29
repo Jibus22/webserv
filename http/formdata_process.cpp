@@ -96,7 +96,8 @@ static int		write_to_file(const std::string& request,
 	return 0;
 }
 
-int				format_boundary(const std::string& value, std::string& boundary)
+//extract the boundary from 'value' to 'boundary'
+static int		format_boundary(const std::string& value, std::string& boundary)
 {
 	size_t	end, start = value.find("boundary=");
 
@@ -115,8 +116,8 @@ int				formdata_process(const std::string& request,
 						const std::string& value, const std::string& updir,
 						size_t boundary_pos)
 {
-	std::string			filename, boundary;
-	size_t				payload_end, payload_start;
+	std::string	filename, boundary;
+	size_t		payload_end, payload_start;
 
 	if (format_boundary(value, boundary))
 		return 1;
