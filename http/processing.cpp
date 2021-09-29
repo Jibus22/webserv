@@ -245,10 +245,13 @@ int		http_post(Client& client, const Request& request,
 
 	if (request.getHeader("content-type", value) == false
 				|| location.upload_dir.empty())
-		return 1;
+		return http_error(client, server.error_page, 400, 1);
 	if (value.find("multipart/form-data") != std::string::npos)
 		return formdata_process(client, request.getRequest(), value,
-						location.upload_dir, request.getBodyPos(), server);
+						location.upload_dir, request.getBodyPos(), server,
+						request.get_target());
+	else
+		return http_error(client, server.error_page, 415, 1);
 	return 1;
 }
 

@@ -123,7 +123,8 @@ static int		format_boundary(const std::string& value, std::string& boundary)
 //processing of multipart/form-data encoding
 int				formdata_process(Client& client, const std::string& request,
 						const std::string& value, const std::string& updir,
-						size_t boundary_pos, const Server_config& server)
+						size_t boundary_pos, const Server_config& server,
+						const std::string& target)
 {
 	std::string	filename, boundary;
 	size_t		payload_end, payload_start;
@@ -145,5 +146,6 @@ int				formdata_process(Client& client, const std::string& request,
 	}
 	if (!isend)
 		return http_error(client, server.error_page, 500, 1);
-	return http_response(client, 201, 1);
+	(void)target;
+	return http_response(client, "/upload", 303, 1);
 }

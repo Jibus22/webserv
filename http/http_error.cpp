@@ -1,5 +1,19 @@
 #include "webserv.hpp"
 
+static void	set_err_status(std::string& response, int http_status)
+{
+	if (http_status == 404)
+		response.append(" Not Found\r\n");
+	else if (http_status == 500)
+		response.append(" Internal Server Error\r\n");
+	else if (http_status == 415)
+		response.append(" Unsupported Media Type\r\n");
+	else if (http_status == 400)
+		response.append(" Bad Request\r\n");
+	else
+		response.append(" Kamoulox\r\n");
+}
+
 //HTTP error response formatting.
 //First creates the right status line according to http_status, then add if it
 //exists an error page relative to configuration file into the body.
@@ -14,12 +28,7 @@ int	http_error(Client& client, const std::map<int, std::string>& err,
 
 	response->assign("HTTP/1.1 ");
 	response->append(ft_int_to_string(http_status));
-	if (http_status == 404)
-		response->append(" Not Found\r\n");
-	else if (http_status == 500)
-		response->append(" Internal Server Error\r\n");
-	else
-		response->append(" Kamoulox\r\n");
+	set_err_status(*response, http_status);
 	it = err.find(http_status);
 	if (it != err.end())
 	{

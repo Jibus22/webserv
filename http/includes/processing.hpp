@@ -15,11 +15,13 @@ bool	get_file_content(std::string const & path, std::string & content);
 void	auto_index(Response & response, std::string  const & target);
 
 int		formdata_process(Client& client, const std::string& request,
-				const std::string& value, const std::string& updir,
-				size_t boundary_pos, const Server_config& server);
+						const std::string& value, const std::string& updir,
+						size_t boundary_pos, const Server_config& server,
+						const std::string& target);
 
 int		http_error(Client& client, const std::map<int, std::string>& err,
 					int http_status, int ret);
-int		http_response(Client& client, int http_status, int ret);
+int		http_response(Client& client, const std::string& headers,
+					int http_status, int ret);
 
 #endif
