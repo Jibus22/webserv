@@ -103,13 +103,13 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 void	error_page(int erreur, Response & response,
 		Config_struct::c_error_map & error_page)
 {
-	if (error_page[erreur] != "")
+	struct stat sb;
+	if (error_page[erreur] != "" && is_openable(error_page[erreur]) &&
+		stat(error_page[erreur], &sb) != -1)
 	{
-		std::string content;
-		if (get_file_content(error_page[erreur], content))
-			response.set_body(content);
+		response.set_body_path(error_page[erreur]);
 		std::stringstream ss;
-		ss << content.size();
+		ss << sb.st_size;
 		response.add_header("Content-Length", ss.str());
 	}
 	else
@@ -239,7 +239,7 @@ void	handle_return(Response & response, Location_config *location)
 void	construct_get_response(Response & response, Request &requete,
 						Server_config * server, Location_config * location)
 {
-	std::string content;
+	struct stat sb;
 
 	//si la target est un repertoire cherche le fichier a repondre
 	if (is_dir(requete.get_target()))
@@ -253,15 +253,14 @@ void	construct_get_response(Response & response, Request &requete,
 	//renvoie une erreur car fichier untrouvable
 	if (is_dir(requete.get_target()) && location->auto_index == true)
 		auto_index(response, requete.get_target());
-	else if (!is_dir(requete.get_target()) &&
-		get_file_content(requete.get_target(), content))
+	else if (!is_dir(requete.get_target()) && is_openable(requete.get_target())
+		&& stat(requete.get_target(), &sb) != -1)
 	{
 		response.set_status_code("200");
 		response.set_status_infos("OK");
-		response.set_body(content);
+		response.set_body_path(requete.get_target());
 		std::stringstream ss;
-		ss << content.size();
-		__D_DISPLAY("content : "<< ss.str());
+		ss << sb.st_size;
 		response.add_header("Content-Length", ss.str());
 	}
 	else
