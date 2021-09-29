@@ -105,7 +105,7 @@ void	error_page(int erreur, Response & response,
 {
 	struct stat sb;
 	if (error_page[erreur] != "" && is_openable(error_page[erreur]) &&
-		stat(error_page[erreur], &sb) != -1)
+		stat(error_page[erreur].c_str(), &sb) != -1)
 	{
 		response.set_body_path(error_page[erreur]);
 		std::stringstream ss;
@@ -254,7 +254,7 @@ void	construct_get_response(Response & response, Request &requete,
 	if (is_dir(requete.get_target()) && location->auto_index == true)
 		auto_index(response, requete.get_target());
 	else if (!is_dir(requete.get_target()) && is_openable(requete.get_target())
-		&& stat(requete.get_target(), &sb) != -1)
+		&& stat(requete.get_target().c_str(), &sb) != -1)
 	{
 		response.set_status_code("200");
 		response.set_status_infos("OK");

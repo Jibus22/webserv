@@ -76,10 +76,8 @@ std::string * Response::get_raw()
 		it++;
 	}
 	raw_response->append("\r\n");
-	if (this->_body_path == false)
-	{
+	if (this->_body_path)
 		get_file_content(this->_body, *raw_response);
-	}
 	else
 		raw_response->append(this->_body);
 	return raw_response;
