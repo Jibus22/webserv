@@ -9,12 +9,25 @@ static size_t	match_boundary(const std::string& request,
 	return request.find(boundary, start);
 }
 
+static size_t	is_end_body(const std::string& request,
+						const std::string& boundary, size_t start, bool& isend)
+{
+	size_t	len = boundary.size() + 2,
+			end = request.find("--" + boundary, start);
+
+	if (end == std::string::npos)
+		return std::string::npos;
+	if (request[end + len] == '-' && request[end + len + 1] == '-')
+		isend = true;
+	return std::string::npos;
+}
+
 //Checks the boundary with 2 dash before. Then checks the blankline, then the
 //"Content-Disposition" header and it's value.
 //Returns the position after the blankline, so the start of payload.
 static size_t	is_valid_format(const std::string& request,
 						const std::string& boundary, std::string& filename,
-						const std::string& updir, size_t start)
+						const std::string& updir, size_t start, bool& isend)
 {
 	size_t	pos, blankline;
 
@@ -25,7 +38,7 @@ static size_t	is_valid_format(const std::string& request,
 	if (blankline == std::string::npos)
 	{
 		if ((blankline = request.find("\n\n", start)) == std::string::npos)
-			return blankline;
+			return is_end_body(request, boundary, start, isend);
 		blankline += 2;
 	}
 	else
@@ -52,19 +65,15 @@ static size_t	is_valid_format(const std::string& request,
 	return blankline;
 }
 
-//Returns the end of form-data payload, which is triggered with a blankline
-//plus a boundary
+//Returns the end of form-data payload, which is triggered with a line return
+//plus 2 dash & a boundary
 static size_t	end_body(const std::string& request,
 						const std::string& boundary, size_t start)
 {
 	size_t	end = request.find("\r\n--" + boundary, start);
 
 	if (end == std::string::npos)
-	{
 		end = request.find("\n--" + boundary, start);
-		if (end == std::string::npos)
-			return std::string::npos;
-	}
 	return end;
 }
 
@@ -112,17 +121,18 @@ static int		format_boundary(const std::string& value, std::string& boundary)
 }
 
 //processing of multipart/form-data encoding
-int				formdata_process(const std::string& request,
+int				formdata_process(Client& client, const std::string& request,
 						const std::string& value, const std::string& updir,
-						size_t boundary_pos)
+						size_t boundary_pos, const Server_config& server)
 {
 	std::string	filename, boundary;
 	size_t		payload_end, payload_start;
+	bool		isend = false;
 
 	if (format_boundary(value, boundary))
 		return 1;
 	payload_start = is_valid_format(request, boundary,
-							filename, updir, boundary_pos);
+							filename, updir, boundary_pos, isend);
 	while (payload_start != std::string::npos)
 	{
 		payload_end = end_body(request, boundary, payload_start);
@@ -131,7 +141,9 @@ int				formdata_process(const std::string& request,
 		write_to_file(request, filename, payload_start, payload_end);
 		boundary_pos = next_boundary(request, boundary, payload_end);
 		payload_start = is_valid_format(request, boundary,
-								filename, updir, boundary_pos);
+								filename, updir, boundary_pos, isend);
 	}
-	return 1;
+	if (!isend)
+		return http_error(client, server.error_page, 500, 1);
+	return http_response(client, 201, 1);
 }

@@ -238,16 +238,17 @@ void	construct_get_response(Response & response, Request &requete,
 	}
 }
 
-int		http_post(const Request& request, const Location_config& location)
+int		http_post(Client& client, const Request& request,
+				const Location_config& location, const Server_config& server)
 {
-	std::string		value;
+	std::string	value;
 
 	if (request.getHeader("content-type", value) == false
 				|| location.upload_dir.empty())
 		return 1;
 	if (value.find("multipart/form-data") != std::string::npos)
-		return formdata_process(request.getRequest(), value,
-						location.upload_dir, request.getBodyPos());
+		return formdata_process(client, request.getRequest(), value,
+						location.upload_dir, request.getBodyPos(), server);
 	return 1;
 }
 
@@ -351,7 +352,7 @@ int		construct_response(Response & response, Server_config * server,
 		construct_get_response(response, request, server, location);
 	else if (request.get_method() == "POST" &&
 			is_methode_allowed(location, "POST"))
-		return http_post(request, *location);
+		return http_post(client, request, *location, *server);
 	else if(request.get_method() == "DELETE" &&
 			is_methode_allowed(location, "DELETE"))
 		construct_delete_response(response, request);
@@ -369,8 +370,8 @@ void	process_request(Client& client,
 	Response response;
 
 	try {
-		__D_DISPLAY("request : ");
-		__D_DISPLAY(client.getStrRequest());
+		//__D_DISPLAY("request : ");
+		//__D_DISPLAY(client.getStrRequest());
 		Request r(client.getStrRequest());
 		__D_DISPLAY("Object Request Created");
 

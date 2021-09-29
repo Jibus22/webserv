@@ -1,23 +1,9 @@
 #include "webserv.hpp"
 
-static void	set_basic_hdr(std::string& response)
-{
-	response.append("Content-Length:0\r\n\r\n");
-}
-
-static void	file_to_string(std::string& response,
-				const std::string& filename, int filesize)
-{
-	char	*buf = new char [filesize];
-	int		fd = open(filename.c_str(), O_RDONLY);
-
-	if (fd == -1)
-		return ;
-	read(fd, buf, filesize);
-	response.append(buf);
-	delete [] buf;
-}
-
+//HTTP error response formatting.
+//First creates the right status line according to http_status, then add if it
+//exists an error page relative to configuration file into the body.
+//Content-Length header is set accordingly.
 int	http_error(Client& client, const std::map<int, std::string>& err,
 					int http_status, int ret)
 {
@@ -32,6 +18,8 @@ int	http_error(Client& client, const std::map<int, std::string>& err,
 		response->append(" Not Found\r\n");
 	else if (http_status == 500)
 		response->append(" Internal Server Error\r\n");
+	else
+		response->append(" Kamoulox\r\n");
 	it = err.find(http_status);
 	if (it != err.end())
 	{
@@ -44,10 +32,10 @@ int	http_error(Client& client, const std::map<int, std::string>& err,
 			file_to_string(*response, absolute_filename, file_size);
 		}
 		else
-			set_basic_hdr(*response);
+			response->append("Content-Length:0\r\n\r\n");
 	}
 	else
-		set_basic_hdr(*response);
+		response->append("Content-Length:0\r\n\r\n");
 	client.setResponse(response);
 	return ret;
 }

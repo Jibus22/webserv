@@ -65,3 +65,16 @@ int		get_file_size(const char *file)
 		return -1;
 	return buf.st_size;
 }
+
+void	file_to_string(std::string& response,
+				const std::string& filename, int filesize)
+{
+	char	*buf = new char [filesize];
+	int		fd = open(filename.c_str(), O_RDONLY);
+
+	if (fd == -1)
+		return ;
+	read(fd, buf, filesize);
+	response.append(buf);
+	delete [] buf;
+}
