@@ -15,12 +15,26 @@ bool is_dir(const std::string path)
 		return false;
 }
 
+bool	is_openable(std::string const & path)
+{
+	std::ifstream		file;
+
+	if (is_dir(path))
+		return false;
+	file.open(path.c_str());
+	if (file.fail() == true)
+		return false;
+	return true;
+}
+
 bool	get_file_content(std::string const & path, std::string & content)
 {
 	__D_DISPLAY("target : " << path);
 	std::ifstream		file;
 	std::string			line;
 
+	if (is_dir(path))
+		return false;
 	file.open(path.c_str());
 	if (file.fail() == true)
 		return false;

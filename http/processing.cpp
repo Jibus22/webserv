@@ -58,11 +58,41 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 	while (it != locations.end())
 	{
 		location = *it;
-		if((target.compare(0, location->uri.size(), location->uri) == 0))// &&
-//(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
+		if (location->uri == "/")
 		{
 			__D_DISPLAY("location matched : " << location->uri);
 			return location;
+		}
+		else if (location->uri[location->uri.size() - 1] == '/')
+		{
+			// cas ou location uri fini par /
+
+			//on compare jusque avant le / de la location URI
+			//ca match si compare == 0 et si soit la target est fini apres la comparaison
+			// soit si il y a un / apres
+			//Par exemple /dir/
+			//doit matcher avec /dir /dir/ /dir/test.html
+			// mais pas /directory
+			if((target.compare(0, location->uri.size() - 1,
+			location->uri, 0, location->uri.size() - 1) == 0)
+			&& (target.size() == location->uri.size() - 1 ||
+				target[location->uri.size() - 1] == '/'))
+			{
+				__D_DISPLAY("location matched : " << location->uri);
+				return location;
+			}
+		}
+		else
+		{
+			//cas ou location fini pas par /
+
+			//pareil mais longueur de comparaison change
+			if((target.compare(0, location->uri.size(), location->uri) == 0) &&
+(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
+			{
+				__D_DISPLAY("location matched : " << location->uri);
+				return location;
+			}
 		}
 		it++;
 	}
@@ -73,13 +103,13 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 void	error_page(int erreur, Response & response,
 		Config_struct::c_error_map & error_page)
 {
-	if (error_page[erreur] != "")
+	struct stat sb;
+	if (error_page[erreur] != "" && is_openable(error_page[erreur]) &&
+		stat(error_page[erreur].c_str(), &sb) != -1)
 	{
-		std::string content;
-		if (get_file_content(error_page[erreur], content))
-			response.set_body(content);
+		response.set_body_path(error_page[erreur]);
 		std::stringstream ss;
-		ss << content.size();
+		ss << sb.st_size;
 		response.add_header("Content-Length", ss.str());
 	}
 	else
@@ -113,10 +143,14 @@ int		check_cgi(Request& requete, const Server_config& server,
 {
 	int	ret = -1;
 	Config_struct::c_cgi_map::const_iterator it = location.cgi.begin();
-
+	size_t pos;
 	while (it != location.cgi.end())
 	{
-		if (requete.get_target().find(it->first) != std::string::npos)
+		if ((pos = requete.get_target().find(it->first)) != std::string::npos &&
+	(	requete.get_target().size() == pos + it->first.size() ||
+		requete.get_target()[pos + it->first.size()] == '/'
+	)
+		)
 		{
 			ret = process_cgi(requete, location,
 					server, client, it->first, client_map, server_map);
@@ -205,7 +239,7 @@ void	handle_return(Response & response, Location_config *location)
 void	construct_get_response(Response & response, Request &requete,
 						Server_config * server, Location_config * location)
 {
-	std::string content;
+	struct stat sb;
 
 	//si la target est un repertoire cherche le fichier a repondre
 	if (is_dir(requete.get_target()))
@@ -219,15 +253,14 @@ void	construct_get_response(Response & response, Request &requete,
 	//renvoie une erreur car fichier untrouvable
 	if (is_dir(requete.get_target()) && location->auto_index == true)
 		auto_index(response, requete.get_target());
-	else if (!is_dir(requete.get_target()) &&
-		get_file_content(requete.get_target(), content))
+	else if (!is_dir(requete.get_target()) && is_openable(requete.get_target())
+		&& stat(requete.get_target().c_str(), &sb) != -1)
 	{
 		response.set_status_code("200");
 		response.set_status_infos("OK");
-		response.set_body(content);
+		response.set_body_path(requete.get_target());
 		std::stringstream ss;
-		ss << content.size();
-		__D_DISPLAY("content : "<< ss.str());
+		ss << sb.st_size;
 		response.add_header("Content-Length", ss.str());
 	}
 	else
@@ -330,8 +363,13 @@ int		construct_response(Response & response, Server_config * server,
 
 	location = match_location(server->location, request.get_target());
 
-	if (location)
-		{__D_DISPLAY("code return : " << location->return_p.first);}
+	if (!location)
+	{
+		response.set_status_code("404");
+		response.set_status_infos("Not Found");
+		error_page(404, response, server->error_page);
+		return 0;
+	}
 	if (location && location->return_p.first != 0)
 	{
 		handle_return(response, location);
