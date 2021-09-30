@@ -120,14 +120,14 @@ int		is_valid_request(Client& client)
 	int			status = INCOMPLETE_REQUEST;
 	std::string	*error = parse_request(client, status);
 
-	//__D_DISPLAY("CLIENT -_-_-_-_-_-_-_-:\n" << client);
 	if (error)
 	{
 		__D_DISPLAY("Corrupt request: " << *error);
 		status = CORRUPT_REQUEST;
-		client.truncateRequest((client.getStrRequest()).size());
+		client.truncateRequest(client.getRequestSize());
 		client.setResponse(error);
 	}
 	__D_DISPLAY("is_valid_request status (VALID=0, INCOMPLETE=1): " << status);
+	display_request_hdr(client.getStrRequest(), status);
 	return status;
 }

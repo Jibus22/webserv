@@ -36,6 +36,7 @@ void		file_to_string(std::string& response,
 
 //display.cpp
 const std::string	display_headers(const std::string& response);
+void				display_request_hdr(const std::string& request, int status);
 void				__D_DISPLAY_RECV(int client_id, int len);
 void				__D_DISPLAY_SEND(int client_id, int len,
 						int send_id, const std::string& response);

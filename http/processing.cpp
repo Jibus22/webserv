@@ -160,7 +160,7 @@ int		check_cgi(Request& request, const Server_config& server,
 					(target[len] != '/' && target[len] != '?'))
 			{
 				it++;
-				continue ;
+				continue;
 			}
 			ret = process_cgi(request, location, server, client, it->first,
 					client_map, server_map);
@@ -351,11 +351,13 @@ int		construct_response(Response & response, Server_config * server,
 	int					ret = 0;
 	Location_config		*location;
 
+	__D_DISPLAY("HEADER CONTENTLEN:" << request["Content-Length"]);
 	if (request["Content-Length"] != "")
 	{
 		std::stringstream	str(request["Content-Length"]);
 		unsigned long		length;
 		str >> length;
+		__D_DISPLAY("CONTENT_LEN: " << length << " - LIMIT: " << server->m_body_size);
 		if (length > server->m_body_size)
 		{
 			__D_DISPLAY("Payload too large");
@@ -416,42 +418,19 @@ void	process_request(Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	size_t	len_request = client.getRequestSize();//TMP!
-	Response response;
+	size_t			len_request = client.getRequestSize();//TMP!
+	Server_config	*server;
+	Response		response;
 
-	try {
-		//__D_DISPLAY("request : ");
-		//__D_DISPLAY(client.getStrRequest());
-		Request r(client.getStrRequest());
-		__D_DISPLAY("Object Request Created");
+	Request request(client.getStrRequest());
+	__D_DISPLAY(request);
 
-		// On recupere le serveur associe a la requete
-		Server_config * s = match_server(server_blocks, client.getListen(), r);
-		__D_DISPLAY("server find");
-
-		//Construction reponse
-		if (construct_response(response, s, r, client, client_map, server_map))
-		{
-			client.truncateRequest(len_request);
-			return ;
-		}
-		//__D_DISPLAY("response :")
-		//__D_DISPLAY(*(response.get_raw()));
-	}
-	catch (Request::NotTerminatedException e)
+	server = match_server(server_blocks, client.getListen(), request);
+	if (construct_response(response, server, request, client,
+				client_map, server_map))
 	{
-		//Requete non termine pas de set reponse
-		__D_DISPLAY("NoT TERMINATED REQUEST");
-		return;
-	}
-	catch (Request::InvalidRequest e)
-	{
-		//Requete non valide renvoyer reponse avec code erreur non valide
-		//TODO: Reponse invlaide
-		__D_DISPLAY("INVALID REQUEST");
-		response.set_status_code("400");
-		response.set_status_infos("Bad Request");
-		response.add_header("Content-Length", "0");
+		client.truncateRequest(len_request);
+		return ;
 	}
 	client.setResponse(response.get_raw());
 	client.truncateRequest(len_request);

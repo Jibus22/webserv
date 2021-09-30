@@ -97,9 +97,27 @@ const char*			Request::getBodyAddr() const
 std::string const & Request::operator[] (std::string const & key_header)
 {return this->_headers[key_header];}
 
+std::ostream &operator<<(std::ostream &out, const Request& value)
+{
+	const std::map<std::string, std::string>&	hdr = value.get_headers();
+
+	out << WHITE_C << "[REQUEST]\n" <<
+		"status line: " << RESET_C << value.get_method() << " "
+		<< value.get_target() << " "
+		<< value.get_version() << "\n"
+		<< WHITE_C << "header map:\n" << RESET_C;
+	for (std::map<std::string, std::string>::const_iterator it = hdr.begin();
+			it != hdr.end(); it++)
+	{
+		out << it->first << ":" << it->second << "\n";
+	}
+	out << WHITE_C << "[hdr end]\nbody len: " << RESET_C << value.getBodySize();
+	return out;
+}
 
 /*------------------------------EXCEPTIONS------------------------------------*/
 
+/*
 const char* Request::NotTerminatedException::what() const throw()
 {
 	return "Request not Terminated";
@@ -110,7 +128,6 @@ const char* Request::InvalidRequest::what() const throw()
 	return "Invalid Request";
 }
 
-/*
 void Request::add_header(std::string const & header)
 {
 	size_t pos_separateur = header.find(":");

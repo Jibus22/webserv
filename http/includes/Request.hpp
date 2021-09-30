@@ -15,7 +15,6 @@ private:
 	size_t								_blankline;
 	const std::string&					_request;
 
-
 	/*
 	void add_header(std::string const & header);
 	void parse_first_line(std::string const & first_line);
@@ -65,6 +64,7 @@ public:
 
 /*------------------------------EXCEPTIONS------------------------------------*/
 
+	/*
 	class NotTerminatedException:std::exception
 	{
 		const char* what() const throw();
@@ -74,8 +74,9 @@ public:
 	{
 		const char* what() const throw();
 	};
-
-
+	*/
 };
+
+std::ostream &operator<<(std::ostream &out, const Request& value);
 
 #endif
