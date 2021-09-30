@@ -9,13 +9,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void	process_request(Client& client,
+int		process_request(Client& client,
 				const std::vector<Server_config *>& server_blocks,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map);
 
-bool	is_dir(const std::string path);
-bool	is_openable(std::string const & path);
 bool	get_file_content(std::string const & path, std::string & content);
 void	auto_index(Response & response, std::string  const & target);
 
@@ -28,5 +26,8 @@ int		http_error(Client& client, const std::map<int, std::string>& err,
 					int http_status, int ret);
 int		http_response(Client& client, const std::string& headers,
 					int http_status, int ret);
+int		http_response(Client& client, const std::string& value,
+					int http_status, int ret, const std::string& filename,
+					size_t filesize);
 
 #endif

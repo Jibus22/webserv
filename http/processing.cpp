@@ -198,8 +198,6 @@ void	handle_index(std::string & target, Location_config * location)
 		return;
 */
 	__D_DISPLAY("DIRECTORY");
-	if (location == NULL)
-		return;
 	Config_struct::c_index_vector::const_iterator it = location->index.begin();
 	//std::string path;
 	while (it != location->index.end())
@@ -226,6 +224,7 @@ void	handle_index(std::string & target, Location_config * location)
 }
 
 
+/*
 //Si une redirection doit etre fait met le code et le status dans la reponse
 void	handle_return(Response & response, Location_config *location)
 {
@@ -243,12 +242,13 @@ void	handle_return(Response & response, Location_config *location)
 		response.set_status_infos("Permanent Redirect");
 	response.add_header("Location", location->return_p.second);
 	response.add_header("Content-Length", "0");
-}
+}*/
 
-void	construct_get_response(Response & response, Request &requete,
-						Server_config * server, Location_config * location)
+int		construct_get_response(Response & response, Request &requete,
+						Server_config & server, Location_config * location,
+						Client& client)
 {
-	struct stat sb;
+	size_t	filesize;
 
 	//si la target est un repertoire cherche le fichier a repondre
 	if (is_dir(requete.get_target()))
@@ -262,22 +262,14 @@ void	construct_get_response(Response & response, Request &requete,
 	//renvoie une erreur car fichier untrouvable
 	if (is_dir(requete.get_target()) && location->auto_index == true)
 		auto_index(response, requete.get_target());
-	else if (!is_dir(requete.get_target()) && is_openable(requete.get_target())
-		&& stat(requete.get_target().c_str(), &sb) != -1)
+	else if (!is_dir(requete.get_target()) && is_openable(requete.get_target()))
 	{
-		response.set_status_code("200");
-		response.set_status_infos("OK");
-		response.set_body_path(requete.get_target());
-		std::stringstream ss;
-		ss << sb.st_size;
-		response.add_header("Content-Length", ss.str());
+		filesize = get_file_size(requete.get_target().c_str());
+		return http_response(client, "", 200, 1, requete.get_target(), filesize);
 	}
 	else
-	{
-		response.set_status_code("404");
-		response.set_status_infos("Not Found");
-		error_page(404, response, server->error_page);
-	}
+		return http_error(client, server.error_page, 404, 404);
+	return 0;
 }
 
 int		http_post(Client& client, const Request& request,
@@ -297,15 +289,19 @@ int		http_post(Client& client, const Request& request,
 	return 1;
 }
 
-void	construct_delete_response(Response & response, Request &requete)
+int		http_delete(Client& client, const Request& request,
+				const Location_config& location, const Server_config& server)
 {
-	(void)response;
-	(void)requete;
+	(void)client;
+	(void)request;
+	(void)location;
+	(void)server;
+	return 1;
 }
 
 //set le code 405 rt le message associe et les headers
 //Header allow qui donne les methodes autorisé pour cette ressource
-void	method_not_allowed(Response & response, Server_config * server,
+void	method_not_allowed(Response & response, Server_config & server,
 		Location_config * location)
 {
 	std::string  str;
@@ -339,11 +335,11 @@ void	method_not_allowed(Response & response, Server_config * server,
 		str.append("DELETE");
 	response.add_header("Allow", str);
 	response.add_header("Content-Length", "0");
-	error_page(405, response, server->error_page);
+	error_page(405, response, server.error_page);
 }
 
-int		construct_response(Response & response, Server_config * server,
-				Request & request, Client& client,
+int		construct_response(Response& response, Server_config& server,
+				Request& request, Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
@@ -351,70 +347,56 @@ int		construct_response(Response & response, Server_config * server,
 	int					ret = 0;
 	Location_config		*location;
 
-	location = match_location(server->location, request.get_target());
-
+	location = match_location(server.location, request.get_target());
 	if (!location)
-	{
-		response.set_status_code("404");
-		response.set_status_infos("Not Found");
-		error_page(404, response, server->error_page);
-		return 0;
-	}
+		return http_error(client, server.error_page, 404, 1);
 	if (location && location->return_p.first != 0)
-	{
-		handle_return(response, location);
-		return 0;
-	}
-
+		return http_response(client, location->return_p.second,
+				location->return_p.first, location->return_p.first);
 	//CGI
-	while (location && (ret = check_cgi(request, *server, *location,
+	while (location && (ret = check_cgi(request, server, *location,
 					client, client_map, server_map)) >= 0)
 	{
 		if (ret == CGI_REDIRECT)
-			location = match_location(server->location, request.get_target());
+			location = match_location(server.location, request.get_target());
 		else
 			return 1;
 	}
 
 	handle_root(request.get_target(), location);
 
-	//check la conf location
 	if (request.get_method() == "GET" && is_methode_allowed(location, "GET"))
-		construct_get_response(response, request, server, location);
+		return construct_get_response(response, request, server, location, client);
 	else if (request.get_method() == "POST" &&
 			is_methode_allowed(location, "POST"))
-		return http_post(client, request, *location, *server);
+		return http_post(client, request, *location, server);
 	else if(request.get_method() == "DELETE" &&
 			is_methode_allowed(location, "DELETE"))
-		construct_delete_response(response, request);
+		return http_delete(client, request, *location, server);
 	else
 		method_not_allowed(response, server, location);
 	return 0;
 }
 
-void	process_request(Client& client,
+int		process_request(Client& client,
 				const std::vector<Server_config *>& server_blocks,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	size_t			len_request = client.getRequestSize();//TMP!
 	Server_config	*server;
 	Response		response;
+	Request 		request(client.getStrRequest());
 
-	Request request(client.getStrRequest());
 	__D_DISPLAY(request);
-
 	server = match_server(server_blocks, client.getListen(), request);
 	if (server->m_body_size < request.getBodySize())
-	{
-		http_error(client, server->error_page, 413, 0);
-		return ;
-	}
-	if (construct_response(response, server, request, client,
+		return http_error(client, server->error_page, 413, 413);
+	if (construct_response(response, *server, request, client,
 				client_map, server_map))
 	{
-		return ;
+		return 0;
 	}
 	client.setResponse(response.get_raw());
-	client.truncateRequest(len_request);
+	client.truncateRequest(client.getRequestSize());
+	return 0;
 }

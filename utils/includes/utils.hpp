@@ -28,11 +28,15 @@ long		get_timestamp(const struct timeval& tv_start);
 int			ft_string_to_nb(const std::string& value);
 std::string	ft_int_to_string(int val);
 std::string	str_to_lower(std::string const & s);
+
+//file_utilities.cpp
 bool		is_file_exist(const char *filename);
 bool		is_file_exist(const std::string& filename);
 int			get_file_size(const char *file);
 void		file_to_string(std::string& response,
 				const std::string& filename, int filesize);
+bool		is_dir(const std::string name);
+bool		is_openable(const std::string& name);
 
 //display.cpp
 const std::string	display_headers(const std::string& response);

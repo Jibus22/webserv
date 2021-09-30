@@ -14,6 +14,7 @@ private:
 	std::map<std::string, std::string>	_headers;
 	size_t								_blankline;
 	const std::string&					_request;
+	std::string							_path;
 
 	/*
 	void add_header(std::string const & header);
@@ -53,8 +54,10 @@ public:
 	size_t				getBodyPos() const;
 	size_t				getBodySize() const;
 	const char*			getBodyAddr() const;
+	const std::string&	getPath() const;
 
 	void				setTarget(const std::string& newtarget);
+	void				setPath(const std::string& uri, const std::string& root);
 
 
 /*------------------------------OVERLOAD OPERATORS----------------------------*/

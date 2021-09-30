@@ -34,16 +34,6 @@ std::string	ft_int_to_string(int val)
   return ss.str();
 }
 
-bool	is_file_exist(const char *filename)
-{
-	return (access(filename, F_OK) == 0);
-}
-
-bool	is_file_exist(const std::string& filename)
-{
-	return (access(filename.c_str(), F_OK) == 0);
-}
-
 std::string str_to_lower(std::string const & s)
 {
 	std::string str(s);
@@ -55,26 +45,4 @@ std::string str_to_lower(std::string const & s)
 		it++;
 	}
 	return str;
-}
-
-int		get_file_size(const char *file)
-{
-	struct stat	buf;
-
-	if (stat(file, &buf) == -1)
-		return -1;
-	return buf.st_size;
-}
-
-void	file_to_string(std::string& response,
-				const std::string& filename, int filesize)
-{
-	char	*buf = new char [filesize];
-	int		fd = open(filename.c_str(), O_RDONLY);
-
-	if (fd == -1)
-		return ;
-	read(fd, buf, filesize);
-	response.append(buf);
-	delete [] buf;
 }
