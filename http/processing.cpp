@@ -351,27 +351,6 @@ int		construct_response(Response & response, Server_config * server,
 	int					ret = 0;
 	Location_config		*location;
 
-	__D_DISPLAY("HEADER CONTENTLEN:" << request["Content-Length"]);
-	if (request["Content-Length"] != "")
-	{
-		std::stringstream	str(request["Content-Length"]);
-		unsigned long		length;
-		str >> length;
-		__D_DISPLAY("CONTENT_LEN: " << length << " - LIMIT: " << server->m_body_size);
-		if (length > server->m_body_size)
-		{
-			__D_DISPLAY("Payload too large");
-			__D_DISPLAY("length" <<  request["Content-Length"]);
-			__D_DISPLAY("length" <<  length);
-			__D_DISPLAY("m_body_size" <<  server->m_body_size);
-
-			response.set_status_code("413");
-			response.set_status_infos("Payload Too Large");
-			error_page(413, response, server->error_page);
-			return 0;
-		}
-	}
-
 	location = match_location(server->location, request.get_target());
 
 	if (!location)
@@ -426,10 +405,14 @@ void	process_request(Client& client,
 	__D_DISPLAY(request);
 
 	server = match_server(server_blocks, client.getListen(), request);
+	if (server->m_body_size < request.getBodySize())
+	{
+		http_error(client, server->error_page, 413, 0);
+		return ;
+	}
 	if (construct_response(response, server, request, client,
 				client_map, server_map))
 	{
-		client.truncateRequest(len_request);
 		return ;
 	}
 	client.setResponse(response.get_raw());

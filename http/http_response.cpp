@@ -26,5 +26,6 @@ int	http_response(Client& client, const std::string& value,
 	set_success_status(*response, value, http_status);
 	response->append("Content-Length:0\r\n\r\n");
 	client.setResponse(response);
+	client.truncateRequest(client.getRequestSize());
 	return ret;
 }

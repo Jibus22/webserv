@@ -94,7 +94,7 @@ const char*			Request::getBodyAddr() const
 
 /*------------------------------OVERLOAD OPERATORS----------------------------*/
 
-std::string const & Request::operator[] (std::string const & key_header)
+const std::string&	Request::operator[](std::string const & key_header)
 {return this->_headers[key_header];}
 
 std::ostream &operator<<(std::ostream &out, const Request& value)

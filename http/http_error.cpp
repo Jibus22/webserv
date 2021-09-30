@@ -10,6 +10,8 @@ static void	set_err_status(std::string& response, int http_status)
 		response.append(" Unsupported Media Type\r\n");
 	else if (http_status == 400)
 		response.append(" Bad Request\r\n");
+	else if (http_status == 413)
+		response.append(" Payload Too Large\r\n");
 	else
 		response.append(" Kamoulox\r\n");
 }
@@ -46,5 +48,6 @@ int	http_error(Client& client, const std::map<int, std::string>& err,
 	else
 		response->append("Content-Length:0\r\n\r\n");
 	client.setResponse(response);
+	client.truncateRequest(client.getRequestSize());
 	return ret;
 }
