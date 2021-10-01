@@ -19,8 +19,6 @@ int		add_read_event(const int kq, const int socket_fd);
 int		set_write_ready(const int kq, Client& client);
 
 //--server_process.cpp--
-int		is_response(const int kq, const struct kevent& event,
-					std::map<int, Client>& client_map);
 int		send_response(const int kq, const struct kevent& event, Client& client);
 int		read_request(const struct kevent& event, Client& client);
 

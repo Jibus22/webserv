@@ -344,8 +344,8 @@ int		construct_response(Response& response, Server_config& server,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 
-	int					ret = 0;
-	Location_config		*location;
+	int				ret = 0;
+	Location_config	*location;
 
 	location = match_location(server.location, request.get_target());
 	if (!location)
@@ -354,11 +354,18 @@ int		construct_response(Response& response, Server_config& server,
 		return http_response(client, location->return_p.second,
 				location->return_p.first, location->return_p.first);
 	//CGI
-	while (location && (ret = check_cgi(request, server, *location,
-					client, client_map, server_map)) >= 0)
+	while (ret != -1)
 	{
-		if (ret == CGI_REDIRECT)
+		ret = check_cgi(request, server, *location, client,
+				client_map, server_map);
+		if (ret == -1)
+			break ;
+		else if (ret == CGI_REDIRECT)
+		{
 			location = match_location(server.location, request.get_target());
+			if (!location)
+				return http_error(client, server.error_page, 404, 1);
+		}
 		else
 			return 1;
 	}

@@ -6,7 +6,7 @@ static int	run_server(const int kq,
 				const std::vector<Server_config*>& server_blocks,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	int						i, event_fd, new_events;
+	int						i, event_fd, new_events, ret;
 	struct kevent			eventlist[MAX_EVENTS];
 	std::map<int, Client>	*client_map = new std::map<int, Client>;
 	//struct timespec			ts = {5, 0};
@@ -39,11 +39,14 @@ static int	run_server(const int kq,
 			{
 				Client&	client = (*client_map)[event_fd];
 				read_request(eventlist[i], client);
-				if (is_valid_request(client) == VALID_REQUEST)
+				ret = is_valid_request(client);
+				if (ret == VALID_REQUEST)
 					process_request(client, server_blocks,
 							*client_map, server_map);
+				if (ret != INCOMPLETE_REQUEST)
+					set_write_ready(kq, client);
 			}
-			if (is_response(kq, eventlist[i], *client_map) == 0)
+			else if (eventlist[i].filter == EVFILT_WRITE)
 			{
 				send_response(kq, eventlist[i], (*client_map)[event_fd]);
 			}

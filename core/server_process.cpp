@@ -99,23 +99,3 @@ int	send_response(const int kq, const struct kevent& event, Client& client)
 	}
 	return 0;
 }
-
-//Checks if the current client has response to send. If it newly has, sets
-//new write event to this client or return 0 to call send_response()
-int	is_response(const int kq, const struct kevent& event,
-					std::map<int, Client>& client_map)
-{ 
-	std::map<int, Client>::iterator	i = client_map.find(event.ident);
-
-	if (i == client_map.end())
-		return pgm_err("is_response : Oops, client should exist");
-
-	if (i->second.getResponseNb() == 0)
-		return EMPTY;
-	else if (i->second.getResponseNb() > 0 && i->second.isReady() == false)
-		return set_write_ready(kq, i->second);
-	else if (i->second.isReady() && event.filter == EVFILT_WRITE)
-		return 0;
-	else
-		return -1;
-}

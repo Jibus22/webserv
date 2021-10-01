@@ -4,7 +4,7 @@ int		cgi_exit_status(const int& status)
 {
 	int	ret = 0;
 
-	if (WIFEXITED(status))//option nohang avec un while, pour timestamp?
+	if (WIFEXITED(status))
 	{
 		ret = WEXITSTATUS(status); 
 		if (ret == EXIT_FAILURE)
@@ -139,6 +139,7 @@ int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 		return cgi_status;
 	}
 	client.setResponse(cgi_out);
+	client.truncateRequest(client.getRequestSize());
 	return cgi_status;
 }
 
