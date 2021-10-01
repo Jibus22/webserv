@@ -12,6 +12,8 @@ static void	set_err_status(std::string& response, int http_status)
 		response.append(" Bad Request\r\n");
 	else if (http_status == 413)
 		response.append(" Payload Too Large\r\n");
+	else if (http_status == 431)
+		response.append(" Request Header Fields Too Large\r\n");
 	else
 		response.append(" Kamoulox\r\n");
 }
@@ -47,6 +49,19 @@ int	http_error(Client& client, const std::map<int, std::string>& err,
 	}
 	else
 		response->append("Content-Length:0\r\n\r\n");
+	client.setResponse(response);
+	client.truncateRequest(client.getRequestSize());
+	return ret;
+}
+
+int	http_error(Client& client, int http_status, int ret)
+{
+	std::string	*response = new std::string;
+
+	response->assign("HTTP/1.1 ");
+	response->append(ft_int_to_string(http_status));
+	set_err_status(*response, http_status);
+	response->append("Content-Length:0\r\n\r\n");
 	client.setResponse(response);
 	client.truncateRequest(client.getRequestSize());
 	return ret;
