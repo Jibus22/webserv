@@ -50,7 +50,7 @@ int	http_error(Client& client, const std::map<int, std::string>& err,
 	else
 		response->append("Content-Length:0\r\n\r\n");
 	client.setResponse(response);
-	client.truncateRequest(client.getRequestSize());
+	client.clearRequest();
 	return ret;
 }
 
@@ -63,6 +63,6 @@ int	http_error(Client& client, int http_status, int ret)
 	set_err_status(*response, http_status);
 	response->append("Content-Length:0\r\n\r\n");
 	client.setResponse(response);
-	client.truncateRequest(client.getRequestSize());
+	client.clearRequest();
 	return ret;
 }

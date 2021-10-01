@@ -26,14 +26,12 @@ static int	run_server(const int kq,
 				__D_DISPLAY(" client " << event_fd << " has disconnected");
 				close(event_fd);
 				client_map->erase(event_fd);
-				continue;
 			}
 			else if (check_new_connection(event_fd, server_map) >= 0)
 			{
 				if (accept_new_client(kq, event_fd, *client_map, server_map)
 						== -1)
 					return -1;
-				continue;
 			}
 			else if (eventlist[i].filter == EVFILT_READ)//2.
 			{

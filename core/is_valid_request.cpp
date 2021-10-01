@@ -20,6 +20,15 @@ static int	check_transfer_encoding(Client& client, const std::string& request,
 	return VALID_REQUEST;
 }
 
+static int	isContentlenValid(Client& client)
+{
+	if (client.getBodyLen() < client.getContentLen())
+		return INCOMPLETE_REQUEST;
+	else if (client.getBodyLen() > client.getContentLen())
+		return http_error(client, 400, CORRUPT_REQUEST);
+	return VALID_REQUEST;
+}
+
 //Check if the content_length header value is valid & match with the body length
 static int	check_content_length(Client& client, const std::string& request,
 						size_t value_start, size_t body_pos)
@@ -35,11 +44,8 @@ static int	check_content_length(Client& client, const std::string& request,
 						(value_end - value_start)));
 	if (content_length == INT_MAX)
 		return http_error(client, 400, CORRUPT_REQUEST);
-	if (body_len < content_length)
-		return INCOMPLETE_REQUEST;
-	else if (body_len > content_length)
-		return http_error(client, 400, CORRUPT_REQUEST);
-	return VALID_REQUEST;
+	client.setContentLen(content_length);
+	return isContentlenValid(client);
 }
 
 //Check syntax of request line and 'Host:' header
@@ -87,22 +93,29 @@ static int	is_basics(const std::string& request, size_t blankline)
 static int	parse_request(Client& client)
 {
 	const std::string&	request = client.getStrRequest();
-	size_t				hdr_pos, blankline = request.find("\r\n\r\n");
+	size_t				hdr_pos, blankline;
 
-	if (blankline == std::string::npos)
+	if (!client.isBlankLine())
 	{
-		if (request.size() > 2048)//2KB of headers without blank line = error
-			return http_error(client, 431, CORRUPT_REQUEST);
-		else
-			return INCOMPLETE_REQUEST;
+		blankline = request.find("\r\n\r\n");
+		if (blankline == std::string::npos)
+		{
+			if (request.size() > 2048)//2KB of headers without blank line = error
+				return http_error(client, 431, CORRUPT_REQUEST);
+			else
+				return INCOMPLETE_REQUEST;
+		}
+		if (!is_basics(request, blankline))
+			return http_error(client, 400, CORRUPT_REQUEST);
+		client.setBlankLine(blankline);
 	}
-	if (!is_basics(request, blankline))
-		return http_error(client, 400, CORRUPT_REQUEST);
+	else
+		blankline = client.getBlankLine();
 	hdr_pos = find_nocase_header(request, "Content-Length:");
 	if (hdr_pos < blankline)
 		return check_content_length(client, request,
 				request.find_first_of(':', hdr_pos) + 1, blankline + 4);
-	hdr_pos = request.find("Transfer-Encoding:");
+	hdr_pos = find_nocase_header(request, "Transfer-Encoding:");
 	if (hdr_pos < blankline)
 		return check_transfer_encoding(client, request,
 				request.find_first_of(':', hdr_pos) + 1, blankline + 4);
@@ -113,7 +126,12 @@ static int	parse_request(Client& client)
 
 int		is_valid_request(Client& client)
 {
-	int	status = parse_request(client);
+	int	status;
+
+	if (!client.isContentLen())
+		status = parse_request(client);
+	else
+		status = isContentlenValid(client);
 	__D_DISPLAY("is_valid_request status (VALID=0, INCOMPLETE=1): " << status);
 	display_request_hdr(client.getStrRequest(), status);
 	return status;

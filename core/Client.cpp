@@ -3,13 +3,15 @@
 
 /*------------------------CONSTRUCTOR / DESTRUCTOR----------------------------*/
 
-Client::Client(void) : _fd(-2), _offset(0), _ready(false)
+Client::Client(void) : _fd(-2), _blankline(-1), _contentlen(-1),
+						_offset(0), _ready(false)
 {}
 
 Client::Client(Client const & src) : _fd(src._fd), _listen(src._listen),
-									_remote_address(src._remote_address),
-									_request(src._request),
-									_offset(src._offset), _ready(src._ready)
+							_remote_address(src._remote_address),
+							_request(src._request), _blankline(src._blankline),
+							_contentlen(src._contentlen), _offset(src._offset),
+							_ready(src._ready)
 {}
 
 Client::~Client()
@@ -26,6 +28,8 @@ Client &	Client::operator=(Client const & src)
 	if (this == &src)
 		return *this;
 	_fd = src._fd;
+	_blankline = src._blankline;
+	_contentlen = src._contentlen;
 	_listen = src._listen;
 	_request = src._request;
 	_ready = src._ready;
@@ -44,6 +48,14 @@ void	Client::truncateRequest(const char *end)
 			_request.erase(0, (end - begin));
 		}
 void	Client::setOffset(const ssize_t len) { _offset += len; }
+void	Client::clearRequest(void)
+{
+	std::string	str("");
+
+	_blankline = -1;
+	_contentlen = -1;
+	_request.swap(str);
+}
 void	Client::clearResponse(void)
 {
 	delete _qResponse.front();
@@ -58,6 +70,12 @@ void	Client::clearResponse(void)
 void	Client::setFd(const int fd) { _fd = fd; }
 void	Client::setListen(const std::pair<std::string, int>& listen)
 		{ _listen = listen; }
+void	Client::setBlankLine(const int pos) { _blankline = pos; }
+void	Client::setContentLen(const int len)
+{
+	_request.reserve(len);
+	_contentlen = len;
+}
 void	Client::setReady(void) { _ready = true; }
 
 void	Client::setRemoteAddr(const std::string& remote_addr)
@@ -68,6 +86,16 @@ void	Client::setRequest(const char *request, const int len)
 
 void	Client::setResponse(std::string *response)
 		{ _qResponse.push(response); }
+
+
+bool	Client::isBlankLine(void) const { return _blankline >= 0; }
+bool	Client::isContentLen(void) const { return _contentlen >= 0; }
+
+
+int					Client::getBlankLine(void) const { return _blankline; }
+int					Client::getContentLen(void) const { return _contentlen; }
+int					Client::getBodyLen(void) const
+					{ return _request.size() - (_blankline + 4); }
 
 
 size_t				Client::getResponseNb(void) const

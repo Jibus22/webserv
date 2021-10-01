@@ -139,7 +139,7 @@ int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 		return cgi_status;
 	}
 	client.setResponse(cgi_out);
-	client.truncateRequest(client.getRequestSize());
+	client.clearRequest();
 	return cgi_status;
 }
 

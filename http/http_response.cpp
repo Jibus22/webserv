@@ -44,7 +44,7 @@ int	http_response(Client& client, const std::string& value,
 		set_redirect_status(*response, value, http_status);
 	response->append("Content-Length:0\r\n\r\n");
 	client.setResponse(response);
-	client.truncateRequest(client.getRequestSize());
+	client.clearRequest();
 	return ret;
 }
 
@@ -69,6 +69,6 @@ int	http_response(Client& client, const std::string& value,
 		file_to_string(*response, filename, filesize);
 	}
 	client.setResponse(response);
-	client.truncateRequest(client.getRequestSize());
+	client.clearRequest();
 	return ret;
 }
