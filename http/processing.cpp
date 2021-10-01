@@ -286,17 +286,19 @@ int		http_post(Client& client, const Request& request,
 						request.get_target());
 	else
 		return http_error(client, server.error_page, 415, 1);
-	return 1;
 }
 
 int		http_delete(Client& client, const Request& request,
-				const Location_config& location, const Server_config& server)
+				const Server_config& server)
 {
-	(void)client;
-	(void)request;
-	(void)location;
-	(void)server;
-	return 1;
+	if (is_dir(request.get_target()))
+		return http_error(client, server.error_page, 400, 400);
+	else if (!is_openable(request.get_target()))
+		return http_error(client, server.error_page, 404, 404);
+	if (unlink(request.get_target().c_str()) == -1)
+		return http_error(client, server.error_page, 500, 500);
+	else
+		return http_response(client, "", 200, 200);
 }
 
 //set le code 405 rt le message associe et les headers
@@ -379,7 +381,7 @@ int		construct_response(Response& response, Server_config& server,
 		return http_post(client, request, *location, server);
 	else if(request.get_method() == "DELETE" &&
 			is_methode_allowed(location, "DELETE"))
-		return http_delete(client, request, *location, server);
+		return http_delete(client, request, server);
 	else
 		method_not_allowed(response, server, location);
 	return 0;
