@@ -48,8 +48,8 @@ int	accept_new_client(const int kq, const int event_fd,
 	return 0;
 }
 
-//Receive new data, add it to client buffer
-//& process it (HTTP parsing + processing)
+//Allocate a buffer with the size available into the buffer from the socket
+//connection, receive it and append it to the client requests string
 int	read_request(const struct kevent& event, Client& client)
 {
 	char	*buf;

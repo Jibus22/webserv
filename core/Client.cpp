@@ -73,7 +73,7 @@ void	Client::setListen(const std::pair<std::string, int>& listen)
 void	Client::setBlankLine(const int pos) { _blankline = pos; }
 void	Client::setContentLen(const int len)
 {
-	_request.reserve(len);
+	_request.reserve(_blankline + 4 + len);
 	_contentlen = len;
 }
 void	Client::setReady(void) { _ready = true; }

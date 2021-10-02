@@ -36,15 +36,12 @@ int		get_file_size(const char *file)
 void	file_to_string(std::string& response,
 				const std::string& filename, int filesize)
 {
-	ssize_t	ret;
-	char	*buf = new char [filesize];
-	int		fd = open(filename.c_str(), O_RDONLY);
+	std::ifstream	ifs(filename);
 
-	if (fd == -1)
+	if (!ifs.good())
 		return ;
-	ret = read(fd, buf, filesize);
-	close(fd);
-	if (ret > -1)
-		response.append(buf, ret);
-	delete [] buf;
+	response.reserve(response.size() + filesize);
+	response.append(std::istreambuf_iterator<char>(ifs),
+			std::istreambuf_iterator<char>());
+	ifs.close();
 }

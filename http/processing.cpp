@@ -117,23 +117,16 @@ void	error_page(int erreur, Response & response,
 }
 
 //renvoie true si methode autorisé false sinon
-bool	is_methode_allowed(Location_config * location, std::string methode)
+bool	is_method_allowed(Location_config * location, std::string methode)
 {
-	if (location == NULL && methode == "GET")
-		return true;
-	else if (location == NULL)
-		return false;
-	else
+	Config_struct::c_methode_vector::iterator it = location->methode.begin();
+	while (it != location->methode.end())
 	{
-		Config_struct::c_methode_vector::iterator it = location->methode.begin();
-		while (it != location->methode.end())
-		{
-			if (*it == methode)
-				return true;
-			it++;
-		}
-		return false;
+		if (*it == methode)
+			return true;
+		it++;
 	}
+	return false;
 }
 
 //Look for cgi_ext directives into location block and its values, to compare
@@ -374,13 +367,13 @@ int		construct_response(Response& response, Server_config& server,
 
 	handle_root(request.get_target(), location);
 
-	if (request.get_method() == "GET" && is_methode_allowed(location, "GET"))
+	if (request.get_method() == "GET" && is_method_allowed(location, "GET"))
 		return construct_get_response(response, request, server, location, client);
 	else if (request.get_method() == "POST" &&
-			is_methode_allowed(location, "POST"))
+			is_method_allowed(location, "POST"))
 		return http_post(client, request, *location, server);
 	else if(request.get_method() == "DELETE" &&
-			is_methode_allowed(location, "DELETE"))
+			is_method_allowed(location, "DELETE"))
 		return http_delete(client, request, server);
 	else
 		method_not_allowed(response, server, location);
@@ -406,6 +399,6 @@ int		process_request(Client& client,
 		return 0;
 	}
 	client.setResponse(response.get_raw());
-	client.truncateRequest(client.getRequestSize());
+	client.clearRequest();
 	return 0;
 }

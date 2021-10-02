@@ -147,5 +147,5 @@ int				formdata_process(Client& client, const std::string& request,
 	if (!isend)
 		return http_error(client, server.error_page, 500, 1);
 	(void)target;
-	return http_response(client, "/upload", 303, 1);
+	return http_response(client, "/upload/", 303, 1);
 }
