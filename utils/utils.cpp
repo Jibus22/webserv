@@ -34,11 +34,15 @@ std::string	ft_int_to_string(int val)
   return ss.str();
 }
 
-int		is_file_exist(const char *filename)
+std::string str_to_lower(std::string const & s)
 {
-	struct stat	buf;
-
-	if (stat(filename, &buf) == 0)
-		return 1;
-	return 0;
+	std::string str(s);
+	std::string::iterator it = str.begin();
+	std::string::iterator ite = str.end();
+	while (it != ite)
+	{
+		*it = std::tolower(*it);
+		it++;
+	}
+	return str;
 }

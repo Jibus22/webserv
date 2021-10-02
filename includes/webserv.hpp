@@ -15,6 +15,7 @@
 #include <dirent.h>
 #include <signal.h>
 #include <ctype.h>
+#include <fcntl.h>
 
 #include <utility>
 #include <iostream>

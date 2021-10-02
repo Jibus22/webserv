@@ -48,64 +48,54 @@ int	accept_new_client(const int kq, const int event_fd,
 	return 0;
 }
 
-//Receive new data, add it to client buffer
-//& process it (HTTP parsing + processing)
-int	read_request(const int event_fd, std::map<int, Client>& client_map)
+//Allocate a buffer with the size available into the buffer from the socket
+//connection, receive it and append it to the client requests string
+int	read_request(const struct kevent& event, Client& client)
 {
-	char	buf[RCV_BUF + 1];
-	ssize_t	len;
-	Client&	client = client_map[event_fd];
+	char	*buf;
+	ssize_t	len, buflen;
 
-	len = recv(event_fd, buf, RCV_BUF, 0);
-	//checker erreur -1
-	buf[len] = 0;
+	__D_DISPLAY("data flag from read event: [" << event.data << "]");
+	/*
+	if (_DEBUG)
+		buflen = RCV_BUF;
+	else*/
+		buflen = event.data;
+	buf = new char [buflen];
+	len = recv(event.ident, buf, buflen, 0);
+	__D_DISPLAY_RECV(event.ident, len);
+	if (len == -1)
+	{
+		delete [] buf;
+		return -1;
+	}
 	client.setRequest(buf, len);
+	delete [] buf;
 
-	__D_DISPLAY_RECV(event_fd, len);
 	return 0;
 }
 
 //Send response & set write event to the client again if all response couldn't
 //be sent. Removes data that has been sent from the response buffer
-int	send_response(const int kq, const struct kevent *event, Client& client)
+int	send_response(const int kq, const struct kevent& event, Client& client)
 {
-	int	len;
+	ssize_t	len;
 
 	//event->data contains space remaining in the write buffer
-	__D_DISPLAY("data flag from write event: " << event->data);
-	if (event->data < static_cast<long>(client.getResponseSize()))
+	__D_DISPLAY("data flag from write event: " << event.data);
+	if (event.data < static_cast<long>(client.getLenToSend()))
 	{
-		len = send(event->ident, client.getRawResponse(), event->data, 0);
+		len = send(event.ident, client.getRawResponse(), event.data, 0);
 		__D_DISPLAY_SEND(client.getFd(), len, 1, client.getStrResponse());
-		client.truncateResponse(len);
+		client.setOffset(len);
 		return set_write_ready(kq, client);
 	}
 	else
 	{
-		len = send(event->ident, client.getRawResponse(),
-				client.getResponseSize(), 0);
+		len = send(event.ident, client.getRawResponse(),
+				client.getLenToSend(), 0);
 		__D_DISPLAY_SEND(client.getFd(), len, 2, client.getStrResponse());
 		client.clearResponse();
 	}
 	return 0;
-}
-
-//Checks if the current client has response to send. If it newly has, sets
-//new write event to this client or return 0 to call send_response()
-int	is_response(const int kq, const struct kevent *event,
-					std::map<int, Client>& client_map)
-{ 
-	std::map<int, Client>::iterator	i = client_map.find(event->ident);
-
-	if (i == client_map.end())
-		return pgm_err("is_response : Oops, client should exist");
-
-	if (i->second.getResponseNb() == 0)
-		return EMPTY;
-	else if (i->second.getResponseNb() > 0 && i->second.isReady() == false)
-		return set_write_ready(kq, i->second);
-	else if (i->second.isReady() && event->filter == EVFILT_WRITE)
-		return 0;
-	else
-		return -1;
 }

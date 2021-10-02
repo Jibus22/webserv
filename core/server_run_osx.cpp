@@ -6,7 +6,7 @@ static int	run_server(const int kq,
 				const std::vector<Server_config*>& server_blocks,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	int						i, event_fd, new_events;
+	int						i, event_fd, new_events, ret;
 	struct kevent			eventlist[MAX_EVENTS];
 	std::map<int, Client>	*client_map = new std::map<int, Client>;
 	//struct timespec			ts = {5, 0};
@@ -26,25 +26,27 @@ static int	run_server(const int kq,
 				__D_DISPLAY(" client " << event_fd << " has disconnected");
 				close(event_fd);
 				client_map->erase(event_fd);
-				continue;
 			}
 			else if (check_new_connection(event_fd, server_map) >= 0)
 			{
 				if (accept_new_client(kq, event_fd, *client_map, server_map)
 						== -1)
 					return -1;
-				continue;
 			}
 			else if (eventlist[i].filter == EVFILT_READ)//2.
 			{
-				read_request(event_fd, *client_map);
-				if (is_valid_request((*client_map)[event_fd]) == VALID_REQUEST)
-					process_request((*client_map)[event_fd], server_blocks,
+				Client&	client = (*client_map)[event_fd];
+				read_request(eventlist[i], client);
+				ret = is_valid_request(client);
+				if (ret == VALID_REQUEST)
+					process_request(client, server_blocks,
 							*client_map, server_map);
+				if (ret != INCOMPLETE_REQUEST)
+					set_write_ready(kq, client);
 			}
-			if (is_response(kq, &(eventlist[i]), *client_map) == 0)
+			else if (eventlist[i].filter == EVFILT_WRITE)
 			{
-				send_response(kq, &(eventlist[i]), (*client_map)[event_fd]);
+				send_response(kq, eventlist[i], (*client_map)[event_fd]);
 			}
 		}
 	}

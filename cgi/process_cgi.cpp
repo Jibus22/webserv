@@ -4,7 +4,7 @@ int		cgi_exit_status(const int& status)
 {
 	int	ret = 0;
 
-	if (WIFEXITED(status))//option nohang avec un while, pour timestamp?
+	if (WIFEXITED(status))
 	{
 		ret = WEXITSTATUS(status); 
 		if (ret == EXIT_FAILURE)
@@ -75,26 +75,13 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 //This is the POSIX length of a pipe message which is guaranteed to not be mixed
 //with other write operation from other threads. It is called 'atomic write'
 //but I don't use it here. hohoho.
-int		write_to_child(const std::string& body, const FtPipe& tx)
+int		write_to_child(const Request& request, const FtPipe& tx)
 {
-	std::string::const_pointer	buf;
-	ssize_t						ret = 1, body_len = body.size();
+	ssize_t	ret;
 
-	__D_DISPLAY("WRITETOCHILD body: |" << body << "|");
-	buf = body.data();
-	while (body_len > 0)
-	{
-		ret = write(tx.write, buf, body_len);
-		if (ret == -1)
-			return pgm_perr("write");
-		if (ret < body_len)
-		{
-			body_len -= ret;
-			buf += ret;
-		}
-		else
-			break;
-	}
+	ret = write(tx.write, request.getBodyAddr(), request.getBodySize());
+	if (ret == -1)
+		return pgm_perr("write");
 	close(tx.write);
 	return 0;
 }
@@ -129,14 +116,14 @@ void	exec_cgi_script(CgiEnv& env, FtPipe& rx, FtPipe& tx,
 //read the script output & parse it. The output can be a document to send back
 //or an absolute URI. If it is a relative URI, reprocess it.
 int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
-				Request& request)
+				Request& request, const Server_config& server_block)
 {
 	std::string	*cgi_out = new std::string();
 	int			cgi_exit, cgi_status = CGI_SUCCESS;
 
 	close(tx.read);
 	close(rx.write);
-	write_to_child(request.get_body(), tx);
+	write_to_child(request, tx);
 	cgi_exit = read_cgi_output(c_pid, rx, *cgi_out);
 	__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
 	if (cgi_exit == EXIT_SUCCESS)
@@ -144,7 +131,7 @@ int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 	else
 		cgi_status = CGI_ERR;
 	if (cgi_status == CGI_ERR)
-		cgi_out->assign("HTTP/1.1 500 Internal Server Error\r\n");
+		return http_error(client, server_block.error_page, 500, cgi_status);
 	else if (cgi_status == CGI_REDIRECT)
 	{
 		request.setTarget(*cgi_out);
@@ -152,8 +139,10 @@ int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 		return cgi_status;
 	}
 	client.setResponse(cgi_out);
+	client.clearRequest();
 	return cgi_status;
 }
+
 
 int		process_cgi(Request& request, const Location_config& location_block,
 				const Server_config& server_block, Client& client,
@@ -168,19 +157,19 @@ int		process_cgi(Request& request, const Location_config& location_block,
 
 	__D_DISPLAY("ENV:\n" << env);
 	if (!is_file_exist(((env.getArgs())[1]).c_str()))
-		return http_error(client, "HTTP/1.1 404 Not Found\r\n\r\n", 2);
+		return http_error(client, server_block.error_page, 404, 2);
 	if (tx.isPipeError() || rx.isPipeError())
-		return http_error(client, "HTTP/1.1 500 Internal Server Error\r\n", 2);
+		return http_error(client, server_block.error_page, 500, 2);
 	c_pid = fork();
 	if (c_pid == -1)
-		return http_error(client, "HTTP/1.1 500 Internal Server Error\r\n", 2);
+		return http_error(client, server_block.error_page, 500, 2);
 	else if (c_pid == 0)//child
 	{
 		exec_cgi_script(env, rx, tx, client_map, server_map);
 	}
 	else
 	{
-		ret = write_read_cgi(rx, tx, c_pid, client, request);
+		ret = write_read_cgi(rx, tx, c_pid, client, request, server_block);
 	}
 	return ret;
 }

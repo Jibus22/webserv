@@ -7,10 +7,19 @@ const std::string	display_headers(const std::string& response)
 	if (blankline == std::string::npos)
 	{
 		blankline = response.find("\n\n");
-		if (blankline == std::string::npos || blankline > 2000)
+		if (blankline == std::string::npos || blankline > 3000)
+		{
+			__D_DISPLAY("display_headers() error: blankline not found");
 			return "";
+		}
 	}
 	return response.substr(0, blankline);
+}
+
+void	display_request_hdr(const std::string& request, int status)
+{
+	if (status == 0 || status == 2)
+	{__D_DISPLAY(CYAN_C << display_headers(request) << RESET_C);}
 }
 
 void	__D_DISPLAY_RECV(int client_id, int len)

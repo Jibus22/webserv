@@ -12,6 +12,7 @@ private:
 	std::string							_status_infos;
 	std::map<std::string, std::string>	_headers;
 	std::string							_body;
+	bool								_body_path;
 
 public:
 
@@ -27,6 +28,7 @@ public:
 	void set_status_infos(std::string const & status_infos);
 	void add_header(std::string const & key_header, std::string const & value);
 	void set_body(std::string const & body);
+	void set_body_path(std::string const & body_path);
 	std::string const & get_body();
 	void append(std::string const & body);
 //	std::string const * get_raw();

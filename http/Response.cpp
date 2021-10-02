@@ -1,4 +1,5 @@
 #include "Response.hpp"
+#include "webserv.hpp"
 #include <iostream>
 #include <string>
 #include <map>
@@ -6,7 +7,7 @@
 /*
 ** CANONICAL FUNCS
 */
-Response::Response(void){
+Response::Response(void):_body_path(false){
 	return;
 }
 
@@ -20,6 +21,7 @@ Response &	Response::operator=(Response const & rhs){
 	this->_status_infos = rhs._status_infos;
 	this->_headers = rhs._headers;
 	this->_body = rhs._body;
+	this->_body_path = rhs._body_path;
 	return *this;
 }
 
@@ -41,7 +43,16 @@ std::string const & Response::get_body()
 
 
 void Response::set_body(std::string const & body)
-{this->_body = body;}
+{
+	this->_body_path = false;
+	this->_body = body;
+}
+
+void Response::set_body_path(std::string const & body)
+{
+	this->_body_path = true;
+	this->_body = body;
+}
 
 void Response::append(std::string const & body)
 {this->_body.append(body);}
@@ -53,7 +64,7 @@ std::string * Response::get_raw()
 	raw_response->append(this->_status_code);
 	raw_response->append(" ");
 	raw_response->append(this->_status_infos);
-	raw_response->append("\n");
+	raw_response->append("\r\n");
 	std::map<std::string, std::string>::iterator it = this->_headers.begin();
 	std::map<std::string, std::string>::iterator ite = this->_headers.end();
 	while(it != ite)
@@ -61,10 +72,13 @@ std::string * Response::get_raw()
 		raw_response->append(it->first);
 		raw_response->append(": ");
 		raw_response->append(it->second);
-		raw_response->append("\n");
+		raw_response->append("\r\n");
 		it++;
 	}
-	raw_response->append("\n");
-	raw_response->append(this->_body);
+	raw_response->append("\r\n");
+	if (this->_body_path)
+		get_file_content(this->_body, *raw_response);
+	else
+		raw_response->append(this->_body);
 	return raw_response;
 }

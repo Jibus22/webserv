@@ -60,10 +60,11 @@ SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 		Location_config.cpp Server_config.cpp)
 #HTTP
 SRCS3 = $(addprefix $(SRCPATH3)/, Request.cpp Response.cpp processing.cpp \
-		processing_utils.cpp directory_listing.cpp)
+		processing_utils.cpp directory_listing.cpp formdata_process.cpp \
+		http_error.cpp http_response.cpp)
 #UTILS
 SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp \
-		utils.cpp find_nocase_header.cpp display.cpp)
+		utils.cpp find_nocase_header.cpp display.cpp file_utilities.cpp)
 #CGI
 SRCS5 = $(addprefix $(SRCPATH5)/, CgiEnv.cpp process_cgi.cpp FtPipe.cpp \
 		cgi_output.cpp)
