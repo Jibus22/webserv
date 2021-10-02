@@ -99,6 +99,7 @@ Location_config * match_location(Config_struct::c_location_vector & locations,
 	return NULL;
 }
 
+/*
 //Ajoute dans la reponse la page d'erreur associe a l'erreur defini dans la conf
 void	error_page(int erreur, Response & response,
 		Config_struct::c_error_map & error_page)
@@ -114,7 +115,7 @@ void	error_page(int erreur, Response & response,
 	}
 	else
 		response.add_header("Content-Length", "0");
-}
+}*/
 
 //renvoie true si methode autorisé false sinon
 bool	is_method_allowed(Location_config * location, std::string methode)
@@ -237,22 +238,21 @@ void	handle_return(Response & response, Location_config *location)
 	response.add_header("Content-Length", "0");
 }*/
 
-int		construct_get_response(Response & response, Request &requete,
+//si la target est un repertoire cherche le fichier a repondre
+// si la target est un repertoire et que l'autoindex est active
+//renvoie l'autoindex
+//sinon si la target est un fichier et qu'il peut etre recupéré
+//set la reponse a 200 et renvoie le fichier
+//sinon
+//renvoie une erreur car fichier untrouvable
+int		http_get(Response & response, Request &requete,
 						Server_config & server, Location_config * location,
 						Client& client)
 {
 	size_t	filesize;
 
-	//si la target est un repertoire cherche le fichier a repondre
 	if (is_dir(requete.get_target()))
 		handle_index(requete.get_target(), location);
-
-	// si la target est un repertoire et que l'autoindex est active
-	//renvoie l'autoindex
-	//sinon si la target est un fichier et qu'il peut etre recupéré
-	//set la reponse a 200 et renvoie le fichier
-	//sinon
-	//renvoie une erreur car fichier untrouvable
 	if (is_dir(requete.get_target()) && location->auto_index == true)
 		auto_index(response, requete.get_target());
 	else if (!is_dir(requete.get_target()) && is_openable(requete.get_target()))
@@ -294,43 +294,19 @@ int		http_delete(Client& client, const Request& request,
 		return http_response(client, "", 200, 200);
 }
 
-//set le code 405 rt le message associe et les headers
-//Header allow qui donne les methodes autorisé pour cette ressource
-void	method_not_allowed(Response & response, Server_config & server,
-		Location_config * location)
+//Set 'Allow' header value accordingly then returns error response to 405
+//Method Not Allowed
+int		unallowed_method(Client& client, const Location_config& location,
+				const Server_config& server)
 {
-	std::string  str;
-	bool get = false;
-	bool post = false;
-	bool del = false;
+	std::string	value("");
 
-	response.set_status_code("405");
-	response.set_status_infos("Method Not Allowed");
-	Config_struct::c_methode_vector::iterator it = location->methode.begin();
-	Config_struct::c_methode_vector::iterator ite = location->methode.end();
-	while (it != ite)
-	{
-		if (*it == "GET")
-			get = true;
-		else if (*it == "POST")
-			post = true;
-		else if (*it == "DELETE")
-			del = true;
-		it++;
-	}
-	if (get)
-		str.append("GET");
-	if (get && (post || del))
-		str.append(", ");
-	if (post)
-		str.append("POST");
-	if (post && del)
-		str.append(", ");
-	if (del)
-		str.append("DELETE");
-	response.add_header("Allow", str);
-	response.add_header("Content-Length", "0");
-	error_page(405, response, server.error_page);
+	for (std::vector<std::string>::const_iterator it = location.methode.begin();
+			it != location.methode.end(); it++)
+		value.append(*it + ", ");
+	if (!value.empty())
+		value.erase(value.size() - 2);
+	return http_error(client, server.error_page, value, 405, 405);
 }
 
 int		construct_response(Response& response, Server_config& server,
@@ -345,10 +321,9 @@ int		construct_response(Response& response, Server_config& server,
 	location = match_location(server.location, request.get_target());
 	if (!location)
 		return http_error(client, server.error_page, 404, 1);
-	if (location && location->return_p.first != 0)
+	if (location->return_p.first != 0)
 		return http_response(client, location->return_p.second,
 				location->return_p.first, location->return_p.first);
-	//CGI
 	while (ret != -1)
 	{
 		ret = check_cgi(request, server, *location, client,
@@ -366,9 +341,8 @@ int		construct_response(Response& response, Server_config& server,
 	}
 
 	handle_root(request.get_target(), location);
-
 	if (request.get_method() == "GET" && is_method_allowed(location, "GET"))
-		return construct_get_response(response, request, server, location, client);
+		return http_get(response, request, server, location, client);
 	else if (request.get_method() == "POST" &&
 			is_method_allowed(location, "POST"))
 		return http_post(client, request, *location, server);
@@ -376,8 +350,7 @@ int		construct_response(Response& response, Server_config& server,
 			is_method_allowed(location, "DELETE"))
 		return http_delete(client, request, server);
 	else
-		method_not_allowed(response, server, location);
-	return 0;
+		return unallowed_method(client, *location, server);
 }
 
 int		process_request(Client& client,

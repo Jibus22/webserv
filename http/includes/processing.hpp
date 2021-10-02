@@ -25,6 +25,8 @@ int		formdata_process(Client& client, const std::string& request,
 int		http_error(Client& client, int http_status, int ret);
 int		http_error(Client& client, const std::map<int, std::string>& err,
 					int http_status, int ret);
+int		http_error(Client& client, const std::map<int, std::string>& err,
+					const std::string& value, int http_status, int ret);
 int		http_response(Client& client, const std::string& headers,
 					int http_status, int ret);
 int		http_response(Client& client, const std::string& value,
