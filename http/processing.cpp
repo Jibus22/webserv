@@ -171,7 +171,7 @@ void	handle_root(std::string & target, Location_config * location)
 {
 	if (location == NULL || location->root == "")
 		return;
-	if (location->uri[location->uri.size()] == '/' || location->uri.size() == 1)
+	if (location->uri[location->uri.size() - 1] == '/' || location->uri.size() == 1)
 		target.erase(0 , location->uri.size());
 	else
 		target.erase(0 , location->uri.size() + 1);
@@ -339,8 +339,9 @@ int		construct_response(Response& response, Server_config& server,
 		else
 			return 1;
 	}
-
+	__D_DISPLAY("target : " << request.get_target());
 	handle_root(request.get_target(), location);
+	__D_DISPLAY("target : " << request.get_target());
 	if (request.get_method() == "GET" && is_method_allowed(location, "GET"))
 		return http_get(response, request, server, location, client);
 	else if (request.get_method() == "POST" &&
