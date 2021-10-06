@@ -28,7 +28,7 @@
 
 
 body{
-   background-image: url('/images/fond_jaune.png'); 
+   background-image: url('images/fond_jaune.png');
    width: 80%;
    margin:auto;
    color: #181818;
@@ -42,7 +42,7 @@ header{
     justify-content: space-between;
     align-items: end;
     margin-top: 20px;
-   
+
 }
 
 /*////////////// titre */
@@ -71,8 +71,8 @@ header{
     font-family: Dayrom, serif;
     font-size: 1.1em;
     margin-left: 30px;
-    
-  
+
+
 }
 
 
@@ -81,7 +81,7 @@ ul{
     display: flex;
     flex-direction: row;
     list-style-type: none;
-    
+
 }
 
 li{
@@ -92,7 +92,7 @@ li a{
     font-size: 1.4em;
     text-transform : uppercase;
     color: black;
-    text-decoration:none; 
+    text-decoration:none;
 }
 
 li a:hover
@@ -112,13 +112,13 @@ li a:hover
 
 @media all and (max-width: 1024px)
 {
-  
+
     nav
     {
         width: auto;
         text-align: left;
     }
-    
+
     nav ul
     {
         flex-direction: column;
@@ -128,12 +128,12 @@ li a:hover
     {
         padding-left: 4px;
     }
-    
+
     nav a
     {
         font-size: 1.1em;
     }
-    
+
     nav a:hover
     {
         border-bottom: 0;
@@ -144,7 +144,7 @@ li a:hover
 
 
 #fond_ecran{
-    background-image: url(/images/sanfrancisco.jpg);
+    background-image: url(images/sanfrancisco.jpg);
     position: relative;
     margin-top: 15px;
     height: 210px;
@@ -160,7 +160,7 @@ li a:hover
     border-radius: 0 0 8px 8px;
     height: 40px ;
     opacity: 0.7;
-    
+
 }
 
 #message p{
@@ -175,13 +175,13 @@ section{
     display: flex;
     flex-direction: row;
     margin-top: 20px;
-    
-    
+
+
 }
 /* ////////////// PARAGRAPHE */
 
 article{
-  
+
     width: 1700px;
     margin-right: 16px;
 }
@@ -215,13 +215,13 @@ article p{
     justify-content: center;
     margin-top: 170px;
 
-    
+
 
 }
 
 #fleche img{
     padding-bottom: 200px;
-    
+
 }
 
 
@@ -232,8 +232,8 @@ aside{
     background-color: rgb(111, 106, 99);
     padding: 0 6px 0 6px;
     border-radius: 8px;
-    
-   
+
+
 }
 
 aside h1{
@@ -255,20 +255,20 @@ aside h1{
 aside p{
     color: #F2F1EF;
     font-size: 0.8em;
-    
+
     text-align: justify;
 }
 
 #logo_reseau{
     text-align: center;
     padding-top: 7px;
-    
+
 }
 
 #logo_reseau img{
     width: 40px;
     padding-left: 4px;
-    
+
 }
 
 
@@ -283,7 +283,7 @@ aside p{
     width: 50px;
     height: 30px;
     margin-left: 400px;
-    margin-top: -18px;    
+    margin-top: -18px;
 }
 
 
@@ -292,7 +292,7 @@ footer{
     justify-content: space-between;
     height: 160px;
     margin-top: -25px;
-    
+
 }
 
 footer h1{
@@ -306,9 +306,9 @@ footer img{
     border: 1px solid black;
 }
 
-#mes_photos h1{ 
+#mes_photos h1{
     margin-left: 65px;
- 
+
 }
 
 
@@ -320,12 +320,12 @@ footer img{
     display: flex;
     width: 290px;
 
-    
+
 }
 
 #liste_amis p{
     font-size: 0.9em;
     margin-top: -4px;
     margin-left: 40px;
-   
+
 }

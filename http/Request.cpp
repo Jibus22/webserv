@@ -27,6 +27,7 @@ Request::Request(std::string const& request) : _request(request)
 			= request.substr(separator + 1, endline - (separator + 1));
 		start = endline + 1;
 	}
+	_path = _target;
 }
 
 Request::Request(Request const & src) : _request(src._request)
@@ -39,6 +40,7 @@ Request &	Request::operator=(Request const & rhs){
 	this->_method = rhs._method;
 	this->_target = rhs._target;
 	this->_headers = rhs._headers;
+	this->_path = rhs._path;
 	return *this;
 }
 
@@ -80,7 +82,6 @@ std::map<std::string, std::string> const&
 
 std::string const&	Request::get_method() const {return this->_method;}
 std::string const&	Request::get_target() const {return this->_target;}
-std::string&		Request::get_target() {return this->_target;}
 std::string const&	Request::get_version() const {return this->_version;}
 const std::string&	Request::getRequest() const {return _request;}
 size_t				Request::getBodyPos() const {return _blankline + 4;}
@@ -88,7 +89,8 @@ size_t				Request::getBodySize() const
 					{return _request.size() - (_blankline + 4);}
 const char*			Request::getBodyAddr() const
 					{return &(_request[_blankline + 4]);}
-const std::string&	Request::getPath() const {return _path;}
+std::string &		Request::getPath()  {return _path;}
+std::string const&	Request::getPath() const {return _path;}
 
 
 void	Request::setTarget(const std::string& newtarget)

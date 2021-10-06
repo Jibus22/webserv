@@ -48,13 +48,13 @@ public:
 						get_headers() const;
 	std::string const &	get_method() const;
 	std::string const & get_target() const;
-	std::string &		get_target();
 	std::string const & get_version() const;
 	const std::string&	getRequest() const;
 	size_t				getBodyPos() const;
 	size_t				getBodySize() const;
 	const char*			getBodyAddr() const;
-	const std::string&	getPath() const;
+	std::string&		getPath();
+	std::string const &	getPath() const;
 
 	void				setTarget(const std::string& newtarget);
 	void				setPath(const std::string& uri, const std::string& root);
