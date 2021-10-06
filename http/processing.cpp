@@ -251,14 +251,14 @@ int		http_get(Response & response, Request &requete,
 {
 	size_t	filesize;
 
-	if (is_dir(requete.get_target()))
-		handle_index(requete.get_target(), location);
-	if (is_dir(requete.get_target()) && location->auto_index == true)
-		auto_index(response, requete.get_target());
-	else if (!is_dir(requete.get_target()) && is_openable(requete.get_target()))
+	if (is_dir(requete.getPath()))
+		handle_index(requete.getPath(), location);
+	if (is_dir(requete.getPath()) && location->auto_index == true)
+		auto_index(response, requete.getPath());
+	else if (!is_dir(requete.getPath()) && is_openable(requete.getPath()))
 	{
-		filesize = get_file_size(requete.get_target().c_str());
-		return http_response(client, "", 200, 1, requete.get_target(), filesize);
+		filesize = get_file_size(requete.getPath().c_str());
+		return http_response(client, "", 200, 1, requete.getPath(), filesize);
 	}
 	else
 		return http_error(client, server.error_page, 404, 404);
@@ -284,11 +284,11 @@ int		http_post(Client& client, const Request& request,
 int		http_delete(Client& client, const Request& request,
 				const Server_config& server)
 {
-	if (is_dir(request.get_target()))
+	if (is_dir(request.getPath()))
 		return http_error(client, server.error_page, 400, 400);
-	else if (!is_openable(request.get_target()))
+	else if (!is_openable(request.getPath()))
 		return http_error(client, server.error_page, 404, 404);
-	if (unlink(request.get_target().c_str()) == -1)
+	if (unlink(request.getPath().c_str()) == -1)
 		return http_error(client, server.error_page, 500, 500);
 	else
 		return http_response(client, "", 200, 200);
@@ -340,8 +340,8 @@ int		construct_response(Response& response, Server_config& server,
 			return 1;
 	}
 	__D_DISPLAY("target : " << request.get_target());
-	handle_root(request.get_target(), location);
-	__D_DISPLAY("target : " << request.get_target());
+	handle_root(request.getPath(), location);
+	__D_DISPLAY("path : " << request.getPath());
 	if (request.get_method() == "GET" && is_method_allowed(location, "GET"))
 		return http_get(response, request, server, location, client);
 	else if (request.get_method() == "POST" &&
