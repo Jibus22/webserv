@@ -1,102 +1,100 @@
 #include "processing.hpp"
 
 //return true si le server name match le header host de la requete
-bool	match_server_name(Server_config *server, Request & request)
+bool	match_server_name(const Server_config& server, const Request& request)
 {
-	Config_struct::c_name_vector::iterator it = server->name_serv.begin();
-	while (it != server->name_serv.end())
-		if (*it == request["Host"])
+	std::string	value;
+
+	if (!request.getHeader("host", value))
+		return false;
+	for (std::vector<std::string>::const_iterator
+			it = server.name_serv.begin(); it != server.name_serv.end(); it++)
+		if (value == *it)
 			return true;
 	return false;
 }
 
 //TODO: gere le 0.0.0.0
-//Renvoie un pointeur sur le server qui est associe a la requete
-Server_config * match_server(std::vector<Server_config *> server_blocks,
-					std::pair<std::string, int> listen, Request & requete)
+//Renvoie un pointeur sur le server qui est associe a la request
+//[1] on recupere une liste avec une tres grande
+//specificite de la correspondance
+//[2] si un seul match il repond
+//[3] si plus de 1 match on regarde le header host
+//[4] si 0 match
+Server_config	*match_server(const std::vector<Server_config*>& server_blocks,
+					const std::pair<std::string, int>& listen,
+					const Request& request)
 {
-	(void)requete;
+	std::vector<Server_config*>	listen_match;
 
-	std::vector<Server_config *> matching_listen;
-	//on recupere une liste avec une tres grande specificite de la correspondance
-	for (std::vector<Server_config *>::iterator it = server_blocks.begin();
-		it != server_blocks.end(); it++)
+	for (std::vector<Server_config*>::const_iterator it = server_blocks.begin();
+		it != server_blocks.end(); it++)//[1]
 	{
 		if((*it)->listen == listen)
-			matching_listen.push_back(*it);
+			listen_match.push_back(*it);
 	}
-	//si un seul match il repond
-	if (matching_listen.size() == 1)
-		return matching_listen.front();
-	//si plus de 1 match on regarde le header host
-	else if (matching_listen.size() > 1)
+	if (listen_match.size() == 1)//[2]
+		return listen_match.front();
+	else if (listen_match.size() > 1)//[3]
 	{
-		for (std::vector<Server_config *>::iterator it = matching_listen.begin();
-			it != matching_listen.end(); it++)
+		for (std::vector<Server_config*>::const_iterator
+				it = listen_match.begin(); it != listen_match.end(); it++)
 		{
-			if (match_server_name(*it, requete))
+			if (match_server_name(**it, request))
 				return *it;
 		}
-		return matching_listen.front();
+		return listen_match.front();
 	}
-	else
-	//si 0 match
-	{
-		return matching_listen.front();
-	}
+	else//[4]
+		return listen_match.front();
 }
 
 // Trouve la location associé a l'URI de la requete
-Location_config * match_location(Config_struct::c_location_vector & locations,
-											std::string target)
+//[1.] : cas ou location uri fini par /
+//on compare jusque avant le / de la location URI
+//ca match si compare == 0 et si soit la target est fini apres la comparaison
+// soit si il y a un / apres
+//Par exemple /dir/
+//doit matcher avec /dir /dir/ /dir/test.html
+// mais pas /directory
+//[2.] : cas ou location fini pas par /
+//pareil mais longueur de comparaison change
+Location_config	*location_match(const Config_struct::c_location_vector&
+									locations, const std::string& target)
 {
-	Location_config * location;
+	Config_struct::c_location_vector::const_iterator
+					it = locations.begin(),
+					end = locations.end();
+	Location_config	*location;
 
 	if (locations.empty())
 		return NULL;
-	Config_struct::c_location_vector::iterator it = locations.begin();
-	while (it != locations.end())
+	while (it != end)
 	{
 		location = *it;
 		if (location->uri == "/")
+			break ;
+		else if (location->uri[location->uri.size() - 1] == '/')//[1.]
 		{
-			__D_DISPLAY("location matched : " << location->uri);
-			return location;
-		}
-		else if (location->uri[location->uri.size() - 1] == '/')
-		{
-			// cas ou location uri fini par /
-
-			//on compare jusque avant le / de la location URI
-			//ca match si compare == 0 et si soit la target est fini apres la comparaison
-			// soit si il y a un / apres
-			//Par exemple /dir/
-			//doit matcher avec /dir /dir/ /dir/test.html
-			// mais pas /directory
 			if((target.compare(0, location->uri.size() - 1,
 			location->uri, 0, location->uri.size() - 1) == 0)
 			&& (target.size() == location->uri.size() - 1 ||
 				target[location->uri.size() - 1] == '/'))
-			{
-				__D_DISPLAY("location matched : " << location->uri);
-				return location;
-			}
+				break ;
 		}
-		else
+		else//[2.]
 		{
-			//cas ou location fini pas par /
-
-			//pareil mais longueur de comparaison change
 			if((target.compare(0, location->uri.size(), location->uri) == 0) &&
-(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
-			{
-				__D_DISPLAY("location matched : " << location->uri);
-				return location;
-			}
+					(target.size() == location->uri.size()
+					 || target[location->uri.size()] == '/'))
+				break ;
 		}
 		it++;
 	}
-	return NULL;
+	if (it == end)
+		return NULL;
+	__D_DISPLAY("location matched : " << location->uri);
+	return location;
 }
 
 /*
@@ -166,6 +164,7 @@ int		check_cgi(Request& request, const Server_config& server,
 	return ret;
 }
 
+/*
 //Met a jour la target avec la directive root
 void	handle_root(std::string & target, Location_config * location)
 {
@@ -179,41 +178,21 @@ void	handle_root(std::string & target, Location_config * location)
 		target.insert(0, location->root);
 	else
 		target.insert(0, location->root + "/");
-}
+}*/
 
 //si la target est un directory teste si le fichier existe dans le dossier
 //et met a jour la requete avec le fichier qui doit etre renvoye
-void	handle_index(std::string & target, Location_config * location)
+void	handle_index(std::string& target, const Location_config& location)
 {
-	std::ifstream		file;
-/*
-	file.open(target.c_str());
-	if (file.fail() == false)
-		return;
-*/
 	__D_DISPLAY("DIRECTORY");
-	Config_struct::c_index_vector::const_iterator it = location->index.begin();
-	//std::string path;
-	while (it != location->index.end())
+	for (std::vector<std::string>::const_iterator it = location.index.begin();
+			it != location.index.begin(); it++)
 	{
 		if (is_file_exist(target + *it))
 		{
 			target.append(*it);
 			return;
 		}
-			/*
-		path = target;
-		path.append((*it));
-		file.open(path.c_str());
-		if (file.fail() == false)
-		{
-			target = path;
-			file.close();
-			return;
-		}
-		file.close();
-		*/
-		it++;
 	}
 }
 
@@ -245,15 +224,15 @@ void	handle_return(Response & response, Location_config *location)
 //set la reponse a 200 et renvoie le fichier
 //sinon
 //renvoie une erreur car fichier untrouvable
-int		http_get(Response & response, Request &requete,
-						Server_config & server, Location_config * location,
-						Client& client)
+int		http_get(Response& response, Request& requete,
+				const Server_config& server, const Location_config& location,
+				Client& client)
 {
 	size_t	filesize;
 
 	if (is_dir(requete.getPath()))
 		handle_index(requete.getPath(), location);
-	if (is_dir(requete.getPath()) && location->auto_index == true)
+	if (is_dir(requete.getPath()) && location.auto_index == true)
 		auto_index(response, requete.getPath());
 	else if (!is_dir(requete.getPath()) && is_openable(requete.getPath()))
 	{
@@ -315,35 +294,27 @@ int		construct_response(Response& response, Server_config& server,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 
-	int				ret = 0;
+	int				ret = CGI_REDIRECT;
 	Location_config	*location;
 
-	location = match_location(server.location, request.get_target());
-	if (!location)
-		return http_error(client, server.error_page, 404, 1);
-	if (location->return_p.first != 0)
-		return http_response(client, location->return_p.second,
-				location->return_p.first, location->return_p.first);
-	while (ret != -1)
+	while (ret == CGI_REDIRECT)
 	{
+		location = location_match(server.location, request.get_target());
+		if (!location)
+			return http_error(client, server.error_page, 404, 1);
+		if (location->return_p.first != 0)
+			return http_response(client, location->return_p.second,
+					location->return_p.first, location->return_p.first);
 		ret = check_cgi(request, server, *location, client,
 				client_map, server_map);
-		if (ret == -1)
-			break ;
-		else if (ret == CGI_REDIRECT)
-		{
-			location = match_location(server.location, request.get_target());
-			if (!location)
-				return http_error(client, server.error_page, 404, 1);
-		}
-		else
-			return 1;
 	}
+	if (ret == CGI_SUCCESS || ret == CGI_ERR)
+		return 1;
 	__D_DISPLAY("target : " << request.get_target());
-	handle_root(request.getPath(), location);
+	request.setPath(location->uri, location->root);
 	__D_DISPLAY("path : " << request.getPath());
 	if (request.get_method() == "GET" && is_method_allowed(location, "GET"))
-		return http_get(response, request, server, location, client);
+		return http_get(response, request, server, *location, client);
 	else if (request.get_method() == "POST" &&
 			is_method_allowed(location, "POST"))
 		return http_post(client, request, *location, server);
@@ -355,7 +326,7 @@ int		construct_response(Response& response, Server_config& server,
 }
 
 int		process_request(Client& client,
-				const std::vector<Server_config *>& server_blocks,
+				const std::vector<Server_config*>& server_blocks,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {

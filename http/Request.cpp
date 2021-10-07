@@ -27,7 +27,6 @@ Request::Request(std::string const& request) : _request(request)
 			= request.substr(separator + 1, endline - (separator + 1));
 		start = endline + 1;
 	}
-	_path = _target;
 }
 
 Request::Request(Request const & src) : _request(src._request)
@@ -97,8 +96,16 @@ void	Request::setTarget(const std::string& newtarget)
 		{_target = newtarget;}
 void	Request::setPath(const std::string& uri, const std::string& root)
 {
-	(void)uri;
-	(void)root;
+	_path = _target;
+	if (uri[uri.size() - 1] == '/'
+			|| uri.size() == 1)
+		_path.erase(0 , uri.size());
+	else
+		_path.erase(0 , uri.size() + 1);
+	if (root[root.size() - 1] == '/')
+		_path.insert(0, root);
+	else
+		_path.insert(0, root + "/");
 }
 
 /*------------------------------OVERLOAD OPERATORS----------------------------*/

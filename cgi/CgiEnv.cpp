@@ -119,12 +119,11 @@ void	CgiEnv::setArgv()
 int			CgiEnv::mapPath(const std::string& path_info,
 						const Server_config& server_block)
 {
-	std::vector<Location_config*>::const_iterator	location, matching_location,
-										end = server_block.location.end();
-	size_t											pos = 0, len = 0, lenmax = 0;
+	std::vector<Location_config*>::const_iterator
+				location = server_block.location.begin(),
+				end = server_block.location.end(), matching_location = end;
+	size_t		pos = 0, len = 0, lenmax = 0;
 
-	location = server_block.location.begin();
-	matching_location = end;
 	while (location != end)
 	{
 		pos = path_info.find((*location)->uri);
