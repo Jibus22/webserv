@@ -15,7 +15,8 @@ int		process_request(Client& client,
 				const std::map<int, std::pair<std::string, int> >& server_map);
 
 bool	get_file_content(std::string const & path, std::string & content);
-void	auto_index(Response & response, std::string  const & target);
+//void	auto_index(Response & response, std::string  const & target);
+std::string	auto_index(const std::string& dir_name, const std::string& target);
 
 int		formdata_process(Client& client, const std::string& request,
 						const std::string& value, const std::string& updir,

@@ -54,7 +54,7 @@ endif
 ##### SRCS #####
 #CORE
 SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp Client.cpp \
-	   server_process.cpp is_valid_request.cpp)
+	   server_process.cpp is_valid_request.cpp core_utils.cpp)
 #CONF
 SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 		Location_config.cpp Server_config.cpp)

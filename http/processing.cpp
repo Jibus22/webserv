@@ -224,16 +224,16 @@ void	handle_return(Response & response, Location_config *location)
 //set la reponse a 200 et renvoie le fichier
 //sinon
 //renvoie une erreur car fichier untrouvable
-int		http_get(Response& response, Request& request,
-				const Server_config& server, const Location_config& location,
-				Client& client, int ret)
+int		http_get(Request& request, const Server_config& server,
+				const Location_config& location, Client& client, int ret)
 {
 	size_t	filesize;
 
 	if (is_dir(request.getPath()))
 		handle_index(request.getPath(), location);
 	if (is_dir(request.getPath()) && location.auto_index == true)
-		auto_index(response, request.getPath());
+		return http_response(client, auto_index(request.getPath(),
+					request.getTarget()), 200, 1);
 	else if (!is_dir(request.getPath()) && is_openable(request.getPath()))
 	{
 		filesize = get_file_size(request.getPath().c_str());
@@ -246,7 +246,6 @@ int		http_get(Response& response, Request& request,
 	}
 	else
 		return http_error(client, server.error_page, 404, 404);
-	return 0;
 }
 
 int		http_post(Client& client, const Request& request,
@@ -293,7 +292,7 @@ int		unallowed_method(Client& client, const Location_config& location,
 	return http_error(client, server.error_page, value, 405, 405);
 }
 
-int		construct_response(Response& response, Server_config& server,
+int		construct_response(Server_config& server,
 				Request& request, Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
@@ -320,7 +319,7 @@ int		construct_response(Response& response, Server_config& server,
 	request.setPath(location->uri, location->root);
 	__D_DISPLAY("path : " << request.getPath());
 	if (request.get_method() == "GET" && is_method_allowed(location, "GET"))
-		return http_get(response, request, server, *location, client, i);
+		return http_get(request, server, *location, client, i);
 	else if (request.get_method() == "POST" &&
 			is_method_allowed(location, "POST"))
 		return http_post(client, request, *location, server);
@@ -337,19 +336,12 @@ int		process_request(Client& client,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 	Server_config	*server;
-	Response		response;
 	Request 		request(client.getStrRequest());
 
 	__D_DISPLAY(request);
 	server = match_server(server_blocks, client.getListen(), request);
 	if (server->m_body_size < request.getBodySize())
 		return http_error(client, server->error_page, 413, 413);
-	if (construct_response(response, *server, request, client,
-				client_map, server_map))
-	{
-		return 0;
-	}
-	client.setResponse(response.get_raw());
-	client.clearRequest();
+	construct_response(*server, request, client, client_map, server_map);
 	return 0;
 }

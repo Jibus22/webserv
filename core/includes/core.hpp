@@ -31,4 +31,9 @@ int		check_new_connection(const int event_fd,
 
 int		is_valid_request(Client& client);
 
+//--utils.cpp--
+void	remove_all_clients(std::map<int, Client>& client_map);
+void	remove_client(std::map<int, Client>& client_map, int client_fd);
+int		check_return(int ret, std::map<int, Client>& client_map);
+
 #endif

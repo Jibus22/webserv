@@ -23,7 +23,7 @@ Client::~Client()
 	}
 }
 
-Client &	Client::operator=(Client const & src)
+Client&	Client::operator=(Client const & src)
 {
 	if (this == &src)
 		return *this;
