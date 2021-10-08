@@ -180,7 +180,7 @@ void		CgiEnv::setMetaVar(const Request& request,
 						const std::string& ext_cgi)
 {
 	std::map<std::string, std::string>::const_iterator	hdr;
-	const std::string&	target = request.get_target();
+	const std::string&	target = request.getTarget();
 	size_t				match;
 	std::stringstream	ss;
 	bool				found;

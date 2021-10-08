@@ -8,19 +8,16 @@ int		cgi_exit_status(const int& status)
 	{
 		ret = WEXITSTATUS(status); 
 		if (ret == EXIT_FAILURE)
-			std::cerr << "Oops, cgi exited with error: " << ret << std::endl;
+		{__D_DISPLAY("Oops, cgi exited with error: " << ret);}
 		else if (ret == EXIT_SUCCESS)
-		{
-			__D_DISPLAY("CGI SUCCESS: " << ret << ", we can process response.");
-		}
+		{__D_DISPLAY("CGI SUCCESS: " << ret << ", we can process response.");}
 		else
-			std::cout << "Cgi exited with status: "
-				<< WEXITSTATUS(status) << std::endl;
+		{__D_DISPLAY("Cgi exited with status: " << WEXITSTATUS(status));}
 	}
 	else if (WIFSIGNALED(status))
 	{
 		ret = WTERMSIG(status);
-		std::cerr << "Cgi exited with signal: " << ret << std::endl;
+		__D_DISPLAY("Cgi exited with signal: " << ret);
 	}
 	__D_DISPLAY("PARENT: finished to wait for cgi");
 	return ret;
@@ -49,7 +46,7 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 	char			buf[CGI_RD_BUF_LEN];
 
 	if (gettimeofday(&tv, NULL) == -1)
-		return pgm_perr("gettimeofday");
+		return EXIT_FAILURE;
 	while ((w_pid = waitpid(c_pid, &status, WNOHANG)) == 0)
 	{
 		if (is_child_slow(tv, c_pid))
@@ -60,14 +57,16 @@ int		read_cgi_output(const pid_t c_pid, const FtPipe& rx,
 				break ;
 			ret = read(rx.read, buf, CGI_RD_BUF_LEN - 1);
 			if (ret == -1)
-				return pgm_perr("read");
-			buf[ret] = 0;
-			cgi_out.append(buf);
+			{
+				close(rx.read);
+				return EXIT_FAILURE;
+			}
+			cgi_out.append(buf, ret);
 		}
 	}
 	close(rx.read);
 	if (w_pid == -1)
-		return pgm_perr("waitpid");
+		return EXIT_FAILURE;
 	return cgi_exit_status(status);
 }
 
@@ -79,10 +78,12 @@ int		write_to_child(const Request& request, const FtPipe& tx)
 {
 	ssize_t	ret;
 
+	if (request.getBodySize() == 0)
+		return 0;
 	ret = write(tx.write, request.getBodyAddr(), request.getBodySize());
-	if (ret == -1)
-		return pgm_perr("write");
 	close(tx.write);
+	if (ret == -1 || ret == 0)
+		return 1;
 	return 0;
 }
 
@@ -118,12 +119,14 @@ void	exec_cgi_script(CgiEnv& env, FtPipe& rx, FtPipe& tx,
 int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 				Request& request, const Server_config& server_block)
 {
-	std::string	*cgi_out = new std::string();
+	std::string	*cgi_out;
 	int			cgi_exit, cgi_status = CGI_SUCCESS;
 
 	close(tx.read);
 	close(rx.write);
-	write_to_child(request, tx);
+	if (write_to_child(request, tx))
+		return http_error(client, server_block.error_page, 500, cgi_status);
+	cgi_out = new std::string();
 	cgi_exit = read_cgi_output(c_pid, rx, *cgi_out);
 	__D_DISPLAY("CGI_OUT:\n" << *cgi_out);
 	if (cgi_exit == EXIT_SUCCESS)
@@ -131,7 +134,10 @@ int		write_read_cgi(FtPipe& rx, FtPipe& tx, const int c_pid, Client& client,
 	else
 		cgi_status = CGI_ERR;
 	if (cgi_status == CGI_ERR)
+	{
+		delete cgi_out;
 		return http_error(client, server_block.error_page, 500, cgi_status);
+	}
 	else if (cgi_status == CGI_REDIRECT)
 	{
 		request.setTarget(*cgi_out);

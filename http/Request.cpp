@@ -80,7 +80,7 @@ std::map<std::string, std::string> const&
 					Request::get_headers() const {return this->_headers;}
 
 std::string const&	Request::get_method() const {return this->_method;}
-std::string const&	Request::get_target() const {return this->_target;}
+std::string const&	Request::getTarget() const {return this->_target;}
 std::string const&	Request::get_version() const {return this->_version;}
 const std::string&	Request::getRequest() const {return _request;}
 size_t				Request::getBodyPos() const {return _blankline + 4;}
@@ -119,7 +119,7 @@ std::ostream &operator<<(std::ostream &out, const Request& value)
 
 	out << WHITE_C << "[REQUEST]\n" <<
 		"status line: " << RESET_C << value.get_method() << " "
-		<< value.get_target() << " "
+		<< value.getTarget() << " "
 		<< value.get_version() << "\n"
 		<< WHITE_C << "header map:\n" << RESET_C;
 	for (std::map<std::string, std::string>::const_iterator it = hdr.begin();

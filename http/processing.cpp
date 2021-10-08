@@ -138,7 +138,7 @@ int		check_cgi(Request& request, const Server_config& server,
 	Config_struct::c_cgi_map::const_iterator
 						it = location.cgi.begin(),
 						end = location.cgi.end();
-	const std::string&	target = request.get_target();
+	const std::string&	target = request.getTarget();
 	int					ret = -1;
 	size_t				pos, len;
 
@@ -186,7 +186,7 @@ void	handle_index(std::string& target, const Location_config& location)
 {
 	__D_DISPLAY("DIRECTORY");
 	for (std::vector<std::string>::const_iterator it = location.index.begin();
-			it != location.index.begin(); it++)
+			it != location.index.end(); it++)
 	{
 		if (is_file_exist(target + *it))
 		{
@@ -224,20 +224,23 @@ void	handle_return(Response & response, Location_config *location)
 //set la reponse a 200 et renvoie le fichier
 //sinon
 //renvoie une erreur car fichier untrouvable
-int		http_get(Response& response, Request& requete,
+int		http_get(Response& response, Request& request,
 				const Server_config& server, const Location_config& location,
-				Client& client)
+				Client& client, int ret)
 {
 	size_t	filesize;
 
-	if (is_dir(requete.getPath()))
-		handle_index(requete.getPath(), location);
-	if (is_dir(requete.getPath()) && location.auto_index == true)
-		auto_index(response, requete.getPath());
-	else if (!is_dir(requete.getPath()) && is_openable(requete.getPath()))
+	if (is_dir(request.getPath()))
+		handle_index(request.getPath(), location);
+	if (is_dir(request.getPath()) && location.auto_index == true)
+		auto_index(response, request.getPath());
+	else if (!is_dir(request.getPath()) && is_openable(request.getPath()))
 	{
-		filesize = get_file_size(requete.getPath().c_str());
-		return http_response(client, "", 200, 1, requete.getPath(), filesize);
+		filesize = get_file_size(request.getPath().c_str());
+		if (ret > 1)
+			return http_response(client, request.getTarget(), 302, 1, request.getPath(), filesize);
+		else
+			return http_response(client, "", 200, 1, request.getPath(), filesize);
 	}
 	else
 		return http_error(client, server.error_page, 404, 404);
@@ -255,7 +258,7 @@ int		http_post(Client& client, const Request& request,
 	if (value.find("multipart/form-data") != std::string::npos)
 		return formdata_process(client, request.getRequest(), value,
 						location.upload_dir, request.getBodyPos(), server,
-						request.get_target());
+						request.getTarget());
 	else
 		return http_error(client, server.error_page, 415, 1);
 }
@@ -294,12 +297,12 @@ int		construct_response(Response& response, Server_config& server,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
 
-	int				ret = CGI_REDIRECT;
+	int				ret = CGI_REDIRECT, i = 0;
 	Location_config	*location;
 
 	while (ret == CGI_REDIRECT)
 	{
-		location = location_match(server.location, request.get_target());
+		location = location_match(server.location, request.getTarget());
 		if (!location)
 			return http_error(client, server.error_page, 404, 1);
 		if (location->return_p.first != 0)
@@ -307,14 +310,15 @@ int		construct_response(Response& response, Server_config& server,
 					location->return_p.first, location->return_p.first);
 		ret = check_cgi(request, server, *location, client,
 				client_map, server_map);
+		i++;
 	}
 	if (ret == CGI_SUCCESS || ret == CGI_ERR)
 		return 1;
-	__D_DISPLAY("target : " << request.get_target());
+	__D_DISPLAY("target : " << request.getTarget());
 	request.setPath(location->uri, location->root);
 	__D_DISPLAY("path : " << request.getPath());
 	if (request.get_method() == "GET" && is_method_allowed(location, "GET"))
-		return http_get(response, request, server, *location, client);
+		return http_get(response, request, server, *location, client, i);
 	else if (request.get_method() == "POST" &&
 			is_method_allowed(location, "POST"))
 		return http_post(client, request, *location, server);
