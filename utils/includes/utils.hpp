@@ -19,7 +19,6 @@ std::vector<Server_config *>	*get_servers_simulation();
 
 
 //find_nocase_header.cpp
-//size_t	find_nocase_header(const std::string& str, const std::string& header);
 size_t	find_nocase_header(const std::string& str,
 					const std::string& header, size_t start = 0);
 
@@ -30,13 +29,14 @@ std::string	ft_int_to_string(int val);
 std::string	str_to_lower(std::string const & s);
 
 //file_utilities.cpp
-bool		is_file_exist(const char *filename);
-bool		is_file_exist(const std::string& filename);
-int			get_file_size(const char *file);
-void		file_to_string(std::string& response,
+bool	is_file_exist(const char *filename);
+bool	is_file_exist(const std::string& filename);
+int		get_file_size(const char *file);
+void	file_to_string(std::string& response,
 				const std::string& filename, int filesize);
-bool		is_dir(const std::string name);
-bool		is_openable(const std::string& name);
+int		data_to_file(const std::string& filename, const char* addr, size_t len);
+bool	is_dir(const std::string name);
+bool	is_openable(const std::string& name);
 
 //display.cpp
 const std::string	display_headers(const std::string& response);

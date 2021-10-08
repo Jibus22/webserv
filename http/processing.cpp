@@ -238,9 +238,11 @@ int		http_get(Response& response, Request& request,
 	{
 		filesize = get_file_size(request.getPath().c_str());
 		if (ret > 1)
-			return http_response(client, request.getTarget(), 302, 1, request.getPath(), filesize);
+			return http_response(client, request.getTarget(), 302, 1,
+					request.getPath(), filesize);
 		else
-			return http_response(client, "", 200, 1, request.getPath(), filesize);
+			return http_response(client, "", 200, 1,
+					request.getPath(), filesize);
 	}
 	else
 		return http_error(client, server.error_page, 404, 404);
