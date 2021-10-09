@@ -12,9 +12,9 @@
             <div id="titre">
                 <div id="logo">
                     <img src="images/zozor_logo.png" alt="">
-                    <h1>test cgi</h1>
+                    <h1>Post test</h1>
                 </div>
-                <h2>On fait moins le mariole</h2>
+                <h2>Post me something & I will be happy</h2>
             </div>
 
             <nav>
@@ -37,42 +37,20 @@
 
             <div id="titre_article">
                 <img src="images/ico_epingle.png" alt="">
-                <h1>I love CGI</h1>
+                <h1>To upload is my passion</h1>
             </div>
 
-			<h3>Test de cgi qui imprime ses variables d'environnement.</h3>
-			<li><a href="cgi/printenv.py">printenv</a></li>
-
-			<h3>Test de cgi qui imprime les entrées nom/prénom d'un formulaire http en GET</h3>
-			<form action = "cgi/get_name.py" method = "get">
-				First Name: <input type = "text" name = "first_name">  <br />
-				Last Name: <input type = "text" name = "last_name" />
-				<input type = "submit" value = "Submit" />
+			<h3>Select files to upload</h3>
+			<form name="upload" method="post" enctype="multipart/form-data" action="/upload">
+				<input type="file" name="file1"><br>
+				<input type="file" name="file2"><br>
+				<input type="file" name="file3"><br>
+				<input type="file" name="file4"><br>
+				<input type="file" name="file5"><br>
+				<input type="file" name="file6"><br>
+				<input type="submit" name="submit" value="Upload">
+				<input type="hidden" name="test" value="value">
 			</form>
-
-			<h3>Test de cgi formulaire http en POST</h3>
-			<form action = "cgi/get_name.py" method = "post">
-				Your bank account ID: <input type = "text" name = "first_name">  <br />
-				Your bank account password: <input type = "password" name = "last_name" />
-				<input type = "submit" value = "Submit (no worries this is very very safe)" />
-			</form>
-
-			<h3> Test de script qui fait 2 redirections client, différentes.</h3>
-			<form action = "cgi/clientredirect.pl" method = "get">
-				<input type = "checkbox" name = "like" value = "on"> J'aime ce webserv
-				<input type = "checkbox" name = "dontlike" value = "on"> J'ai des gros doutes sur ce webserv
-				<input type = "submit" value = "Send" />
-			</form>
-
-			<h3> Test de script qui fait 2 redirections locales différentes.</h3>
-			<form action = "cgi/localredirect.pl" method = "get">
-				<input type = "checkbox" name = "like" value = "on"> J'aime la californie
-				<input type = "checkbox" name = "dontlike" value = "on"> J'aime la page d'accueil
-				<input type = "submit" value = "Send" />
-			</form>
-
-			<h3>Test de cgi php qui ne fonctionne pas</h3>
-			<li><a href="cgi/phpinfo.php">phptest</a></li>
 
             </article>
                 <div id="fleche">

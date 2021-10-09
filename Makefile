@@ -54,7 +54,7 @@ endif
 ##### SRCS #####
 #CORE
 SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp Client.cpp \
-	   server_process.cpp is_valid_request.cpp core_utils.cpp)
+	   handle_connections.cpp is_valid_request.cpp core_utils.cpp)
 #CONF
 SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 		Location_config.cpp Server_config.cpp)
@@ -72,7 +72,8 @@ SRCS5 = $(addprefix $(SRCPATH5)/, CgiEnv.cpp process_cgi.cpp FtPipe.cpp \
 
 ##### OS CONDITIONNAL SRCS #####
 ifeq ($(UNAME), Darwin)
-	SRCS += $(addprefix $(SRCPATH)/, server_run_osx.cpp kqueue_event_osx.cpp)
+	SRCS += $(addprefix $(SRCPATH)/, server_run_unix.cpp kqueue_event_unix.cpp \
+			server_io_unix.cpp)
 else
 	SRCS += $(addprefix $(SRCPATH)/, server_run_linux.cpp)
 endif

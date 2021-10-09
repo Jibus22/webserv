@@ -58,20 +58,6 @@ static int	run_server(const int kq,
 	return 0;
 }
 
-//Set all our IP:PORT listening sockets in the kqueue so they are monitored
-//for read event
-static int	monitor_network_sockets(const int kq,
-				const std::map<int, std::pair<std::string, int> > & server_map)
-{
-	for (std::map<int, std::pair<std::string, int> >::const_iterator
-			i = server_map.begin(); i != server_map.end(); i++)
-	{
-		if (add_read_event(kq, i->first))
-			return -1;
-	}
-	return 0;
-}
-
 //Creates kqueue and add server sockets to it so they are monitored
 //Then run the server.
 int	start_server(const std::vector<Server_config*>& server_blocks,
