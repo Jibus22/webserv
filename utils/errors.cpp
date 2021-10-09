@@ -8,3 +8,6 @@ int	pgm_err(const std::string& msg)
 
 int	pgm_perr(const std::string& msg)
 {perror(msg.c_str()); return -1;}
+
+void	*pgm_err2(const std::string& msg)
+{std::cerr << msg << std::endl; return NULL;}

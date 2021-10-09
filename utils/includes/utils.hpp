@@ -6,6 +6,7 @@
 int		sys_err(const std::string& msg);
 int		pgm_err(const std::string& msg);
 int		pgm_perr(const std::string& msg);
+void	*pgm_err2(const std::string& msg);
 
 //close_fd.cpp
 int		close_server_sockets(std::map<int, std::pair<std::string, int> >&
@@ -39,6 +40,8 @@ bool	is_dir(const std::string name);
 bool	is_openable(const std::string& name);
 
 //display.cpp
+void				__DISPLAY_SERVERMAP(std::map<int,
+						std::pair<std::string, int> >& srvmp);
 const std::string	display_headers(const std::string& response);
 void				display_request_hdr(const std::string& request, int status);
 void				__D_DISPLAY_RECV(int client_id, int len);

@@ -1,34 +1,50 @@
 #include "webserv.hpp"
 
-void	display_servermap(std::map<int, std::pair<std::string, int> >& srvmp)
+static std::string	get_webserv_usage()
 {
-	__D_DISPLAY("Display map of servers");
-	for (std::map<int, std::pair<std::string, int> >::const_iterator i
-			= srvmp.begin(); i != srvmp.end(); i++)
-	{
-		__D_DISPLAY("fd: " << i->first << " - ip: " << i->second.first
-				<< " - port: " << i->second.second);
-	}
+	return std::string("WEBSERV 0.1\nUsage:  ./webserv\n\t"
+			"./webserv CONFIGFILE\n\nWhen no config file is provided,"
+			" the default config file is used.\n"
+			"Default config file: $HOME/webserv.conf");
 }
 
-std::vector<Server_config *>	*load_configuration(int ac, char *av[])
+static void	get_default_conf_file(std::string& file)
+{
+	const char	*home;
+
+	home = getenv("HOME");
+	if (!home)
+		return ;
+	file.assign(home);
+	file.append("/webserv.conf");
+}
+
+static std::vector<Server_config *>
+*load_configuration(int ac, char *av[])
 {
 	std::vector<Server_config *>	*conf = NULL;
-	std::string						*file;
+	std::string						file;
 	Config_base						*parser;
 
 	if (ac == 2)
 	{
-		file = new std::string(av[1]);
-		parser = new Config_base(*file);
+		file = std::string(av[1]);
+		parser = new Config_base(file);
 		conf = parser->get_vector();
-		delete file;
 		delete parser;
 	}
 	else if (_DEBUG)
 		conf = get_servers_simulation();
 	else
-		pgm_err("conf file missing");
+	{
+		get_default_conf_file(file);
+		if (!is_openable(file))
+			return static_cast<std::vector<Server_config *> *>
+				(pgm_err2(get_webserv_usage()));
+		parser = new Config_base(file);
+		conf = parser->get_vector();
+		delete parser;
+	}
 	return conf;
 }
 
@@ -38,14 +54,13 @@ int	main(int ac, char *av[])
 	std::map<int, std::pair<std::string, int> >	*server_map;
 
 	conf = load_configuration(ac, av);
+	if (!conf)
+		return 1;
 	server_map = create_network_sockets(*conf);
-	if (server_map == NULL)
-		return -1;
-	display_servermap(*server_map);
-	start_server(*conf, *server_map);
+	if (server_map)
+		start_server(*conf, *server_map);
 	close_server_sockets(*server_map, 0);
 	delete server_map;
 	delete conf;
-
 	return 0;
 }

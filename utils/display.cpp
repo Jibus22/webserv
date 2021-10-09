@@ -36,3 +36,14 @@ void	__D_DISPLAY_SEND(int client_id, int len,
 			<< "]\nHeaders:\n" << display_headers(response)
 			<< "\n[END SEND]" << RESET_C);
 }
+
+void	__DISPLAY_SERVERMAP(std::map<int, std::pair<std::string, int> >& srvmp)
+{
+	__D_DISPLAY("Display map of servers");
+	for (std::map<int, std::pair<std::string, int> >::const_iterator i
+			= srvmp.begin(); i != srvmp.end(); i++)
+	{
+		__D_DISPLAY("fd: " << i->first << " - ip: " << i->second.first
+				<< " - port: " << i->second.second);
+	}
+}

@@ -74,11 +74,12 @@ static int	monitor_network_sockets(const int kq,
 
 //Creates kqueue and add server sockets to it so they are monitored
 //Then run the server.
-int	start_server(const std::vector<Server_config*> & server_blocks,
-					std::map<int, std::pair<std::string, int> >	& server_map)
+int	start_server(const std::vector<Server_config*>& server_blocks,
+					std::map<int, std::pair<std::string, int> >& server_map)
 {
 	const int	kq = kqueue();
 
+	__DISPLAY_SERVERMAP(server_map);
 	if (kq == -1)
 		return -1;
 	if (monitor_network_sockets(kq, server_map) == -1)
