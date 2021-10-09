@@ -1,5 +1,17 @@
 #include "webserv.hpp"
 
+static void	set_default_err_page(std::string& response)
+{
+	std::string	err_page("<html>\n<head>\n<meta charset=\"utf-8\">\n"
+					"<title>Webserv error page</title>\n</head>\n<body>"
+					"\n<h2>Webserv - HTTP error:</h2>\n<p>");
+	err_page.append(response);
+	err_page.append("</p></body></html>");
+	response.append("Content-Length:" + ft_int_to_string(err_page.size()) +
+			"\r\n\r\n");
+	response.append(err_page);
+}
+
 static void	set_err_status(std::string& response, const std::string& value,
 				int http_status)
 {
@@ -11,26 +23,6 @@ static void	set_err_status(std::string& response, const std::string& value,
 		if (!value.empty())
 			response.append("Allow: " + value + "\r\n");
 	}
-	else if (http_status == 500)
-		response.append(" Internal Server Error\r\n");
-	else if (http_status == 415)
-		response.append(" Unsupported Media Type\r\n");
-	else if (http_status == 400)
-		response.append(" Bad Request\r\n");
-	else if (http_status == 413)
-		response.append(" Payload Too Large\r\n");
-	else if (http_status == 431)
-		response.append(" Request Header Fields Too Large\r\n");
-	else
-		response.append(" Kamoulox\r\n");
-}
-
-static void	set_err_status(std::string& response, int http_status)
-{
-	if (http_status == 404)
-		response.append(" Not Found\r\n");
-	else if (http_status == 405)
-		response.append(" Method Not Allowed\r\n");
 	else if (http_status == 500)
 		response.append(" Internal Server Error\r\n");
 	else if (http_status == 415)
@@ -59,7 +51,7 @@ int	http_error(Client& client, const std::map<int, std::string>& err,
 
 	response->assign("HTTP/1.1 ");
 	response->append(ft_int_to_string(http_status));
-	set_err_status(*response, http_status);
+	set_err_status(*response, "", http_status);
 	it = err.find(http_status);
 	if (it != err.end())
 	{
@@ -72,10 +64,10 @@ int	http_error(Client& client, const std::map<int, std::string>& err,
 			file_to_string(*response, absolute_filename, file_size);
 		}
 		else
-			response->append("Content-Length:0\r\n\r\n");
+			set_default_err_page(*response);
 	}
 	else
-		response->append("Content-Length:0\r\n\r\n");
+		set_default_err_page(*response);
 	client.setResponse(response);
 	client.clearRequest();
 	return ret;
@@ -104,10 +96,10 @@ int	http_error(Client& client, const std::map<int, std::string>& err,
 			file_to_string(*response, absolute_filename, file_size);
 		}
 		else
-			response->append("Content-Length:0\r\n\r\n");
+		set_default_err_page(*response);
 	}
 	else
-		response->append("Content-Length:0\r\n\r\n");
+		set_default_err_page(*response);
 	client.setResponse(response);
 	client.clearRequest();
 	return ret;
@@ -119,8 +111,8 @@ int	http_error(Client& client, int http_status, int ret)
 
 	response->assign("HTTP/1.1 ");
 	response->append(ft_int_to_string(http_status));
-	set_err_status(*response, http_status);
-	response->append("Content-Length:0\r\n\r\n");
+	set_err_status(*response, "", http_status);
+	set_default_err_page(*response);
 	client.setResponse(response);
 	client.clearRequest();
 	return ret;
