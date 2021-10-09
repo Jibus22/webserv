@@ -18,7 +18,7 @@ static int	create_listening_socket(const std::pair<std::string, int> & ipport)
 	if (bind(socket_fd, (struct sockaddr*) &sockaddr, sizeof(sockaddr)) == -1)
 		return sys_err("failed to bind the socket: ");
 
-	if (listen(socket_fd, 5))
+	if (listen(socket_fd, 100))
 		return sys_err("failed to listen the socket: ");
 	return socket_fd;
 }

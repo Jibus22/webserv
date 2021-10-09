@@ -45,3 +45,17 @@ void	file_to_string(std::string& response,
 			std::istreambuf_iterator<char>());
 	ifs.close();
 }
+
+int		data_to_file(const std::string& filename, const char* addr, size_t len)
+{
+	std::ofstream	ofs(filename);
+
+	if (!ofs.good() || !ofs.is_open())
+		return -1;
+	ofs.write(addr, len);
+	ofs.close();
+	if (!ofs.good())
+		return -1;
+	return 0;
+}
+

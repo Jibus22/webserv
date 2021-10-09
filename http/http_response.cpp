@@ -42,7 +42,14 @@ int	http_response(Client& client, const std::string& value,
 		set_success_status(*response, value, http_status);
 	else if (http_status >= 300 && http_status < 400)
 		set_redirect_status(*response, value, http_status);
-	response->append("Content-Length:0\r\n\r\n");
+	if (!value.empty() && http_status < 300)
+	{
+		response->append("Content-Length:" + ft_int_to_string(value.size())
+				+ "\r\n\r\n");
+		response->append(value);
+	}
+	else
+		response->append("Content-Length:0\r\n\r\n");
 	client.setResponse(response);
 	client.clearRequest();
 	return ret;

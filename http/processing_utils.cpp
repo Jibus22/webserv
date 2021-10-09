@@ -11,7 +11,10 @@ bool	get_file_content(std::string const & path, std::string & content)
 	file.open(path.c_str());
 	if (file.fail() == true)
 		return false;
-	while (std::getline(file, line))
-		content.append(line + "\n");
+	content.reserve(get_file_size(path.c_str()));
+	content.append( (std::istreambuf_iterator<char>(file) ),
+                (std::istreambuf_iterator<char>()    ) );
+	//while (std::getline(file, line))
+	//	content.append(line + "\n");
 	return true;
 }

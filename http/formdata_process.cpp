@@ -84,27 +84,6 @@ static size_t	next_boundary(const std::string& request,
 	return request.find("--" + boundary, payload_end);
 }
 
-static int		write_to_file(const std::string& request,
-						const std::string& filename,
-						size_t payload_start, size_t payload_end)
-{
-	ssize_t		ret;
-	size_t		len = payload_end - payload_start;
-	const char	*addr = &(request[payload_start]);
-	int			fd;
-
-	if (filename.empty())
-		return -1;
-	fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	if (fd == -1)
-		return -1;
-	ret = write(fd, addr, len);
-	close(fd);
-	if (ret == -1)
-		return -1;
-	return 0;
-}
-
 //extract the boundary from 'value' to 'boundary'
 static int		format_boundary(const std::string& value, std::string& boundary)
 {
@@ -139,13 +118,13 @@ int				formdata_process(Client& client, const std::string& request,
 		payload_end = end_body(request, boundary, payload_start);
 		if (payload_end == std::string::npos)
 			break ;
-		write_to_file(request, filename, payload_start, payload_end);
+		data_to_file(filename, &(request[payload_start]),
+				payload_end - payload_start);
 		boundary_pos = next_boundary(request, boundary, payload_end);
 		payload_start = is_valid_format(request, boundary,
 								filename, updir, boundary_pos, isend);
 	}
 	if (!isend)
 		return http_error(client, server.error_page, 500, 1);
-	(void)target;
-	return http_response(client, "/upload/", 303, 1);
+	return http_response(client, target, 303, 1);
 }
