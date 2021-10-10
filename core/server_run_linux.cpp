@@ -1,65 +1,21 @@
 #include "webserv.hpp"
 
-//Set all our IP:PORT listening sockets in the kqueue so they are monitored
-//for read event
-static int	monitor_network_sockets(const int & ep,
-		const std::vector<int> & net_socks)
+//Server engine. System is set to notify any event on any server
+//socket descriptors & client socket descriptor which are monitored.
+static int	run_server(const int kq,
+				const std::vector<Server_config*>& server_blocks,
+				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	struct epoll_event	changelist;
+	int						i, event_fd, new_events, ret = 0;
+	struct epoll_event		eventlist[MAX_EVENTS];
+	std::map<int, Client>	*client_map = new std::map<int, Client>;
 
-	for (std::vector<int>::const_iterator i = net_socks.begin();
-			i != net_socks.end(); i++)
-	{
-		changelist.events = EPOLLIN;
-		changelist.data.fd = *i;
-		if (epoll_ctl(ep, EPOLL_CTL_ADD, *i, &changelist) == -1)
-			return sys_err("network socks epoll_ctl failed");
-	}
-	return 0;
-}
-
-//check if 'event_fd == one of network fd from vector', which would means
-//a new client wanna connect.
-static int	check_new_connection(const int & event_fd,
-		const std::vector<int> & net_socks)
-{
-	for (std::vector<int>::const_iterator i = net_socks.begin();
-			i != net_socks.end(); i++)
-		if (*i == event_fd)
-			return event_fd;
-	return -1;
-}
-
-static int	accept_new_client(const int & ep, const int & event_fd)
-{
-	struct epoll_event	changelist;
-	const int			client_fd = accept(event_fd, NULL, NULL);
-
-	if (client_fd == -1)
-		return sys_err("failed to accept a new client");
-	changelist.events = EPOLLIN;
-	changelist.data.fd = client_fd;
-	if (epoll_ctl(ep, EPOLL_CTL_ADD, client_fd, &changelist) == -1)
-		return sys_err("network socks epoll_ctl failed");
-	__D_DISPLAY(" new client had been accepted on socket "
-		<< client_fd << " and is now monitored");
-	return 0;
-}
-
-//Server engine. System is set to notify any event on any network
-//socket descriptors & client connection descriptor
-int	run_darwin_server(const std::vector<int> & net_socks)
-{
-	const int			ep = epoll_create(1);
-	int					i, event_fd, new_events, disconnected = 0;
-	struct epoll_event	eventlist[32];
-
-	if (monitor_network_sockets(ep, net_socks) == -1)
-		return -1;
 	for (;;)//Main loop to wait new events
 	{
-		__D_DISPLAY("waiting new event...");
-		new_events = epoll_wait(ep, eventlist, 32, -1);
+		__D_DISPLAY(WHITE_C << "\t\t\t\t....waiting new event...." << RESET_C);
+		errno = 0;
+		new_events = epoll_wait(kq, eventlist, MAX_EVENTS, -1);
+		__D_DISPLAY(WHITE_C << "\t\t\t\tnew events: " << new_events << RESET_C);
 		if (new_events == -1)
 			return sys_err("kevent new event failed");
 		for (i = 0; i < new_events; i++)//loop to process triggered events
@@ -67,38 +23,56 @@ int	run_darwin_server(const std::vector<int> & net_socks)
 			event_fd = eventlist[i].data.fd;
 			if (eventlist[i].events & EPOLLRDHUP
 					|| eventlist[i].events & EPOLLHUP
-					|| eventlist[i].events & EPOLLERR
-					|| !(eventlist[i].events & EPOLLIN))
-				disconnected = 1;
-			else if (check_new_connection(event_fd, net_socks) >= 0)
+					|| eventlist[i].events & EPOLLERR)
+				remove_client(*client_map, event_fd, kq);
+			else if (check_new_connection(event_fd, server_map) >= 0)
 			{
-				if (accept_new_client(ep, event_fd) == -1)
+				ret = accept_new_client(kq, event_fd, *client_map, server_map);
+				if (ret == -1)
 					return -1;
 			}
 			else if (eventlist[i].events & EPOLLIN)//2.
 			{
-				char	buf[5];
-				ssize_t	len;
-
-				memset(buf, 0, sizeof(buf));
-				len = recv(event_fd, buf, 4, 0);
-				if (!len)
-					disconnected = 1;
-				else {
-					__D_DISPLAY(" client " << event_fd << ": " << len
-						<< " bytes had been read: " << std::string(buf));
+				Client&	client = (*client_map)[event_fd];
+				ret = read_request(eventlist[i], client);
+				if (ret == -1 || ret == 0)
+					remove_client(*client_map, event_fd, kq);
+				else
+				{
+					ret = is_valid_request(client);
+					if (ret == VALID_REQUEST)
+						process_request(client, server_blocks,
+								*client_map, server_map);
+					if (ret != INCOMPLETE_REQUEST)
+						set_write_ready(kq, client);
 				}
 			}
-			if (disconnected)
+			else if (eventlist[i].events & EPOLLOUT)//2.
 			{
-				__D_DISPLAY(" client " << event_fd << " has disconnected");
-				if (epoll_ctl(ep, EPOLL_CTL_DEL, event_fd, NULL) == -1)
-					return sys_err("delete client epoll_ctl fd failed");
-				close(event_fd);
-				disconnected = 0;
+				ret = send_response(kq, eventlist[i], (*client_map)[event_fd]);
+				if (ret == -1 || ret == 0)
+					remove_client(*client_map, event_fd, kq);
 			}
 		}
 	}
-	close(ep);
+	delete client_map;
+	return 0;
+}
+
+//Creates kqueue and add server sockets to it so they are monitored
+//Then run the server.
+int	start_server(const std::vector<Server_config*>& server_blocks,
+					std::map<int, std::pair<std::string, int> >& server_map)
+{
+	const int	kq = epoll_create(1);
+
+	__DISPLAY_SERVERMAP(server_map);
+	if (kq == -1)
+		return -1;
+	if (monitor_network_sockets(kq, server_map) == -1)
+		return -1;
+	if (run_server(kq, server_blocks, server_map) == -1)
+		return -1;
+	close(kq);
 	return 0;
 }

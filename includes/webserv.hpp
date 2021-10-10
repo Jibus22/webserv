@@ -8,6 +8,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <sys/types.h>
 
 #include <unistd.h>
@@ -18,6 +19,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 
+#include <climits>
 #include <utility>
 #include <iostream>
 #include <fstream>

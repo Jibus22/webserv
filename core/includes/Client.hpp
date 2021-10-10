@@ -1,6 +1,7 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
+#include <sys/types.h>
 #include <utility>
 #include <iostream>
 #include <queue>

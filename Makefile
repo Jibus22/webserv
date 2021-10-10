@@ -75,7 +75,8 @@ ifeq ($(UNAME), Darwin)
 	SRCS += $(addprefix $(SRCPATH)/, server_run_unix.cpp kqueue_event_unix.cpp \
 			server_io_unix.cpp)
 else
-	SRCS += $(addprefix $(SRCPATH)/, server_run_linux.cpp)
+	SRCS += $(addprefix $(SRCPATH)/, server_run_linux.cpp epoll_event_linux.cpp\
+			server_io_linux.cpp)
 endif
 
 
