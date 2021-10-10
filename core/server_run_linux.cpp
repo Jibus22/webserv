@@ -21,9 +21,9 @@ static int	run_server(const int kq,
 		for (i = 0; i < new_events; i++)//loop to process triggered events
 		{
 			event_fd = eventlist[i].data.fd;
-			if (eventlist[i].events & EPOLLRDHUP
-					|| eventlist[i].events & EPOLLHUP
-					|| eventlist[i].events & EPOLLERR)
+			if ((eventlist[i].events & EPOLLRDHUP) == EPOLLRDHUP
+					|| (eventlist[i].events & EPOLLHUP) == EPOLLHUP
+					|| (eventlist[i].events & EPOLLERR) == EPOLLERR)
 				remove_client(*client_map, event_fd, kq);
 			else if (check_new_connection(event_fd, server_map) >= 0)
 			{
@@ -31,7 +31,7 @@ static int	run_server(const int kq,
 				if (ret == -1)
 					return -1;
 			}
-			else if (eventlist[i].events & EPOLLIN)//2.
+			else if ((eventlist[i].events & EPOLLIN) == EPOLLIN)//2.
 			{
 				Client&	client = (*client_map)[event_fd];
 				ret = read_request(eventlist[i], client);
@@ -47,7 +47,7 @@ static int	run_server(const int kq,
 						set_write_ready(kq, client);
 				}
 			}
-			else if (eventlist[i].events & EPOLLOUT)//2.
+			else if ((eventlist[i].events & EPOLLOUT) == EPOLLOUT)//2.
 			{
 				ret = send_response(kq, eventlist[i], (*client_map)[event_fd]);
 				if (ret == -1 || ret == 0)

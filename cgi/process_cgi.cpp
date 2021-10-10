@@ -106,11 +106,9 @@ void	exec_cgi_script(CgiEnv& env, FtPipe& rx, FtPipe& tx,
 	ret = execve((env.getArgv())[0], env.getArgv(), env.getEnv());
 	if (ret == -1)
 	{
-		perror("execve");
+		//perror("execve");
 		exit(EXIT_FAILURE);
 	}
-	std::cerr << "iNtO fOrK AfTer eXeCvE & ExIt, sHouLDnT bE prInTEd"
-		<< std::endl;
 }
 
 //If an http body exist, send it to the script.

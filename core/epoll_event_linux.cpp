@@ -7,6 +7,7 @@ int	add_read_event(const int kq, const int socket_fd)
 {
 	struct epoll_event	changelist;
 
+	memset(&changelist, 0, sizeof(changelist));
 	changelist.events = EPOLLIN;
 	changelist.data.fd = socket_fd;
 	if (epoll_ctl(kq, EPOLL_CTL_ADD, socket_fd, &changelist) == -1)
@@ -23,6 +24,7 @@ int	set_write_ready(const int kq, Client& client)
 {
 	struct epoll_event	changelist;
 
+	memset(&changelist, 0, sizeof(changelist));
 	changelist.events = EPOLLOUT | EPOLLIN;
 	changelist.data.fd = client.getFd();
 	if (epoll_ctl(kq, EPOLL_CTL_MOD, client.getFd(), &changelist) == -1)
@@ -42,7 +44,8 @@ int	remove_write_event(const int kq, const int client_fd)
 {
 	struct epoll_event	changelist;
 
-	changelist.events = EPOLLOUT;
+	memset(&changelist, 0, sizeof(changelist));
+	changelist.events = EPOLLIN;
 	changelist.data.fd = client_fd;
 	if (epoll_ctl(kq, EPOLL_CTL_MOD, client_fd, &changelist) == -1)
 		return sys_err("epoll_ctl add write event failed. ");
