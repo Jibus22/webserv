@@ -36,7 +36,7 @@ int		get_file_size(const char *file)
 void	file_to_string(std::string& response,
 				const std::string& filename, int filesize)
 {
-	std::ifstream	ifs(filename);
+	std::ifstream	ifs(filename.c_str());
 	char			*buf;
 
 	if (!ifs.good())
@@ -51,7 +51,7 @@ void	file_to_string(std::string& response,
 
 int		data_to_file(const std::string& filename, const char* addr, size_t len)
 {
-	std::ofstream	ofs(filename);
+	std::ofstream	ofs(filename.c_str());
 
 	if (!ofs.good() || !ofs.is_open())
 		return -1;

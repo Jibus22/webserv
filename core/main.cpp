@@ -57,8 +57,9 @@ int	main(int ac, char *av[])
 	if (!conf)
 		return 1;
 	server_map = create_network_sockets(*conf);
-	if (server_map)
-		start_server(*conf, *server_map);
+	if (!server_map)
+		return 1;
+	start_server(*conf, *server_map);
 	close_server_sockets(*server_map, 0);
 	delete server_map;
 	delete conf;
