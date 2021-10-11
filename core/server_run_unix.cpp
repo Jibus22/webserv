@@ -51,6 +51,8 @@ static int	run_server(const int kq,
 				if (ret == -1 || ret == 0)
 					remove_client(*client_map, event_fd);
 			}
+			else
+				remove_client(*client_map, event_fd);
 		}
 		//system("leaks webserv.out");
 	}

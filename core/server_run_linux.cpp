@@ -53,6 +53,8 @@ static int	run_server(const int kq,
 				if (ret == -1 || ret == 0)
 					remove_client(*client_map, event_fd, kq);
 			}
+			else
+				remove_client(*client_map, event_fd, kq);
 		}
 	}
 	delete client_map;
