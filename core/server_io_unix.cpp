@@ -25,6 +25,8 @@ int	send_response(const int kq, const struct kevent& event, Client& client)
 	ssize_t	len;
 
 	//event->data contains space remaining in the write buffer
+	if (!client.getResponseSize())
+		return -1;
 	__D_DISPLAY("data flag from write event: " << event.data);
 	if (event.data < static_cast<long>(client.getLenToSend()))
 	{

@@ -37,12 +37,15 @@ void	file_to_string(std::string& response,
 				const std::string& filename, int filesize)
 {
 	std::ifstream	ifs(filename);
+	char			*buf;
 
 	if (!ifs.good())
 		return ;
 	response.reserve(response.size() + filesize);
-	response.append(std::istreambuf_iterator<char>(ifs),
-			std::istreambuf_iterator<char>());
+	buf = new char [filesize];
+	ifs.read(buf, filesize);
+	response.append(buf, filesize);
+	delete buf;
 	ifs.close();
 }
 
