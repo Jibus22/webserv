@@ -23,10 +23,7 @@ int	send_response(const int kq, const struct epoll_event& event, Client& client)
 	socklen_t	bla = sizeof(val);
 
 	if (!client.getResponseSize())
-	{
-		std::cerr << "FUCK ME BITCH" << std::endl;
 		return -1;
-	}
 	getsockopt(client.getFd(), SOL_SOCKET, SO_SNDBUF, &val, &bla);
 	__D_DISPLAY("getsockopt send socket: " << val);
 	if (val < static_cast<int>(client.getLenToSend()))
