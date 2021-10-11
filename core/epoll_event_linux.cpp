@@ -40,6 +40,15 @@ int	del_event(const int kq, const int client_fd)
 	return 0;
 }
 
+void	remove_client(std::map<int, Client>& client_map, const int client_fd,
+				const int kq)
+{
+	__D_DISPLAY(" client " << client_fd << " has disconnected");
+	del_event(kq, client_fd);
+	close(client_fd);
+	client_map.erase(client_fd);
+}
+
 int	remove_write_event(const int kq, const int client_fd)
 {
 	struct epoll_event	changelist;

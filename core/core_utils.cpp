@@ -1,14 +1,5 @@
 #include "webserv.hpp"
 
-void	remove_client(std::map<int, Client>& client_map, const int client_fd,
-				const int kq)
-{
-	__D_DISPLAY(" client " << client_fd << " has disconnected");
-	del_event(kq, client_fd);
-	close(client_fd);
-	client_map.erase(client_fd);
-}
-
 void	remove_client(std::map<int, Client>& client_map, int client_fd)
 {
 	__D_DISPLAY(" client " << client_fd << " has disconnected");
