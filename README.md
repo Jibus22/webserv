@@ -10,3 +10,9 @@ This server is *UNIX* & *LINUX* compliant.
 
 ### Core
 This webserv is implemented with `kqueue()` for unix and `epoll()` for linux.
+
+### Documentation
+Please check the wiki of the project [here](https://github.com/Jibus22/webserv/wiki)
+
+### Stress test result
+With siege:
