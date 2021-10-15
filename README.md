@@ -8,6 +8,8 @@ This server is *UNIX* & *LINUX* compliant.
 #### Usage:
 `./webserv CONFIGFILE`
 
+---
+
 ### Core
 This webserv is implemented with `kqueue()` for unix and `epoll()` for linux.
 
@@ -16,3 +18,4 @@ Please check the wiki of the project [here](https://github.com/Jibus22/webserv/w
 
 ### Stress test result
 With siege:
+![test](.siege_res.jpg)
