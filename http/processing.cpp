@@ -4,9 +4,18 @@
 bool	match_server_name(const Server_config& server, const Request& request)
 {
 	std::string	value;
+	size_t		pos;
 
 	if (!request.getHeader("host", value))
 		return false;
+	if (value.size() < 2)
+		return false;
+	pos = value.find(':');
+	if (pos != std::string::npos)
+		value.erase(pos);
+	pos = value.find_first_not_of(' ');
+	if (pos > 0)
+		value.erase(0, pos);
 	for (std::vector<std::string>::const_iterator
 			it = server.name_serv.begin(); it != server.name_serv.end(); it++)
 		if (value == *it)
@@ -29,20 +38,16 @@ Server_config	*match_server(const std::vector<Server_config*>& server_blocks,
 
 	for (std::vector<Server_config*>::const_iterator it = server_blocks.begin();
 		it != server_blocks.end(); it++)//[1]
-	{
 		if((*it)->listen == listen)
 			listen_match.push_back(*it);
-	}
 	if (listen_match.size() == 1)//[2]
 		return listen_match.front();
 	else if (listen_match.size() > 1)//[3]
 	{
 		for (std::vector<Server_config*>::const_iterator
 				it = listen_match.begin(); it != listen_match.end(); it++)
-		{
 			if (match_server_name(**it, request))
 				return *it;
-		}
 		return listen_match.front();
 	}
 	else//[4]
