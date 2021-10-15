@@ -14,8 +14,8 @@
 	ost << fmt << std::endl;\
 	std::cout << ost.str();} else ;\
 
-# define RCV_BUF 5
-# define MAX_EVENTS 32
+# define RCV_BUF 400000
+# define MAX_EVENTS 128
 
 # define EMPTY 2
 # define READY 1

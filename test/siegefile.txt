@@ -1,0 +1,10 @@
+# usage: siege -c50 -r100 -f test/siegefile.txt
+
+
+SCHEME=http
+HOST=127.0.0.1:8080
+$(SCHEME)://$(HOST)/
+$(SCHEME)://$(HOST)/redirection
+$(SCHEME)://$(HOST)/test_cgi.html
+# $(SCHEME)://$(HOST)/cgi/get_name.py POST first_name=JB&last_name=LeCorreLol
+$(SCHEME)://$(HOST)/wrong_file.txt

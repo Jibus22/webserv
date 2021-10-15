@@ -54,15 +54,17 @@ endif
 ##### SRCS #####
 #CORE
 SRCS = $(addprefix $(SRCPATH)/, main.cpp network_endpoint.cpp Client.cpp \
-	   server_process.cpp is_valid_request.cpp)
+	   handle_connections.cpp is_valid_request.cpp core_utils.cpp)
 #CONF
 SRCS2 = $(addprefix $(SRCPATH2)/, Config_base.cpp Config_struct.cpp \
 		Location_config.cpp Server_config.cpp)
 #HTTP
-SRCS3 = $(addprefix $(SRCPATH3)/, Request.cpp Response.cpp processing.cpp)
+SRCS3 = $(addprefix $(SRCPATH3)/, Request.cpp processing.cpp \
+		directory_listing.cpp formdata_process.cpp \
+		http_error.cpp http_response.cpp)
 #UTILS
 SRCS4 = $(addprefix $(SRCPATH4)/, close_fd.cpp errors.cpp simulations.cpp \
-		utils.cpp find_nocase_header.cpp)
+		utils.cpp find_nocase_header.cpp display.cpp file_utilities.cpp)
 #CGI
 SRCS5 = $(addprefix $(SRCPATH5)/, CgiEnv.cpp process_cgi.cpp FtPipe.cpp \
 		cgi_output.cpp)
@@ -70,9 +72,11 @@ SRCS5 = $(addprefix $(SRCPATH5)/, CgiEnv.cpp process_cgi.cpp FtPipe.cpp \
 
 ##### OS CONDITIONNAL SRCS #####
 ifeq ($(UNAME), Darwin)
-	SRCS += $(addprefix $(SRCPATH)/, server_run_osx.cpp kqueue_event_osx.cpp)
+	SRCS += $(addprefix $(SRCPATH)/, server_run_unix.cpp kqueue_event_unix.cpp \
+			server_io_unix.cpp)
 else
-	SRCS += $(addprefix $(SRCPATH)/, server_run_linux.cpp)
+	SRCS += $(addprefix $(SRCPATH)/, server_run_linux.cpp epoll_event_linux.cpp\
+			server_io_linux.cpp)
 endif
 
 

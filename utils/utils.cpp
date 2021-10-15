@@ -25,3 +25,24 @@ int		ft_string_to_nb(const std::string& value)
 	strm >> nb;
 	return nb;
 }
+
+std::string	ft_int_to_string(int val)
+{
+  std::stringstream	ss;
+
+  ss << val;
+  return ss.str();
+}
+
+std::string str_to_lower(std::string const & s)
+{
+	std::string str(s);
+	std::string::iterator it = str.begin();
+	std::string::iterator ite = str.end();
+	while (it != ite)
+	{
+		*it = std::tolower(*it);
+		it++;
+	}
+	return str;
+}

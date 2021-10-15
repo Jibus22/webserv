@@ -1,6 +1,7 @@
 # include "includes/Config_base.hpp"
 # include "includes/Config_struct.hpp"
 # include "includes/Location_config.hpp"
+#include <stdint.h>
 
 
 Config_base::Config_base(std::string &config){

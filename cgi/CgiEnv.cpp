@@ -66,6 +66,7 @@ void	CgiEnv::initMetaVar()
 	_metaVar.push_back("SERVER_NAME=");
 	_metaVar.push_back("SERVER_PORT=");
 	_metaVar.push_back("PATH_TRANSLATED=");
+	_metaVar.push_back("REDIRECT_STATUS=200");//Pour php-cgi...
 }
 
 //takes the address of each string of _metaVar vector to be formated as char**,
@@ -94,6 +95,8 @@ void	CgiEnv::setArgs(const Location_config& location_block,
 	_args.reserve(MAX_ARG);
 	_args.push_back(match->second);//get the cgi filesystem location from conf
 	script_path = location_block.root;
+	if (script_path[script_path.size() - 1] != '/')
+		script_path.push_back('/');
 	script_name = (_metaVar[SCRIPT_NAME].substr(12));
 	script_path.append(script_name, location_block.uri.size(), std::string::npos);
 	_args.push_back(script_path);
@@ -116,12 +119,11 @@ void	CgiEnv::setArgv()
 int			CgiEnv::mapPath(const std::string& path_info,
 						const Server_config& server_block)
 {
-	std::vector<Location_config*>::const_iterator	location, matching_location,
-										end = server_block.location.end();
-	size_t											pos = 0, len = 0, lenmax = 0;
+	std::vector<Location_config*>::const_iterator
+				location = server_block.location.begin(),
+				end = server_block.location.end(), matching_location = end;
+	size_t		pos = 0, len = 0, lenmax = 0;
 
-	location = server_block.location.begin();
-	matching_location = end;
 	while (location != end)
 	{
 		pos = path_info.find((*location)->uri);
@@ -178,7 +180,7 @@ void		CgiEnv::setMetaVar(const Request& request,
 						const std::string& ext_cgi)
 {
 	std::map<std::string, std::string>::const_iterator	hdr;
-	const std::string&	target = request.get_target();
+	const std::string&	target = request.getTarget();
 	size_t				match;
 	std::stringstream	ss;
 	bool				found;
@@ -192,10 +194,10 @@ void		CgiEnv::setMetaVar(const Request& request,
 		_metaVar[SERVER_NAME].append(server_block.name_serv[0]);
 	else
 		_metaVar[SERVER_NAME].append((client.getListen()).first);
-	hdr = request.get_header("content-length", found);
+	hdr = request.getHeader("content-length", found);
 	if (found == true)
 		_metaVar[CONTENT_LENGTH].append(hdr->second);
-	hdr = request.get_header("content-type", found);
+	hdr = request.getHeader("content-type", found);
 	if (found == true)
 		_metaVar[CONTENT_TYPE].append(hdr->second);
 
@@ -230,4 +232,3 @@ std::ostream &operator<<(std::ostream &out, const CgiEnv& value)
 		out << *i << std::endl;
 	return (out);
 }
-

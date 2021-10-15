@@ -1,129 +1,147 @@
 #include "processing.hpp"
 
-bool	match_server_name(Server_config *server, Request & request)
+//return true if server_name of server config matchs
+//with request host header value
+bool	match_server_name(const Server_config& server, const Request& request)
 {
-	Config_struct::c_name_vector::iterator it = server->name_serv.begin();
-	while (it != server->name_serv.end())
-		if (*it == request["Host"])
+	std::string	value;
+	size_t		pos;
+
+	if (!request.getHeader("host", value))
+		return false;
+	if (value.size() < 2)
+		return false;
+	pos = value.find(':');
+	if (pos != std::string::npos)
+		value.erase(pos);
+	pos = value.find_first_not_of(' ');
+	if (pos > 0)
+		value.erase(0, pos);
+	for (std::vector<std::string>::const_iterator
+			it = server.name_serv.begin(); it != server.name_serv.end(); it++)
+		if (value == *it)
 			return true;
 	return false;
 }
 
-//TODO: gere le 0.0.0.0
-Server_config * match_server(std::vector<Server_config *> server_blocks,
-					std::pair<std::string, int> listen, Request & requete)
+//First fetch a vector of server_config which has there ip:port pair matching
+//with the one from the client.
+//Then try to make each of them matching with a more specific server_name
+Server_config	*match_server(const std::vector<Server_config*>& server_blocks,
+					const std::pair<std::string, int>& listen,
+					const Request& request)
 {
-	(void)requete;
+	std::vector<Server_config*>	listen_match;
 
-	std::vector<Server_config *> matching_listen;
-	//on recupere une liste avec une tres grande specificite de la correspondance
-	for (std::vector<Server_config *>::iterator it = server_blocks.begin();
+	for (std::vector<Server_config*>::const_iterator it = server_blocks.begin();
 		it != server_blocks.end(); it++)
-	{
 		if((*it)->listen == listen)
-			matching_listen.push_back(*it);
-	}
-	//si un seul match il repond
-	if (matching_listen.size() == 1)
-		return matching_listen.front();
-	//si plus de 1 match on regarde le header host
-	else if (matching_listen.size() > 1)
+			listen_match.push_back(*it);
+	if (listen_match.size() == 1)
+		return listen_match.front();
+	else if (listen_match.size() > 1)
 	{
-		for (std::vector<Server_config *>::iterator it = matching_listen.begin();
-			it != matching_listen.end(); it++)
-		{
-			if (match_server_name(*it, requete))
+		for (std::vector<Server_config*>::const_iterator
+				it = listen_match.begin(); it != listen_match.end(); it++)
+			if (match_server_name(**it, request))
 				return *it;
-		}
-		return matching_listen.front();
+		return listen_match.front();
 	}
 	else
-	//si 0 match
-	{
-		return matching_listen.front();
-	}
+		return listen_match.front();
 }
 
-bool	get_file_content(std::string const & path, std::string & content)
+// Trouve la location associé a l'URI de la requete
+//[1.] : cas ou location uri fini par /
+//on compare jusque avant le / de la location URI
+//ca match si compare == 0 et si soit la target est fini apres la comparaison
+// soit si il y a un / apres
+//Par exemple /dir/
+//doit matcher avec /dir /dir/ /dir/test.html
+// mais pas /directory
+//[2.] : cas ou location fini pas par /
+//pareil mais longueur de comparaison change
+Location_config	*location_match(const Config_struct::c_location_vector&
+									locations, const std::string& target)
 {
-	__D_DISPLAY("target : " << path);
-	std::ifstream		file;
-	std::string			line;
-
-	file.open(path.c_str());
-	if (file.fail() == true)
-		return false;
-	while (std::getline(file, line))
-		content.append(line + "\n");
-	return true;
-}
-
-void	error_page(int erreur, Response & response,
-		Config_struct::c_error_map & error_page)
-{
-	if (error_page[erreur] != "")
-	{
-		std::string content;
-		if (get_file_content(error_page[erreur], content))
-			response.set_body(content);
-	}
-}
-
-Location_config * match_location(Config_struct::c_location_vector & locations,
-											std::string target)
-{
-	Location_config * location;
+	Config_struct::c_location_vector::const_iterator
+					it = locations.begin(),
+					end = locations.end();
+	Location_config	*location;
 
 	if (locations.empty())
 		return NULL;
-	Config_struct::c_location_vector::iterator it = locations.begin();
-	while (it != locations.end())
+	while (it != end)
 	{
 		location = *it;
-		if((target.compare(0, location->uri.size(), location->uri) == 0))// &&
-//(target.size() == location->uri.size() || target[location->uri.size()] == '/'))
+		if (location->uri == "/")
+			break ;
+		else if (location->uri[location->uri.size() - 1] == '/')//[1.]
 		{
-			__D_DISPLAY("location matched : " << location->uri);
-			return location;
+			if((target.compare(0, location->uri.size() - 1,
+			location->uri, 0, location->uri.size() - 1) == 0)
+			&& (target.size() == location->uri.size() - 1 ||
+				target[location->uri.size() - 1] == '/'))
+				break ;
+		}
+		else//[2.]
+		{
+			if((target.compare(0, location->uri.size(), location->uri) == 0) &&
+					(target.size() == location->uri.size()
+					 || target[location->uri.size()] == '/'))
+				break ;
 		}
 		it++;
 	}
-	return NULL;
+	if (it == end)
+		return NULL;
+	__D_DISPLAY("location matched : " << location->uri);
+	return location;
 }
 
-bool	is_methode_allowed(Location_config * location, std::string methode)
+//Return true if HTTP method from request is found as allowed in the
+//location config block, else return false.
+bool	is_method_allowed(Location_config * location, std::string methode)
 {
-	if (location == NULL && methode == "GET")
-		return true;
-	else if (location == NULL)
-		return false;
-	else
+	Config_struct::c_methode_vector::iterator it = location->methode.begin();
+	while (it != location->methode.end())
 	{
-		Config_struct::c_methode_vector::iterator it = location->methode.begin();
-		while (it != location->methode.end())
-		{
-			if (*it == methode)
-				return true;
-			it++;
-		}
-		return false;
+		if (*it == methode)
+			return true;
+		it++;
 	}
+	return false;
 }
 
-int		check_cgi(Request& requete, const Server_config& server,
+//Look for cgi_ext directives into location block and its values, to compare
+//with the target, to find cgi file extension
+int		check_cgi(Request& request, const Server_config& server,
 			const Location_config& location, Client& client,
 			const std::map<int, Client>& client_map,
 			const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	int	ret = -1;
-	Config_struct::c_cgi_map::const_iterator it = location.cgi.begin();
+	Config_struct::c_cgi_map::const_iterator
+						it = location.cgi.begin(),
+						end = location.cgi.end();
+	const std::string&	target = request.getTarget();
+	int					ret = -1;
+	size_t				pos, len;
 
-	while (it != location.cgi.end())
+	while (it != end)
 	{
-		if (requete.get_target().find(it->first) != std::string::npos)
+		pos = target.find(it->first);
+		if (pos != std::string::npos)
 		{
-			ret = process_cgi(requete, location,
-					server, client, it->first, client_map, server_map);
+			len = pos + it->first.size();
+			if (len < target.size() &&
+					(target[len] != '/' && target[len] != '?'))
+			{
+				it++;
+				continue;
+			}
+			ret = process_cgi(request, location, server, client, it->first,
+					client_map, server_map);
+		__D_DISPLAY("CGI status (0:SUCCESS - 1:REDIRECT - 2:ERROR): " << ret);
 			return ret;
 		}
 		it++;
@@ -131,196 +149,144 @@ int		check_cgi(Request& requete, const Server_config& server,
 	return ret;
 }
 
-
-
-#include <iostream>
-#include <vector>
-#include <dirent.h>
-
-bool is_dir(const std::string path)
+//Set target to index file declared in location block from the config file if
+//it's found & if it exists into the local filesystem.
+void	handle_index(std::string& target, const Location_config& location)
 {
-	DIR *dir;
-
-    if ((dir = opendir(path.c_str())) != nullptr) {
-        closedir (dir);
-		return 1;
-    }
-	else
-		return false;
-}
-
-void	handle_root(std::string & target, Location_config * location)
-{
-	if (location == NULL || location->root == "")
-		return;
-	if (target[location->uri.size() + 1] == '/')
-		target.erase(0 , location->uri.size() + 1);
-	else
-		target.erase(0 , location->uri.size());
-	if (location->root[location->root.size()] == '/')
-		target.insert(0, location->root);
-	else
-		target.insert(0, location->root + "/");
-}
-
-void	handle_index(std::string & target, Location_config * location)
-{
-	std::ifstream		file;
-/*
-	file.open(target.c_str());
-	if (file.fail() == false)
-		return;
-*/
 	__D_DISPLAY("DIRECTORY");
-	if (location == NULL)
-		return;
-	Config_struct::c_index_vector::const_iterator it = location->index.begin();
-	std::string path;
-	while (it != location->index.end())
+	for (std::vector<std::string>::const_iterator it = location.index.begin();
+			it != location.index.end(); it++)
 	{
-		path = target;
-		path.append((*it));
-		file.open(path.c_str());
-		if (file.fail() == false)
+		if (is_file_exist(target + *it))
 		{
-			target = path;
+			target.append(*it);
 			return;
 		}
-		it++;
 	}
 }
 
 
-
-void	construct_get_response(Response & response, Request &requete,
-						Server_config * server, Location_config * location)
+//Wether the http target requests for a directory or a file, wether config
+//directives as 'autoindex on;' or 'index file;' are found or not, process
+//or get the file then set the according http response.
+int		http_get(Request& request, const Server_config& server,
+				const Location_config& location, Client& client, int ret)
 {
-	std::string content;
+	size_t	filesize;
 
-	if (is_dir(requete.get_target()))
-		handle_index(requete.get_target(), location);
-	if (get_file_content(requete.get_target(), content))
+	if (is_dir(request.getPath()))
+		handle_index(request.getPath(), location);
+	if (is_dir(request.getPath()) && location.auto_index == true)
+		return http_response(client, auto_index(request.getPath(),
+					request.getTarget()), 200, 1);
+	else if (!is_dir(request.getPath()) && is_openable(request.getPath()))
 	{
-		response.set_status_code("200");
-		response.set_status_infos("OK");
-		response.set_body(content);
-		std::stringstream ss;
-		ss << content.size();
-		response.add_header("Content-Length", ss.str());
-	}
-	else
-	{
-		response.set_status_code("404");
-		response.set_status_infos("Not Found");
-		error_page(404, response, server->error_page);
-	}
-}
-
-void	construct_post_response(Response & response, Request &requete)
-{
-	(void)response;
-	(void)requete;
-}
-
-void	construct_delete_response(Response & response, Request &requete)
-{
-	(void)response;
-	(void)requete;
-}
-
-int		construct_response(Response & response, Server_config * server,
-				Request & requete, Client& client,
-				const std::map<int, Client>& client_map,
-				const std::map<int, std::pair<std::string, int> >& server_map)
-{
-	//TODO: verifier les parametres de server
-	std::stringstream	str(requete["Content-Length"]);
-	unsigned long		length;
-	int					ret = 0;
-	Location_config		*location;
-
-	str >> length;
-	if (length > server->m_body_size)
-	{
-		response.set_status_code("413");
-		response.set_status_infos("Payload Too Large");
-		error_page(413, response, server->error_page);
-	}
-
-	location = match_location(server->location, requete.get_target());
-	if (!location)
-		;//return error ???
-
-	while (location && (ret = check_cgi(requete, *server, *location,
-					client, client_map, server_map)) >= 0)
-	{
-		if (ret == CGI_REDIRECT)
-			location = match_location(server->location, requete.get_target());
+		filesize = get_file_size(request.getPath().c_str());
+		if (ret > 1)
+			return http_response(client, request.getTarget(), 302, 1,
+					request.getPath(), filesize);
 		else
-			return 1;
+			return http_response(client, "", 200, 1,
+					request.getPath(), filesize);
 	}
-
-	handle_root(requete.get_target(), location);
-
-	//check la conf location
-	if (requete.get_method() == "GET" && is_methode_allowed(location, "GET"))
-		construct_get_response(response, requete, server, location);
-	else if (requete.get_method() == "POST" &&
-			is_methode_allowed(location, "POST"))
-		construct_post_response(response, requete);
-	else if(requete.get_method() == "DELETE" &&
-			is_methode_allowed(location, "DELETE"))
-		construct_delete_response(response, requete);
 	else
-	{
-		response.set_status_code("405");
-		response.set_status_infos("Method Not Allowed");
-		error_page(405, response, server->error_page);
-	}
-	return 0;
+		return http_error(client, server.error_page, 404, 404);
 }
 
-void	process_request(Client& client,
-				const std::vector<Server_config *>& server_blocks,
+int		http_post(Client& client, const Request& request,
+				const Location_config& location, const Server_config& server)
+{
+	std::string	value;
+
+	if (request.getHeader("content-type", value) == false
+				|| location.upload_dir.empty())
+		return http_error(client, server.error_page, 400, 1);
+	if (value.find("multipart/form-data") != std::string::npos)
+		return formdata_process(client, request.getRequest(), value,
+						location.upload_dir, request.getBodyPos(), server,
+						request.getTarget());
+	else
+		return http_error(client, server.error_page, 415, 1);
+}
+
+int		http_delete(Client& client, const Request& request,
+				const Server_config& server)
+{
+	if (is_dir(request.getPath()))
+		return http_error(client, server.error_page, 400, 400);
+	else if (!is_openable(request.getPath()))
+		return http_error(client, server.error_page, 404, 404);
+	if (unlink(request.getPath().c_str()) == -1)
+		return http_error(client, server.error_page, 500, 500);
+	else
+		return http_response(client, "", 200, 200);
+}
+
+//Set 'Allow' header value accordingly then returns error response to 405
+//Method Not Allowed
+int		unallowed_method(Client& client, const Location_config& location,
+				const Server_config& server)
+{
+	std::string	value("");
+
+	for (std::vector<std::string>::const_iterator it = location.methode.begin();
+			it != location.methode.end(); it++)
+		value.append(*it + ", ");
+	if (!value.empty())
+		value.erase(value.size() - 2);
+	return http_error(client, server.error_page, value, 405, 405);
+}
+
+int		construct_response(Server_config& server,
+				Request& request, Client& client,
 				const std::map<int, Client>& client_map,
 				const std::map<int, std::pair<std::string, int> >& server_map)
 {
-	size_t	len_request = (client.getStrRequest()).size();//TMP!
-	Response response;
 
-	try {
-		__D_DISPLAY("request : ");
-		__D_DISPLAY(client.getStrRequest());
-		Request r = Request(client.getStrRequest());
-		__D_DISPLAY("Object Request Created");
+	int				ret = CGI_REDIRECT, i = 0;
+	Location_config	*location;
 
-		// On recupere le serveur associe a la requete
-		Server_config * s = match_server(server_blocks, client.getListen(), r);
-		__D_DISPLAY("server find");
-
-		//Construction reponse
-		if (construct_response(response, s, r, client, client_map, server_map))
-		{
-			client.truncateRequest(len_request);
-			return ;
-		}
-		//__D_DISPLAY("response :")
-		//__D_DISPLAY(*(response.get_raw()));
-	}
-	catch (Request::NotTerminatedException e)
+	while (ret == CGI_REDIRECT)
 	{
-		//Requete non termine pas de set reponse
-		__D_DISPLAY("NoT TERMINATED REQUEST");
-		return;
+		location = location_match(server.location, request.getTarget());
+		if (!location)
+			return http_error(client, server.error_page, 404, 1);
+		if (location->return_p.first != 0)
+			return http_response(client, location->return_p.second,
+					location->return_p.first, location->return_p.first);
+		ret = check_cgi(request, server, *location, client,
+				client_map, server_map);
+		i++;
 	}
-	catch (Request::InvalidRequest e)
-	{
-		//Requete non valide renvoyer reponse avec code erreur non valide
-		//TODO: Reponse invlaide
-		__D_DISPLAY("INVALID REQUEST");
-		response.set_status_code("400");
-		response.set_status_infos("Bad Request");
-	}
-	client.setResponse(response.get_raw());
-	client.truncateRequest(len_request);
+	if (ret == CGI_SUCCESS || ret == CGI_ERR)
+		return 1;
+	__D_DISPLAY("target : " << request.getTarget());
+	request.setPath(location->uri, location->root);
+	__D_DISPLAY("path : " << request.getPath());
+	if (request.get_method() == "GET" && is_method_allowed(location, "GET"))
+		return http_get(request, server, *location, client, i);
+	else if (request.get_method() == "POST" &&
+			is_method_allowed(location, "POST"))
+		return http_post(client, request, *location, server);
+	else if(request.get_method() == "DELETE" &&
+			is_method_allowed(location, "DELETE"))
+		return http_delete(client, request, server);
+	else
+		return unallowed_method(client, *location, server);
+}
+
+int		process_request(Client& client,
+				const std::vector<Server_config*>& server_blocks,
+				const std::map<int, Client>& client_map,
+				const std::map<int, std::pair<std::string, int> >& server_map)
+{
+	Server_config	*server;
+	Request 		request(client.getStrRequest());
+
+	__D_DISPLAY(request);
+	server = match_server(server_blocks, client.getListen(), request);
+	if (server->m_body_size < request.getBodySize())
+		return http_error(client, server->error_page, 413, 413);
+	construct_response(*server, request, client, client_map, server_map);
+	return 0;
 }

@@ -33,22 +33,28 @@ bool	is_relative_uri(size_t val, const std::string& headers)
 }
 
 //CGI response format: header - blankline - body
-//If header = content-type -> document response -> check/set status, set respons
+//If header = content-type -> document response -> check/set status & check/set
+//							'content-length' header
 //If header = Location -> 
 //					- If relative URI -> local redirecttion -> redirect stat
 //					- If absolute URI -> client redirection -> set response.
 int		cgi_output(std::string& cgi_out)
 {
 	size_t		val, end, blankline = cgi_out.find("\r\n\r\n");
-	std::string	headers;
+	std::string	headers, cont_len("");
 
 	if (blankline == std::string::npos)
 		return CGI_ERR;//err 500
 	headers = cgi_out.substr(0, blankline);
 	if (find_nocase_header(headers, "Content-Type:") != std::string::npos)
 	{
+		if (find_nocase_header(headers, "Content-Length:") == std::string::npos)
+			cont_len = "Content-Length:" +
+				ft_int_to_string(cgi_out.size() - (blankline + 4)) + "\r\n";
 		if (!is_status_line(cgi_out))
-			cgi_out.insert(0, "HTTP/1.1 200 OK\r\n");
+			cgi_out.insert(0, "HTTP/1.1 200 OK\r\n" + cont_len);
+		else if (!cont_len.empty())
+			cgi_out.insert(blankline + 3, cont_len);
 		return CGI_SUCCESS;
 	}
 	else if ((val = find_nocase_header(headers, "Location:"))
@@ -61,6 +67,12 @@ int		cgi_output(std::string& cgi_out)
 			cgi_out.assign(headers.substr(val, end - val));
 			return CGI_REDIRECT;
 		}
+	}
+	if (find_nocase_header(headers, "Content-Length:") == std::string::npos)
+	{
+		cont_len = "Content-Length:" +
+			ft_int_to_string(cgi_out.size() - (blankline + 4)) + "\r\n";
+			cgi_out.insert(blankline + 3, cont_len);
 	}
 	return CGI_SUCCESS;
 }
