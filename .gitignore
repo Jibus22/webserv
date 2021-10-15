@@ -36,3 +36,6 @@ private/
 
 # osx shit
 *.DS_Store
+
+# Other
+*.pdf
