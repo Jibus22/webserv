@@ -2,7 +2,6 @@
 #define CGIENV_HPP
 
 #include "Request.hpp"
-#include "Response.hpp"
 #include "webserv.hpp"
 
 # define METAVAR_NB 14

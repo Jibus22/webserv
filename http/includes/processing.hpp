@@ -3,7 +3,6 @@
 
 #include "webserv.hpp"
 #include "Request.hpp"
-#include "Response.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>

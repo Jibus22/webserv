@@ -1,6 +1,7 @@
 #include "processing.hpp"
 
-//return true si le server name match le header host de la requete
+//return true if server_name of server config matchs
+//with request host header value
 bool	match_server_name(const Server_config& server, const Request& request)
 {
 	std::string	value;
@@ -23,13 +24,9 @@ bool	match_server_name(const Server_config& server, const Request& request)
 	return false;
 }
 
-//TODO: gere le 0.0.0.0
-//Renvoie un pointeur sur le server qui est associe a la request
-//[1] on recupere une liste avec une tres grande
-//specificite de la correspondance
-//[2] si un seul match il repond
-//[3] si plus de 1 match on regarde le header host
-//[4] si 0 match
+//First fetch a vector of server_config which has there ip:port pair matching
+//with the one from the client.
+//Then try to make each of them matching with a more specific server_name
 Server_config	*match_server(const std::vector<Server_config*>& server_blocks,
 					const std::pair<std::string, int>& listen,
 					const Request& request)
@@ -37,12 +34,12 @@ Server_config	*match_server(const std::vector<Server_config*>& server_blocks,
 	std::vector<Server_config*>	listen_match;
 
 	for (std::vector<Server_config*>::const_iterator it = server_blocks.begin();
-		it != server_blocks.end(); it++)//[1]
+		it != server_blocks.end(); it++)
 		if((*it)->listen == listen)
 			listen_match.push_back(*it);
-	if (listen_match.size() == 1)//[2]
+	if (listen_match.size() == 1)
 		return listen_match.front();
-	else if (listen_match.size() > 1)//[3]
+	else if (listen_match.size() > 1)
 	{
 		for (std::vector<Server_config*>::const_iterator
 				it = listen_match.begin(); it != listen_match.end(); it++)
@@ -50,7 +47,7 @@ Server_config	*match_server(const std::vector<Server_config*>& server_blocks,
 				return *it;
 		return listen_match.front();
 	}
-	else//[4]
+	else
 		return listen_match.front();
 }
 
@@ -102,25 +99,8 @@ Location_config	*location_match(const Config_struct::c_location_vector&
 	return location;
 }
 
-/*
-//Ajoute dans la reponse la page d'erreur associe a l'erreur defini dans la conf
-void	error_page(int erreur, Response & response,
-		Config_struct::c_error_map & error_page)
-{
-	struct stat sb;
-	if (error_page[erreur] != "" && is_openable(error_page[erreur]) &&
-		stat(error_page[erreur].c_str(), &sb) != -1)
-	{
-		response.set_body_path(error_page[erreur]);
-		std::stringstream ss;
-		ss << sb.st_size;
-		response.add_header("Content-Length", ss.str());
-	}
-	else
-		response.add_header("Content-Length", "0");
-}*/
-
-//renvoie true si methode autorisé false sinon
+//Return true if HTTP method from request is found as allowed in the
+//location config block, else return false.
 bool	is_method_allowed(Location_config * location, std::string methode)
 {
 	Config_struct::c_methode_vector::iterator it = location->methode.begin();
@@ -169,24 +149,8 @@ int		check_cgi(Request& request, const Server_config& server,
 	return ret;
 }
 
-/*
-//Met a jour la target avec la directive root
-void	handle_root(std::string & target, Location_config * location)
-{
-	if (location == NULL || location->root == "")
-		return;
-	if (location->uri[location->uri.size() - 1] == '/' || location->uri.size() == 1)
-		target.erase(0 , location->uri.size());
-	else
-		target.erase(0 , location->uri.size() + 1);
-	if (location->root[location->root.size() - 1] == '/')
-		target.insert(0, location->root);
-	else
-		target.insert(0, location->root + "/");
-}*/
-
-//si la target est un directory teste si le fichier existe dans le dossier
-//et met a jour la requete avec le fichier qui doit etre renvoye
+//Set target to index file declared in location block from the config file if
+//it's found & if it exists into the local filesystem.
 void	handle_index(std::string& target, const Location_config& location)
 {
 	__D_DISPLAY("DIRECTORY");
@@ -202,33 +166,9 @@ void	handle_index(std::string& target, const Location_config& location)
 }
 
 
-/*
-//Si une redirection doit etre fait met le code et le status dans la reponse
-void	handle_return(Response & response, Location_config *location)
-{
-	std::stringstream sstream;
-    sstream << location->return_p.first;
-
-	response.set_status_code(sstream.str());
-	if (location->return_p.first == 301)
-		response.set_status_infos("Moved Permanently");
-	else if (location->return_p.first == 302)
-		response.set_status_infos("Found");
-	else if (location->return_p.first == 307)
-		response.set_status_infos("Temporary Redirect");
-	else if (location->return_p.first == 308)
-		response.set_status_infos("Permanent Redirect");
-	response.add_header("Location", location->return_p.second);
-	response.add_header("Content-Length", "0");
-}*/
-
-//si la target est un repertoire cherche le fichier a repondre
-// si la target est un repertoire et que l'autoindex est active
-//renvoie l'autoindex
-//sinon si la target est un fichier et qu'il peut etre recupéré
-//set la reponse a 200 et renvoie le fichier
-//sinon
-//renvoie une erreur car fichier untrouvable
+//Wether the http target requests for a directory or a file, wether config
+//directives as 'autoindex on;' or 'index file;' are found or not, process
+//or get the file then set the according http response.
 int		http_get(Request& request, const Server_config& server,
 				const Location_config& location, Client& client, int ret)
 {
